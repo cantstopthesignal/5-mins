@@ -1,0 +1,13 @@
+/* TEAM */
+  Developer, Designer: Cant Stop The Signal
+  Contact: cantstopthesignals [at] gmail.com
+  Reddit: http://www.reddit.com/user/CantStopTheSignal/
+  From: Kirkland, Washington, USA
+
+/* THANKS */
+  Too early to thank!
+
+/* SITE */
+  Language: English
+  IDE: Eclipse, Emacs
+  Source code: https://github.com/cantstopthesignal/5-mins

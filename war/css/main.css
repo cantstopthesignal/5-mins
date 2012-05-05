@@ -1,0 +1,23 @@
+body {
+  font-family: Arial;
+  font-size: 16px;
+  margin: 0px;
+  padding: 0px;
+}
+a {
+  color: #0000cc;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+.footer {
+  font-size: 13px;
+  text-align: center;
+  padding: 10px;
+}
+.footer a {
+  color: blue;
+  text-decoration: none;
+  cursor: pointer;
+}
