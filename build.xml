@@ -1,28 +1,28 @@
 <?xml version="1.0"?>
 <project basedir="." default="compile">
 
-  <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask"
-           classpath="build/closure-compiler.jar"/>
+  <property name="js-source.dir" location="src/js" />
+  <property name="js-output.dir" location="war/js" />
+
+  <property name="closure-library.dir" location="lib/closure-library" />
+  <property name="closure-compiler.dir" location="lib/closure-compiler" />
+  <property name="closure-compiler.jar"
+      value="${closure-compiler.dir}/compiler.jar" />
+
+  <property name="closure-builder.bin"
+      value="${closure-library.dir}/closure/bin/build/closurebuilder.py" />
 
   <target name="compile">
 
-    <filelist id="sources" dir="${basedir}/src/js">
-      <file name="main.js"/>
-    </filelist>
+    <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
+        namespace="main"
+        warningLevel="QUIET"
+        destfile="${js-output.dir}/main_debug.js" />
 
-    <concat destfile="war/js/main_uncompiled.js" append="false">
-      <filelist refid="sources" />
-    </concat>
-
-    <jscomp compilationLevel="whitespace" warning="quiet"
-            debug="true" output="war/js/main_debug.js">
-      <sources refid="sources" />
-    </jscomp>
-
-    <jscomp compilationLevel="simple" warning="verbose" 
-            debug="false" output="war/js/main_optimized.js">
-      <sources refid="sources" />
-    </jscomp>
+    <closure-builder-compile compilationLevel="SIMPLE_OPTIMIZATIONS"
+        namespace="main"
+        warningLevel="VERBOSE"
+        destfile="${js-output.dir}/main_optimized.js" />
 
   </target>
 
@@ -36,4 +36,24 @@
 
   </target>
 
+  <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask"
+           classpath="${closure-compiler.jar}"/>
+
+  <macrodef name="closure-builder-compile">
+    <attribute name="compilationLevel" default="WHITESPACE_ONLY" />
+    <attribute name="warningLevel" default="DEFAULT" />
+    <attribute name="namespace" />
+    <attribute name="destfile" />
+    <sequential>
+      <exec executable="${closure-builder.bin}" output="@{destfile}" logError="true">
+        <arg value="--root=${closure-library.dir}" />
+        <arg value="--root=${js-source.dir}" />
+        <arg value="--namespace=@{namespace}" />
+        <arg value="--output_mode=compiled" />
+        <arg value="--compiler_jar=${closure-compiler.jar}" />
+        <arg value="--compiler_flags=--compilation_level=@{compilationLevel}" />
+        <arg value="--compiler_flags=--warning_level=@{warningLevel}" />
+      </exec>
+    </sequential>
+  </macrodef>
 </project>
