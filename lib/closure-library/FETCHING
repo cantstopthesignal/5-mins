@@ -1,0 +1,5 @@
+Grab the latest closure library into this directory.
+
+svn checkout http://closure-library.googlecode.com/svn/trunk/ .
+
+See also http://code.google.com/p/closure-library/
