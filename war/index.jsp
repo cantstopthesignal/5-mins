@@ -18,7 +18,7 @@
     <title>5 minutes</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <script type="text/javascript">
-      var userEmail = "<%= user.getEmail() %>";
+      var userEmail = "<%= user != null ? user.getEmail() : "" %>";
     </script>
     <script type="text/javascript" src="js/main_<%= jsMode %>.js"></script>
     <link rel="stylesheet" href="css/main.css" type="text/css" />
