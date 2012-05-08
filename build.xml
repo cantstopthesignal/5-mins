@@ -12,19 +12,25 @@
   <property name="closure-builder.bin"
       value="${closure-library.dir}/closure/bin/build/closurebuilder.py" />
 
-  <target name="compile">
+  <target name="compile-debug">
 
     <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
-        namespace="main"
+        namespace="fivemins.main"
         warningLevel="QUIET"
         destfile="${js-output.dir}/main_debug.js" />
 
+  </target>
+
+  <target name="compile-optimized">
+
     <closure-builder-compile compilationLevel="SIMPLE_OPTIMIZATIONS"
-        namespace="main"
+        namespace="fivemins.main"
         warningLevel="VERBOSE"
         destfile="${js-output.dir}/main_optimized.js" />
 
   </target>
+
+  <target name="compile" depends="compile-debug,compile-optimized" />
 
   <target name="clean">
 
