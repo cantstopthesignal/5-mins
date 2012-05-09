@@ -21,3 +21,31 @@ a:hover {
   text-decoration: none;
   cursor: pointer;
 }
+.events-list {
+
+}
+.events-list > .title {
+  font-weight: bold;
+}
+.events-scroll-box {
+  border: 1px solid black;
+  height: 400px;
+  width: 400px;
+  overflow: scroll;
+  position: relative;
+}
+.events-scroll-box > .time-indicator {
+  position: absolute;
+  border: 1px solid gray;
+  border-bottom: 0;
+  width: 100%;
+}
+.events-scroll-box > .time-indicator > .time-box {
+  border-right: 1px solid gray;
+  color: gray;
+  font-size: 13px;
+  text-align: right;
+  padding: 2px;
+  width: 50px;
+  height: 100%;
+}

@@ -4,17 +4,23 @@ goog.provide('fivemins.App');
 
 goog.require('fivemins.CalendarApi');
 goog.require('fivemins.CalendarChooser');
+goog.require('fivemins.EventsList');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.debug.Logger');
+goog.require('goog.events.EventTarget');
 
 
-/** @constructor */
+/**
+ * @constructor
+ * @extends {goog.events.EventTarget}
+ */
 fivemins.App = function() {
   this.authDeferred_ = new goog.async.Deferred();
 
   this.calendarApi_ = new fivemins.CalendarApi();
 };
+goog.inherits(fivemins.App, goog.events.EventTarget);
 
 fivemins.App.GAPI_API_KEY = 'AIzaSyDh5fbf_pmhJko-6SBua7ptbjnrNl9Jer4';
 fivemins.App.GAPI_CLIENT_ID = '446611198518.apps.googleusercontent.com';
@@ -28,22 +34,47 @@ fivemins.App.prototype.logger_ = goog.debug.Logger.getLogger('fivemins.App');
 /** @type {fivemins.CalendarChooser} */
 fivemins.App.prototype.calendarChooser_;
 
+/** @type {fivemins.EventsList} */
+fivemins.App.prototype.eventsList_;
+
+/** @type {Object} */
+fivemins.App.prototype.calendar_;
+
 /** @type {number} */
 fivemins.App.prototype.gapiFullAuthTimerId_;
 
 fivemins.App.prototype.start = function() {
-  this.authDeferred_.addCallback(this.chooseCalendar_, this);
+  this.authDeferred_.branch().
+      addCallback(this.chooseCalendar_, this).
+      addCallback(this.showEventsList_, this);
   this.loadGapiJavascriptClientAndAuth_();
 };
 
+fivemins.App.prototype.disposeInternal = function() {
+  goog.dispose(this.calendarChooser_);
+  goog.dispose(this.eventsList_);
+  goog.base(this, 'disposeInternal');
+};
+
 fivemins.App.prototype.chooseCalendar_ = function() {
-  this.calendarApi_.loadCalendarList().addCallback(function(resp) {
-    goog.dispose(this.calendarChooser_);
-    this.calendarChooser_ = new fivemins.CalendarChooser(resp);
-    this.calendarChooser_.chooseCalendar().addCallback(goog.bind(function(calendar) {
-      debugger;
-    }, this));
-  }, this);
+  return this.calendarApi_.loadCalendarList().
+      addCallback(function(resp) {
+        goog.asserts.assert(!this.calendarChooser_);
+        this.calendarChooser_ = new fivemins.CalendarChooser(resp);
+        return this.calendarChooser_.chooseCalendar();
+      }, this).
+      addCallback(function(calendar) {
+        this.calendar_ = calendar;
+        goog.dispose(this.calendarChooser_);
+        delete this.calendarChooser_;
+      }, this);
+};
+
+fivemins.App.prototype.showEventsList_ = function() {
+  goog.asserts.assert(this.calendar_);
+  goog.asserts.assert(!this.eventsList_);
+  this.eventsList_ = new fivemins.EventsList(this.calendarApi_, this.calendar_);
+  this.eventsList_.render();
 };
 
 fivemins.App.prototype.loadGapiJavascriptClientAndAuth_ = function() {

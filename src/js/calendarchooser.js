@@ -42,7 +42,7 @@ fivemins.CalendarChooser.prototype.chooseCalendar = function() {
   if (!this.choiceDeferred_.hasFired()) {
     this.showChooserUi_();
   }
-  return this.choiceDeferred_;
+  return this.choiceDeferred_.branch();
 };
 
 fivemins.CalendarChooser.prototype.disposeInternal = function() {
