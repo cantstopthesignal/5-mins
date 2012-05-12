@@ -12,12 +12,19 @@
   <property name="closure-builder.bin"
       value="${closure-library.dir}/closure/bin/build/closurebuilder.py" />
 
+  <property name="closure-deps-writer.bin"
+      value="${closure-library.dir}/closure/bin/build/depswriter.py" />
+
   <target name="compile-debug">
 
     <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
         namespace="fivemins.main"
         warningLevel="QUIET"
         destfile="${js-output.dir}/main_debug.js" />
+
+    <closure-deps-writer root="${js-source.dir}"
+        rootRelativeToClosure="../../../../src/js/"
+        destfile="${js-source.dir}/deps.js" />
 
   </target>
 
@@ -43,7 +50,7 @@
   </target>
 
   <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask"
-           classpath="${closure-compiler.jar}"/>
+      classpath="${closure-compiler.jar}"/>
 
   <macrodef name="closure-builder-compile">
     <attribute name="compilationLevel" default="WHITESPACE_ONLY" />
@@ -59,6 +66,18 @@
         <arg value="--compiler_jar=${closure-compiler.jar}" />
         <arg value="--compiler_flags=--compilation_level=@{compilationLevel}" />
         <arg value="--compiler_flags=--warning_level=@{warningLevel}" />
+      </exec>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="closure-deps-writer">
+    <attribute name="root" />
+    <attribute name="rootRelativeToClosure" />
+    <attribute name="destfile" />
+    <sequential>
+      <exec executable="${closure-deps-writer.bin}" output="@{destfile}"
+          logError="true">
+        <arg value="--root_with_prefix='@{root}' '@{rootRelativeToClosure}'" />
       </exec>
     </sequential>
   </macrodef>
