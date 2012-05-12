@@ -44,7 +44,7 @@ fivemins.EventsList.prototype.el_;
 /** @type {Array.<Object>} */
 fivemins.EventsList.prototype.events_;
 
-fivemins.EventsList.prototype.render = function() {
+fivemins.EventsList.prototype.render = function(parentEl) {
   goog.asserts.assert(!this.el_);
   this.el_ = document.createElement('div');
   this.el_.className = 'events-list';
@@ -53,9 +53,9 @@ fivemins.EventsList.prototype.render = function() {
   headerEl.appendChild(document.createTextNode(
       'Calendar ' + this.calendar_['summary']));
   this.el_.appendChild(headerEl);
+  parentEl.appendChild(this.el_);
   this.eventsScrollBox_.setDateRange(this.startDate_, this.endDate_);
   this.eventsScrollBox_.render(this.el_);
-  document.body.appendChild(this.el_);
 
   if (!this.events_) {
     this.loadEvents_();
@@ -74,7 +74,8 @@ fivemins.EventsList.prototype.loadEvents_ = function() {
   this.calendarApi_.loadEvents(this.calendar_['id'], this.startDate_,
       this.endDate_).
       addCallback(function(resp) {
-        this.events_ = resp['items'];
+        goog.asserts.assert(resp['kind'] == 'calendar#events');
+        this.events_ = resp['items'] || [];
         this.displayEvents_();
       }, this);
 };

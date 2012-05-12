@@ -2,7 +2,7 @@ body {
   font-family: Arial;
   font-size: 16px;
   margin: 0px;
-  padding: 0px;
+  padding: 5px;
 }
 a {
   color: #0000cc;
@@ -29,8 +29,8 @@ a:hover {
 }
 .events-scroll-box {
   border: 1px solid black;
+  max-width: 500px;
   height: 400px;
-  width: 400px;
   overflow: scroll;
   position: relative;
 }
@@ -38,7 +38,7 @@ a:hover {
   position: absolute;
   border: 1px solid gray;
   border-bottom: 0;
-  width: 100%;
+  width: 99%;
 }
 .events-scroll-box > .time-indicator > .time-box {
   border-right: 1px solid gray;
@@ -48,4 +48,12 @@ a:hover {
   padding: 2px;
   width: 50px;
   height: 100%;
+}
+
+.events-scroll-box > .event-card {
+  padding: 5px;
+  position: absolute;
+  border: 1px solid #88f;
+  background-color: rgba(200, 200, 255, 0.8);
+  font-size: 12px;
 }

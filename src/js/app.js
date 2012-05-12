@@ -28,6 +28,8 @@ fivemins.App.GAPI_SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
 fivemins.App.GAPI_FULL_AUTH_TIMEOUT = 5000;
 
+fivemins.App.GAPI_CHECK_AUTH_INTERVAL = 5000;
+
 /** @type {goog.debug.Logger} */
 fivemins.App.prototype.logger_ = goog.debug.Logger.getLogger('fivemins.App');
 
@@ -41,7 +43,10 @@ fivemins.App.prototype.eventsList_;
 fivemins.App.prototype.calendar_;
 
 /** @type {number} */
-fivemins.App.prototype.gapiFullAuthTimerId_;
+fivemins.App.prototype.gapiFullAuthTimeoutId_;
+
+/** @type {number} */
+fivemins.App.prototype.gapiCheckAuthPollIntervalId_;
 
 fivemins.App.prototype.start = function() {
   this.authDeferred_.branch().
@@ -74,7 +79,7 @@ fivemins.App.prototype.showEventsList_ = function() {
   goog.asserts.assert(this.calendar_);
   goog.asserts.assert(!this.eventsList_);
   this.eventsList_ = new fivemins.EventsList(this.calendarApi_, this.calendar_);
-  this.eventsList_.render();
+  this.eventsList_.render(goog.dom.getElementByClass('app-content'));
 };
 
 fivemins.App.prototype.loadGapiJavascriptClientAndAuth_ = function() {
@@ -98,7 +103,7 @@ fivemins.App.prototype.handleGapiClientLoad_ = function() {
 fivemins.App.prototype.handleGapiAuthInit_ = function() {
   this.logger_.info('handleGapiAuthInit_');
   window.setTimeout(goog.bind(this.checkAuth_, this), 1);
-  this.gapiFullAuthTimerId_ = window.setTimeout(
+  this.gapiFullAuthTimeoutId_ = window.setTimeout(
       goog.bind(this.fullAuth_, this), fivemins.App.GAPI_FULL_AUTH_TIMEOUT);
 };
 
@@ -119,24 +124,40 @@ fivemins.App.prototype.fullAuth_ = function() {
     scope: fivemins.App.GAPI_SCOPES,
     immediate: false
   }, goog.bind(this.handleAuthResult_, this));
+  this.gapiCheckAuthPollIntervalId_ = window.setInterval(
+      goog.bind(this.checkAuth_, this),
+      fivemins.App.GAPI_CHECK_AUTH_INTERVAL);
 };
 
 fivemins.App.prototype.clearFullAuthTimer_ = function() {
-  if (this.gapiFullAuthTimerId_) {
-    window.clearTimeout(this.gapiFullAuthTimerId_);
-    delete this.gapiFullAuthTimerId_;
+  if (this.gapiFullAuthTimeoutId_) {
+    window.clearTimeout(this.gapiFullAuthTimeoutId_);
+    delete this.gapiFullAuthTimeoutId_;
+  }
+};
+
+fivemins.App.prototype.clearCheckAuthPoller_ = function() {
+  if (this.gapiCheckAuthPollIntervalId_) {
+    window.clearInterval(this.gapiCheckAuthPollIntervalId_);
+    delete this.gapiCheckAuthPollIntervalId_;
   }
 };
 
 fivemins.App.prototype.handleAuthResult_ = function(authResult) {
   this.logger_.info('handleAuthResult_ ' + authResult);
+  if (this.authDeferred_.hasFired()) {
+    return;
+  }
   if (!authResult) {
-    // An empty auth result can happen if the user previously authorized
-    // this service but then de-authorized.  Go immediately to full auth
-    // in this case.
-    this.fullAuth_();
+    if (!this.gapiCheckAuthPollIntervalId_) {
+      // An empty auth result can happen if the user previously authorized
+      // this service but then de-authorized.  Go immediately to full auth
+      // in this case.
+      this.fullAuth_();
+    }
     return;
   }
   this.clearFullAuthTimer_();
+  this.clearCheckAuthPoller_();
   this.authDeferred_.callback(null);
 };

@@ -39,6 +39,7 @@
     </script>
   </head>
   <body>
+    <div class="app-content"></div>
     <div class="footer">
       Contact by
       <a href="mailto:cantstopthesignals@gmail.com">Email</a> or
