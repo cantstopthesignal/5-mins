@@ -1,0 +1,24 @@
+/* Copyright cantstopthesignals@gmail.com */
+
+body {
+  font-family: Arial;
+  font-size: 13px;
+}
+
+.event-area {
+  float: left;
+  border: 1px solid #bbb;
+  padding: 5px;
+}
+
+.event-container {
+  width: 500px;
+  position: relative;
+}
+
+.event {
+  padding: 5px;
+  position: absolute;
+  border: 1px solid #88f;
+  background-color: rgba(200, 200, 255, 0.8);
+}
