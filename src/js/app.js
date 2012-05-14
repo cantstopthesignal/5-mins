@@ -8,7 +8,9 @@ goog.require('fivemins.EventsList');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.debug.Logger');
+goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
+goog.require('goog.events.EventType');
 
 
 /**
@@ -19,6 +21,9 @@ fivemins.App = function() {
   this.authDeferred_ = new goog.async.Deferred();
 
   this.calendarApi_ = new fivemins.CalendarApi();
+
+  /** @type {goog.events.EventHandler} */
+  this.eventHandler_ = new goog.events.EventHandler(this);
 };
 goog.inherits(fivemins.App, goog.events.EventTarget);
 
@@ -39,6 +44,12 @@ fivemins.App.prototype.calendarChooser_;
 /** @type {fivemins.EventsList} */
 fivemins.App.prototype.eventsList_;
 
+/** @type {Element} */
+fivemins.App.prototype.footerEl_;
+
+/** @type {Element} */
+fivemins.App.prototype.appContentEl_;
+
 /** @type {Object} */
 fivemins.App.prototype.calendar_;
 
@@ -53,11 +64,18 @@ fivemins.App.prototype.start = function() {
       addCallback(this.chooseCalendar_, this).
       addCallback(this.showEventsList_, this);
   this.loadGapiJavascriptClientAndAuth_();
+  this.appContentEl_ = goog.dom.getElementByClass('app-content');
+  goog.asserts.assert(this.appContentEl_);
+  this.footerEl_ = goog.dom.getElementByClass('footer');
+  goog.asserts.assert(this.footerEl_);
+  this.eventHandler_.listen(window, goog.events.EventType.RESIZE,
+      this.handleWindowResize_);
 };
 
 fivemins.App.prototype.disposeInternal = function() {
   goog.dispose(this.calendarChooser_);
   goog.dispose(this.eventsList_);
+  goog.dispose(this.eventHandler_);
   goog.base(this, 'disposeInternal');
 };
 
@@ -79,7 +97,23 @@ fivemins.App.prototype.showEventsList_ = function() {
   goog.asserts.assert(this.calendar_);
   goog.asserts.assert(!this.eventsList_);
   this.eventsList_ = new fivemins.EventsList(this.calendarApi_, this.calendar_);
-  this.eventsList_.render(goog.dom.getElementByClass('app-content'));
+  this.eventsList_.render(this.appContentEl_);
+  this.resize();
+};
+
+fivemins.App.prototype.handleWindowResize_ = function(e) {
+  this.resize();
+};
+
+fivemins.App.prototype.resize = function() {
+  var footerHeight = this.footerEl_.offsetHeight;
+  var parentHeight = this.appContentEl_.parentNode.offsetHeight;
+  var appHeight = Math.max(0, parentHeight - footerHeight);
+  window.console.log('footerHeight', footerHeight);
+  window.console.log('bodyHeight', parentHeight);
+  if (this.eventsList_) {
+    this.eventsList_.resize(undefined, appHeight);
+  }
 };
 
 fivemins.App.prototype.loadGapiJavascriptClientAndAuth_ = function() {

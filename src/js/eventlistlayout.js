@@ -34,9 +34,25 @@ fivemins.EventListLayout.prototype.minEventHeight_ = 10;
 /** @type {number} */
 fivemins.EventListLayout.prototype.layoutWidth_ = 100;
 
+/** @type {goog.date.DateTime} */
+fivemins.EventListLayout.prototype.minTime_;
+
+/** @type {goog.date.DateTime} */
+fivemins.EventListLayout.prototype.maxTime_;
+
 /** @param {number} width */
 fivemins.EventListLayout.prototype.setLayoutWidth = function(width) {
   this.layoutWidth_ = width;
+};
+
+/** @param {goog.date.DateTime} minTime */
+fivemins.EventListLayout.prototype.setMinTime = function(minTime) {
+  this.minTime_ = minTime ? minTime.clone() : null;
+};
+
+/** @param {goog.date.DateTime} maxTime */
+fivemins.EventListLayout.prototype.setMaxTime = function(maxTime) {
+  this.maxTime_ = maxTime ? maxTime.clone() : null;
 };
 
 /** @param {Array.<fivemins.EventListLayout.Event>} events */
@@ -53,6 +69,7 @@ fivemins.EventListLayout.prototype.setEvents = function(events) {
 fivemins.EventListLayout.prototype.calc = function() {
   goog.asserts.assert(this.events_);
 
+  this.calcTimeRange_();
   this.calcTimePoints_();
   this.assignEventsToColumns_();
   this.calcColumnCounts_();
@@ -66,8 +83,32 @@ fivemins.EventListLayout.prototype.disposeInternal =
   goog.base(this, 'disposeInternal');
 };
 
+fivemins.EventListLayout.prototype.calcTimeRange_ = function() {
+  goog.array.forEach(this.events_, function(event) {
+    if (!this.minTime_ || goog.date.Date.compare(
+        this.minTime_, event.startTime) > 0) {
+      this.minTime_ = event.startTime.clone();
+    }
+    if (!this.maxTime_ || goog.date.Date.compare(
+        this.maxTime_, event.endTime) < 0) {
+      this.maxTime_ = event.endTime.clone();
+    }
+  }, this);
+};
+
 fivemins.EventListLayout.prototype.calcTimePoints_ = function() {
   var timePointMap = {};
+
+  if (this.minTime_) {
+    var minTimePoint = new fivemins.EventListLayout.TimePoint(this.minTime_);
+    this.registerDisposable(minTimePoint);
+    timePointMap[minTimePoint] = minTimePoint;
+  }
+  if (this.maxTime_) {
+    var maxTimePoint = new fivemins.EventListLayout.TimePoint(this.maxTime_);
+    this.registerDisposable(maxTimePoint);
+    timePointMap[maxTimePoint] = maxTimePoint;
+  }
 
   // Create all relevant time points for the start and end times of all events.
   goog.array.forEach(this.events_, function(event) {

@@ -6,6 +6,7 @@ goog.require('fivemins.EventListLayout');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.date.DateTime');
+goog.require('goog.date.Interval');
 goog.require('goog.dom');
 goog.require('goog.events.EventTarget');
 goog.require('goog.style');
@@ -52,10 +53,16 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
     layoutEvent.demoEvent = event;
     return layoutEvent;
   }, this);
+
+  var minTime = new goog.date.DateTime();
+  minTime.add(new goog.date.Interval(goog.date.Interval.HOURS, -2));
+
   var layout = new fivemins.EventListLayout();
   layout.setLayoutWidth(500);
+  layout.setMinTime(minTime);
   layout.setEvents(layoutEvents);
   layout.calc();
+
   var eventContainerHeight = 0;
   goog.array.forEach(layoutEvents, function(layoutEvent) {
     var event = layoutEvent.demoEvent;

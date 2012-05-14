@@ -15,14 +15,16 @@ fivemins.CalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
 
 /** @return {goog.async.Deferred} */
 fivemins.CalendarApi.prototype.loadCalendarList = function() {
+  this.logger_.info('loadCalendarList');
   var d = new goog.async.Deferred();
   var request = goog.getObjectByName('gapi.client.request')({
     path: '/calendar/v3/users/me/calendarList',
     params: {}
   });
-  request['execute'](function(resp) {
+  request['execute'](goog.bind(function(resp) {
+    this.logger_.info('calendar list loaded');
     d.callback(resp);
-  });
+  }, this));
   return d;
 };
 
@@ -34,6 +36,7 @@ fivemins.CalendarApi.prototype.loadCalendarList = function() {
  */
 fivemins.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
     endDate) {
+  this.logger_.info('loadEvents');
   var d = new goog.async.Deferred();
   var request = goog.getObjectByName('gapi.client.request')({
     path: '/calendar/v3/calendars/' + calendarId + '/events',
@@ -44,8 +47,9 @@ fivemins.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
       timeMax: new Date(endDate.valueOf()).toISOString()
     }
   });
-  request['execute'](function(resp) {
+  request['execute'](goog.bind(function(resp) {
+    this.logger_.info('events loaded');
     d.callback(resp);
-  });
+  }, this));
   return d;
 };

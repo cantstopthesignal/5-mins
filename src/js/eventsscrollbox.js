@@ -56,6 +56,11 @@ fivemins.EventsScrollBox.prototype.render = function(parentEl) {
   this.layout_();
 };
 
+fivemins.EventsScrollBox.prototype.resize = function(opt_width, opt_height) {
+  var height = opt_height || this.el_.parentNode.offsetHeight;
+  goog.style.setBorderBoxSize(this.el_, new goog.math.Size(undefined, height));
+};
+
 fivemins.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
   this.startDate_ = startDate;
   this.endDate_ = endDate;

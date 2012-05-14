@@ -2,35 +2,35 @@
 
 goog.provide('fivemins.CalendarChooser');
 
+goog.require('fivemins.Dialog')
 goog.require('goog.asserts');
 goog.require('goog.dom');
-goog.require('goog.events.EventTarget');
+goog.require('goog.dom.classes');
 goog.require('goog.net.Cookies');
 
 /**
  * @constructor
- * @extends {goog.events.EventTarget}
+ * @extends {fivemins.Dialog}
  */
 fivemins.CalendarChooser = function(listResp) {
+  goog.base(this);
+
   this.listResp_ = listResp;
 
   /** @type {goog.net.Cookies} */
   this.cookies_ = new goog.net.Cookies(document);
 
-  /** @type {goog.events.EventHandler} */
-  this.eventHandler_ = new goog.events.EventHandler(this);
-
   /** @type {goog.async.Deferred} */
   this.choiceDeferred_ = new goog.async.Deferred();
 };
-goog.inherits(fivemins.CalendarChooser, goog.events.EventTarget);
+goog.inherits(fivemins.CalendarChooser, fivemins.Dialog);
 
 fivemins.CalendarChooser.FIVEMINS_CALENDAR_COOKIE = "FIVEMINS_CALENDAR";
 
 fivemins.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE = -1;
 
 /** @type {Element} */
-fivemins.CalendarChooser.prototype.el_;
+fivemins.CalendarChooser.prototype.containerEl_;
 
 /** @type {string} */
 fivemins.CalendarChooser.prototype.calendarId_;
@@ -45,13 +45,6 @@ fivemins.CalendarChooser.prototype.chooseCalendar = function() {
   return this.choiceDeferred_.branch();
 };
 
-fivemins.CalendarChooser.prototype.disposeInternal = function() {
-  goog.dom.removeNode(this.el_);
-  delete this.el_;
-  goog.dispose(this.eventHandler_);
-  goog.base(this, 'disposeInternal');
-};
-
 fivemins.CalendarChooser.prototype.fireCalendarChoice_ = function(calendarId) {
   goog.asserts.assert(!this.choiceDeferred_.hasFired());
   var calendar = this.getCalendarById_(calendarId);
@@ -60,25 +53,26 @@ fivemins.CalendarChooser.prototype.fireCalendarChoice_ = function(calendarId) {
 }
 
 fivemins.CalendarChooser.prototype.showChooserUi_ = function() {
-  goog.asserts.assert(!this.el_);
-  this.el_ = document.createElement('div');
-  this.el_.className = 'calendar-chooser';
+  this.createDom();
+  this.containerEl_ = document.createElement('div');
+  goog.dom.classes.add(this.containerEl_, 'calendar-chooser');
   var headerEl = document.createElement('div');
-  headerEl.className = 'title';
-  headerEl.appendChild(document.createTextNode('Choose a calendar'));
-  this.el_.appendChild(headerEl);
+  goog.dom.classes.add(headerEl, 'title');
+  headerEl.appendChild(document.createTextNode('Choose a calendar to use'));
+  this.containerEl_.appendChild(headerEl);
   var ownedCalendars = this.getOwnedCalendars_();
   for (var i = 0; i < ownedCalendars.length; i++) {
     var ownedCalendar = ownedCalendars[i];
     var calendarEl = document.createElement('div');
-    calendarEl.className = 'calendar-entry';
-    this.eventHandler_.listen(calendarEl, goog.events.EventType.CLICK,
+    goog.dom.classes.add(calendarEl, 'button', 'calendar-entry');
+    this.eventHandler.listen(calendarEl, goog.events.EventType.CLICK,
         goog.partial(this.handleCalendarClick_, ownedCalendar['id']));
     var calendarNameEl = document.createTextNode(ownedCalendar['summary']);
     calendarEl.appendChild(calendarNameEl);
-    this.el_.appendChild(calendarEl);
+    this.containerEl_.appendChild(calendarEl);
   }
-  document.body.appendChild(this.el_);
+  this.el.appendChild(this.containerEl_);
+  this.show();
 };
 
 fivemins.CalendarChooser.prototype.handleCalendarClick_ = function(calendarId) {
