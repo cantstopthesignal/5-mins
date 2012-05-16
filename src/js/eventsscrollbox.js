@@ -2,6 +2,7 @@
 
 goog.provide('fivemins.EventsScrollBox');
 
+goog.require('fivemins.Component');
 goog.require('fivemins.EventCard');
 goog.require('fivemins.EventListLayout');
 goog.require('goog.array');
@@ -10,24 +11,23 @@ goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
 goog.require('goog.date.Interval');
 goog.require('goog.dom');
-goog.require('goog.events.EventTarget');
+goog.require('goog.dom.classes');
 goog.require('goog.style');
 
 /**
  * @constructor
- * @extends {goog.events.EventTarget}
+ * @extends {fivemins.Component}
  */
 fivemins.EventsScrollBox = function() {
+  goog.base(this);
+
   /** @type {Array.<fivemins.EventCard>} */
   this.eventCards_ = [];
 
   /** @type {Array.<Element>} */
   this.timeIndicatorEls_ = [];
-
-  /** @type {goog.events.EventHandler} */
-  this.eventHandler_ = new goog.events.EventHandler(this);
 };
-goog.inherits(fivemins.EventsScrollBox, goog.events.EventTarget);
+goog.inherits(fivemins.EventsScrollBox, fivemins.Component);
 
 /** @type {number} */
 fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT = 45;
@@ -38,33 +38,35 @@ fivemins.EventsScrollBox.prototype.startDate_;
 /** @type {goog.date.DateTime} */
 fivemins.EventsScrollBox.prototype.endDate_;
 
-/** @type {Element} */
-fivemins.EventsScrollBox.prototype.el_;
-
 /** @type {number} */
 fivemins.EventsScrollBox.prototype.scale_ = 1.0;
 
+fivemins.EventsScrollBox.prototype.createDom = function() {
+  goog.base(this, 'createDom');
+  goog.dom.classes.add(this.el, 'events-scroll-box');
+};
+
 fivemins.EventsScrollBox.prototype.render = function(parentEl) {
-  goog.asserts.assert(!this.el_);
+  goog.asserts.assert(!this.el);
   goog.asserts.assert(this.startDate_);
   goog.asserts.assert(this.endDate_);
-  this.el_ = document.createElement('div');
-  this.el_.className = 'events-scroll-box';
+  this.createDom();
+
   this.renderTimeIndicators_();
   this.renderEvents_();
-  parentEl.appendChild(this.el_);
+  parentEl.appendChild(this.el);
   this.layout_();
 };
 
 fivemins.EventsScrollBox.prototype.resize = function(opt_width, opt_height) {
-  var height = opt_height || this.el_.parentNode.offsetHeight;
-  goog.style.setBorderBoxSize(this.el_, new goog.math.Size(undefined, height));
+  var height = opt_height || this.el.parentNode.offsetHeight;
+  goog.style.setBorderBoxSize(this.el, new goog.math.Size(undefined, height));
 };
 
 fivemins.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
   this.startDate_ = startDate;
   this.endDate_ = endDate;
-  if (this.el_) {
+  if (this.el) {
     this.renderTimeIndicators_();
   }
 };
@@ -76,17 +78,10 @@ fivemins.EventsScrollBox.prototype.setEvents = function(events) {
   this.eventCards_ = goog.array.map(events, function(event) {
     return new fivemins.EventCard(event);
   }, this);
-  if (this.el_) {
+  if (this.el) {
     this.renderEvents_();
     this.layout_();
   }
-};
-
-fivemins.EventsScrollBox.prototype.disposeInternal = function() {
-  goog.dom.removeNode(this.el_);
-  delete this.el_;
-  goog.dispose(this.eventHandler_);
-  goog.base(this, 'disposeInternal');
 };
 
 fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
@@ -107,7 +102,7 @@ fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
     timeEl.appendChild(timeBoxEl);
     var topPos = this.timeToPixel_(hourIter);
     timeEl.style.top = topPos + 'px';
-    this.el_.appendChild(timeEl);
+    this.el.appendChild(timeEl);
     this.timeIndicatorEls_.push(timeEl);
     hourIter.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
     timeEl.style.height = (this.timeToPixel_(hourIter) - topPos) + 'px';
@@ -116,7 +111,7 @@ fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
 
 fivemins.EventsScrollBox.prototype.renderEvents_ = function() {
   goog.array.forEach(this.eventCards_, function(eventCard) {
-    eventCard.render(this.el_);
+    eventCard.render(this.el);
   }, this);
 };
 
@@ -128,7 +123,7 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
     return layoutEvent;
   }, this);
   var layout = new fivemins.EventListLayout();
-  layout.setLayoutWidth(goog.style.getContentBoxSize(this.el_).width);
+  layout.setLayoutWidth(goog.style.getContentBoxSize(this.el).width);
   layout.setEvents(layoutEvents);
   layout.calc();
   goog.array.forEach(layoutEvents, function(layoutEvent) {

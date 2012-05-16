@@ -16,6 +16,7 @@ fivemins.Component = function() {
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
+  this.registerDisposable(this.eventHandler_);
 };
 goog.inherits(fivemins.Component, goog.events.EventTarget);
 
@@ -30,7 +31,5 @@ fivemins.Component.prototype.createDom = function() {
 fivemins.Component.prototype.disposeInternal = function() {
   goog.dom.removeNode(this.el);
   delete this.el;
-  goog.dispose(this.eventHandler_);
-  delete this.eventHandler_;
   goog.base(this, 'disposeInternal');
 };

@@ -24,6 +24,7 @@ fivemins.App = function() {
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
+  this.registerDisposable(this.eventHandler_);
 };
 goog.inherits(fivemins.App, goog.events.EventTarget);
 
@@ -75,7 +76,6 @@ fivemins.App.prototype.start = function() {
 fivemins.App.prototype.disposeInternal = function() {
   goog.dispose(this.calendarChooser_);
   goog.dispose(this.eventsList_);
-  goog.dispose(this.eventHandler_);
   goog.base(this, 'disposeInternal');
 };
 
@@ -109,8 +109,6 @@ fivemins.App.prototype.resize = function() {
   var footerHeight = this.footerEl_.offsetHeight;
   var parentHeight = this.appContentEl_.parentNode.offsetHeight;
   var appHeight = Math.max(0, parentHeight - footerHeight);
-  window.console.log('footerHeight', footerHeight);
-  window.console.log('bodyHeight', parentHeight);
   if (this.eventsList_) {
     this.eventsList_.resize(undefined, appHeight);
   }
