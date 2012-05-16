@@ -2,19 +2,27 @@
 
 goog.provide('fivemins.EventListLayoutDemo');
 
+goog.require('fivemins.Component');
 goog.require('fivemins.EventListLayout');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.date.DateTime');
 goog.require('goog.date.Interval');
 goog.require('goog.dom');
+goog.require('goog.dom.classes');
 goog.require('goog.events.EventTarget');
+goog.require('goog.events.EventType');
+goog.require('goog.events.EventHandler');
+goog.require('goog.math.Coordinate');
 goog.require('goog.style');
 
 /**
  * @constructor
+ * @extends {goog.events.EventTarget}
  */
 fivemins.EventListLayoutDemo = function() {
+  goog.base(this);
+
   this.events_ = [];
 
   this.el_ = document.createElement('div');
@@ -25,11 +33,26 @@ fivemins.EventListLayoutDemo = function() {
   this.eventContainerEl_.className = 'event-container';
   this.el_.appendChild(this.eventContainerEl_);
 
+  this.cursorPopup_ = new fivemins.EventListLayoutDemo.CursorPopup_();
+  this.registerDisposable(this.cursorPopup_);
+
   this.now_ = new goog.date.DateTime();
+
+  /** @type {goog.events.EventHandler} */
+  this.eventHandler_ = new goog.events.EventHandler(this);
+  this.registerDisposable(this.eventHandler_);
 };
+goog.inherits(fivemins.EventListLayoutDemo, goog.events.EventTarget);
+
+/** @type {fivemins.EventListLayout.TimeMap} */
+fivemins.EventListLayoutDemo.prototype.timeMap_;
 
 fivemins.EventListLayoutDemo.prototype.start = function() {
   this.createSomeEvents_();
+  this.eventHandler_.listen(this.el_, goog.events.EventType.MOUSEMOVE,
+      this.handleMouseMoveEventArea_);
+  this.eventHandler_.listen(this.el_, goog.events.EventType.MOUSEOUT,
+      this.handleMouseOutEventArea_);
 };
 
 fivemins.EventListLayoutDemo.prototype.createSomeEvents_ = function() {
@@ -62,6 +85,7 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
   layout.setMinTime(minTime);
   layout.setEvents(layoutEvents);
   layout.calc();
+  this.timeMap_ = layout.getTimeMap();
 
   var eventContainerHeight = 0;
   goog.array.forEach(layoutEvents, function(layoutEvent) {
@@ -89,23 +113,108 @@ fivemins.EventListLayoutDemo.prototype.createEvent_ = function(
   return new fivemins.EventListLayoutDemo.Event(name, startTime, endTime);
 };
 
+fivemins.EventListLayoutDemo.prototype.handleMouseMoveEventArea_ = function(e) {
+  if (!this.timeMap_) {
+    return;
+  }
+  var eventAreaClientPos = goog.style.getClientPosition(this.el_);
+  var eventAreaPagePos = goog.style.getPageOffset(this.el_);
+  var eventAreaPaddingBox = goog.style.getPaddingBox(this.el_);
+  var yPos = e.clientY - eventAreaClientPos.y - eventAreaPaddingBox.top;
 
-/** @constructor */
+  var cursorTime = this.timeMap_.yPosToTime(yPos);
+  this.cursorPopup_.setMessageText(cursorTime.toUsTimeString(
+      undefined, true, true));
+
+  var cursorPopupPos = new goog.math.Coordinate(
+      e.clientX + (eventAreaPagePos.x - eventAreaClientPos.x) + 30,
+      e.clientY + (eventAreaPagePos.y - eventAreaClientPos.y) + 15);
+  this.cursorPopup_.showAt(cursorPopupPos);
+};
+
+fivemins.EventListLayoutDemo.prototype.handleMouseOutEventArea_ = function(e) {
+  this.cursorPopup_.hide()
+};
+
+/**
+ * @constructor
+ * @extends {fivemins.Component}
+ */
 fivemins.EventListLayoutDemo.Event = function(name, startTime, endTime) {
+  goog.base(this);
   this.name = name;
   this.startTime = startTime;
   this.endTime = endTime;
-  this.el_ = document.createElement('div');
-  this.el_.className = 'event';
-  this.el_.appendChild(document.createTextNode(name));
+};
+goog.inherits(fivemins.EventListLayoutDemo.Event, fivemins.Component);
+
+fivemins.EventListLayoutDemo.Event.prototype.createDom = function() {
+  goog.base(this, 'createDom');
+  goog.dom.classes.add(this.el, 'event');
+
+  var titleEl = document.createElement('span');
+  goog.dom.classes.add(titleEl, 'title');
+  titleEl.appendChild(document.createTextNode(name));
+  this.el.appendChild(titleEl);
+
+  var timeStr = this.startTime.toUsTimeString(undefined, true, true) + ' - ' +
+      this.endTime.toUsTimeString(undefined, true, true);
+  this.el.appendChild(document.createTextNode(timeStr));
 };
 
 fivemins.EventListLayoutDemo.Event.prototype.render = function(parentEl) {
-  parentEl.appendChild(this.el_);
+  if (!this.el) {
+    this.createDom();
+  }
+  parentEl.appendChild(this.el);
 };
 
 /** @param {goog.math.Rect} rect */
 fivemins.EventListLayoutDemo.Event.prototype.setRect = function(rect) {
-  goog.style.setPosition(this.el_, rect.left, rect.top);
-  goog.style.setBorderBoxSize(this.el_, rect.getSize());
+  if (!this.el) {
+    this.createDom();
+  }
+  goog.style.setPosition(this.el, rect.left, rect.top);
+  goog.style.setBorderBoxSize(this.el, rect.getSize());
+};
+
+/**
+ * @constructor
+ * @extends {fivemins.Component}
+ */
+fivemins.EventListLayoutDemo.CursorPopup_ = function() {
+  goog.base(this);
+};
+goog.inherits(fivemins.EventListLayoutDemo.CursorPopup_, fivemins.Component);
+
+fivemins.EventListLayoutDemo.CursorPopup_.prototype.createDom = function() {
+  goog.base(this, 'createDom');
+  goog.dom.classes.add(this.el, 'cursor-popup');
+  goog.style.showElement(this.el, false);
+};
+
+/** @param {string} text */
+fivemins.EventListLayoutDemo.CursorPopup_.prototype.setMessageText = function(
+    text) {
+  if (!this.el) {
+    this.createDom();
+  }
+  goog.dom.removeChildren(this.el);
+  this.el.appendChild(document.createTextNode(text));
+};
+
+/** @param {goog.math.Coordinate} pos */
+fivemins.EventListLayoutDemo.CursorPopup_.prototype.showAt = function(pos) {
+  if (!this.el) {
+    this.createDom();
+  }
+  if (!this.el.parentNode) {
+    document.body.appendChild(this.el);
+  }
+  goog.style.setPosition(this.el, pos);
+  goog.style.showElement(this.el, true);
+};
+
+fivemins.EventListLayoutDemo.CursorPopup_.prototype.hide = function() {
+  goog.style.showElement(this.el, false);
 };

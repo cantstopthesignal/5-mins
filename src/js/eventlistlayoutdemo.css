@@ -4,21 +4,29 @@ body {
   font-family: Arial;
   font-size: 13px;
 }
-
 .event-area {
   float: left;
   border: 1px solid #bbb;
-  padding: 5px;
+  padding: 25px;
 }
-
 .event-container {
   width: 500px;
   position: relative;
 }
-
 .event {
   padding: 5px;
   position: absolute;
   border: 1px solid #88f;
   background-color: rgba(200, 200, 255, 0.8);
+}
+.event > .title {
+  font-weight: bold;
+  margin-right: 10px;
+}
+.cursor-popup {
+  position: absolute;
+  border: 1px solid #bbb;
+  background-color: #ddd;
+  min-width: 100px;
+  padding: 10px;
 }
