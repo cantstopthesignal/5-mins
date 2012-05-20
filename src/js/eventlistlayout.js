@@ -77,7 +77,6 @@ fivemins.EventListLayout.prototype.setEvents = function(events) {
 
 fivemins.EventListLayout.prototype.calc = function() {
   goog.asserts.assert(this.events_);
-
   this.calcTimeRange_();
   this.calcTimePoints_();
   this.assignEventsToColumns_();
@@ -160,20 +159,28 @@ fivemins.EventListLayout.prototype.calcTimePoints_ = function() {
   });
 
   // Populate openEvents with events that span this time point.
-  var timePointIdx = 0;
-  var eventIdx = 0;
-  while (eventIdx < this.events_.length &&
-      timePointIdx < this.timePoints_.length) {
-    var event = this.events_[eventIdx];
-    var timePoint = this.timePoints_[timePointIdx];
-    if (goog.date.Date.compare(event.startTime, timePoint.time) >= 0) {
-      timePointIdx += 1;
-    } else if (goog.date.Date.compare(event.endTime, timePoint.time) < 0) {
-      eventIdx += 1;
-    } else {
-      timePoint.openEvents.push(event);
-      event.timePoints.push(timePoint);
-      eventIdx += 1;
+  var minEventIdx = 0;
+  for (var i = 0; i < this.timePoints_.length; i++) {
+    var timePoint = this.timePoints_[i];
+    for (var j = minEventIdx; j < this.events_.length; j++) {
+      var event = this.events_[j];
+      if (goog.date.Date.compare(event.endTime, timePoint.time) <= 0) {
+        // Event ended before this time point, do not revisit it again.
+        minEventIdx = j + 1;
+      } else if (goog.date.Date.compare(event.startTime, timePoint.time) > 0) {
+        // Event started after this time point, we are done working with this
+        // time point.
+        break;
+      } else {
+        // Event started at or before this time point, and ended after this
+        // time point.
+        timePoint.openEvents.push(event);
+        event.timePoints.push(timePoint);
+      }
+    }
+    if (minEventIdx >= this.events_.length) {
+      // All events have been passed.
+      break;
     }
   }
 };

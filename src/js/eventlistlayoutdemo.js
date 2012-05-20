@@ -36,7 +36,7 @@ fivemins.EventListLayoutDemo = function() {
   this.cursorPopup_ = new fivemins.EventListLayoutDemo.CursorPopup_();
   this.registerDisposable(this.cursorPopup_);
 
-  this.now_ = new goog.date.DateTime();
+  this.now_ = new goog.date.DateTime(new goog.date.Date());
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
@@ -56,11 +56,17 @@ fivemins.EventListLayoutDemo.prototype.start = function() {
 };
 
 fivemins.EventListLayoutDemo.prototype.createSomeEvents_ = function() {
-  this.events_.push(this.createEvent_('Event 1', 0, 1));
-  this.events_.push(this.createEvent_('Event 2', 3.2, 1));
-  this.events_.push(this.createEvent_('Event 3', 1.1, 2));
-  this.events_.push(this.createEvent_('Event 4', 1.1, 8));
-  this.events_.push(this.createEvent_('Event 5', 5, 3));
+  this.events_.push(this.createEvent_('Event 1', 0, 60));
+  this.events_.push(this.createEvent_('Event 2', 3 * 60 + 15, 60));
+  this.events_.push(this.createEvent_('Event 3', 60 + 10, 2 * 60));
+  this.events_.push(this.createEvent_('Event 4', 60 + 10, 5 * 60));
+  this.events_.push(this.createEvent_('Event 5', 5 * 60, 1.5 * 60));
+
+  this.events_.push(this.createEvent_('Event 6', 7 * 60, 5));
+  this.events_.push(this.createEvent_('Event 7', 7 * 60 + 5, 5));
+  this.events_.push(this.createEvent_('Event 8', 7 * 60 + 10, 10));
+  this.events_.push(this.createEvent_('Event 9', 7 * 60 + 20, 15));
+  this.events_.push(this.createEvent_('Event 10', 7 * 60 + 35, 10));
 
   goog.array.forEach(this.events_, function(event) {
     event.render(this.eventContainerEl_);
@@ -78,7 +84,7 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
   }, this);
 
   var minTime = new goog.date.DateTime();
-  minTime.add(new goog.date.Interval(goog.date.Interval.HOURS, -2));
+  minTime.add(new goog.date.Interval(goog.date.Interval.HOURS, -1));
 
   var layout = new fivemins.EventListLayout();
   layout.setLayoutWidth(500);
@@ -101,13 +107,13 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
 };
 
 fivemins.EventListLayoutDemo.prototype.createEvent_ = function(
-    name, startOffsetHours, durationHours) {
+    name, startOffsetMins, durationMins) {
   var startTime = this.now_.clone();
-  var startOffsetSeconds = Math.round(startOffsetHours * 60 * 60);
+  var startOffsetSeconds = Math.round(startOffsetMins * 60);
   startTime.add(new goog.date.Interval(goog.date.Interval.SECONDS,
       startOffsetSeconds));
   var endTime = startTime.clone();
-  var durationSeconds = Math.round(durationHours * 60 * 60);
+  var durationSeconds = Math.round(durationMins * 60);
   endTime.add(new goog.date.Interval(goog.date.Interval.SECONDS,
       durationSeconds));
   return new fivemins.EventListLayoutDemo.Event(name, startTime, endTime);
@@ -160,7 +166,7 @@ fivemins.EventListLayoutDemo.Event.prototype.createDom = function() {
 
   var titleEl = document.createElement('span');
   goog.dom.classes.add(titleEl, 'title');
-  titleEl.appendChild(document.createTextNode(name));
+  titleEl.appendChild(document.createTextNode(this.name));
   this.el.appendChild(titleEl);
 
   var timeStr = this.startTime.toUsTimeString(undefined, true, true) + ' - ' +
