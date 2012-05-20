@@ -38,6 +38,9 @@ fivemins.EventsScrollBox.prototype.startDate_;
 /** @type {goog.date.DateTime} */
 fivemins.EventsScrollBox.prototype.endDate_;
 
+/** @type {fivemins.EventListLayout.TimeMap} */
+fivemins.EventsScrollBox.prototype.timeMap_;
+
 /** @type {number} */
 fivemins.EventsScrollBox.prototype.scale_ = 1.0;
 
@@ -84,6 +87,22 @@ fivemins.EventsScrollBox.prototype.setEvents = function(events) {
   }
 };
 
+/**
+ * Scroll to a specified time.  Optionally show context before the time
+ * instead of starting exactly at the specified time.
+ */
+fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
+    opt_showContext) {
+  if (!this.timeMap_) {
+    return;
+  }
+  var yPos = this.timeMap_.timeToYPos(date);
+  if (opt_showContext) {
+    yPos -= Math.min(100, this.el.offsetHeight / 4);
+  }
+  this.el.scrollTop = yPos;
+};
+
 fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
   goog.asserts.assert(this.startDate_);
   goog.asserts.assert(this.endDate_);
@@ -124,8 +143,12 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
   }, this);
   var layout = new fivemins.EventListLayout();
   layout.setLayoutWidth(goog.style.getContentBoxSize(this.el).width);
+  if (this.startDate_) {
+    layout.setMinTime(this.startDate_);
+  }
   layout.setEvents(layoutEvents);
   layout.calc();
+  this.timeMap_ = layout.getTimeMap();
   goog.array.forEach(layoutEvents, function(layoutEvent) {
     var eventCard = layoutEvent.eventCard;
     eventCard.setRect(layoutEvent.rect);

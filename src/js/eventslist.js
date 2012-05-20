@@ -80,7 +80,7 @@ fivemins.EventsList.prototype.render = function(parentEl) {
   this.eventsScrollBox_.render(this.el);
 
   if (!this.events_) {
-    this.loadEvents_();
+    this.loadEvents_().addCallback(this.scrollToNow_, this);
   }
 };
 
@@ -92,7 +92,7 @@ fivemins.EventsList.prototype.resize = function(opt_width, opt_height) {
 };
 
 fivemins.EventsList.prototype.loadEvents_ = function() {
-  this.calendarApi_.loadEvents(this.calendar_['id'], this.startDate_,
+  return this.calendarApi_.loadEvents(this.calendar_['id'], this.startDate_,
       this.endDate_).
       addCallback(function(resp) {
         goog.asserts.assert(resp['kind'] == 'calendar#events');
@@ -103,6 +103,10 @@ fivemins.EventsList.prototype.loadEvents_ = function() {
 
 fivemins.EventsList.prototype.displayEvents_ = function() {
   this.eventsScrollBox_.setEvents(this.events_);
+};
+
+fivemins.EventsList.prototype.scrollToNow_ = function() {
+  this.eventsScrollBox_.scrollToTime(new goog.date.DateTime(), true);
 };
 
 fivemins.EventsList.prototype.initDefaultDateRange_ = function() {
