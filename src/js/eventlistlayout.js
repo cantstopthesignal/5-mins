@@ -49,6 +49,11 @@ fivemins.EventListLayout.prototype.setLayoutWidth = function(width) {
   this.layoutWidth_ = width;
 };
 
+/** @param {number} width */
+fivemins.EventListLayout.prototype.setDistancePerHour = function(distance) {
+  this.distancePerHour_ = distance;
+};
+
 /** @param {goog.date.DateTime} minTime */
 fivemins.EventListLayout.prototype.setMinTime = function(minTime) {
   this.minTime_ = minTime ? minTime.clone() : null;

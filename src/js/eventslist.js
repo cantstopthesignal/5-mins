@@ -4,6 +4,7 @@ goog.provide('fivemins.EventsList');
 
 goog.require('fivemins.Component');
 goog.require('fivemins.EventsScrollBox');
+goog.require('fivemins.Spinner');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
@@ -31,6 +32,10 @@ fivemins.EventsList = function(calendarApi, calendar) {
   /** @type {fivemins.EventsScrollBox} */
   this.eventsScrollBox_ = new fivemins.EventsScrollBox();
   this.registerDisposable(this.eventsScrollBox_);
+
+  /** @type {fivemins.Spinner} */
+  this.spinner_ = new fivemins.Spinner();
+  this.registerDisposable(this.spinner_);
 
   this.initDefaultDateRange_();
 };
@@ -63,6 +68,8 @@ fivemins.EventsList.prototype.createDom = function() {
       this.handleRefreshClick_);
   this.headerEl_.appendChild(refreshEl);
 
+  this.spinner_.render(this.headerEl_);
+
   var titleEl = document.createElement('div');
   titleEl.className = 'title';
   titleEl.appendChild(document.createTextNode(
@@ -92,12 +99,14 @@ fivemins.EventsList.prototype.resize = function(opt_width, opt_height) {
 };
 
 fivemins.EventsList.prototype.loadEvents_ = function() {
+  var spinEntry = this.spinner_.spin(150);
   return this.calendarApi_.loadEvents(this.calendar_['id'], this.startDate_,
       this.endDate_).
       addCallback(function(resp) {
         goog.asserts.assert(resp['kind'] == 'calendar#events');
         this.events_ = resp['items'] || [];
         this.displayEvents_();
+        spinEntry.release();
       }, this);
 };
 

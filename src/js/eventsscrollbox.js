@@ -32,6 +32,9 @@ goog.inherits(fivemins.EventsScrollBox, fivemins.Component);
 /** @type {number} */
 fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT = 45;
 
+/** @type {number} */
+fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH = 40;
+
 /** @type {goog.date.DateTime} */
 fivemins.EventsScrollBox.prototype.startDate_;
 
@@ -55,10 +58,9 @@ fivemins.EventsScrollBox.prototype.render = function(parentEl) {
   goog.asserts.assert(this.endDate_);
   this.createDom();
 
-  this.renderTimeIndicators_();
-  this.renderEvents_();
   parentEl.appendChild(this.el);
   this.layout_();
+  this.renderEvents_();
 };
 
 fivemins.EventsScrollBox.prototype.resize = function(opt_width, opt_height) {
@@ -70,7 +72,7 @@ fivemins.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
   this.startDate_ = startDate;
   this.endDate_ = endDate;
   if (this.el) {
-    this.renderTimeIndicators_();
+    this.layout_();
   }
 };
 
@@ -82,8 +84,8 @@ fivemins.EventsScrollBox.prototype.setEvents = function(events) {
     return new fivemins.EventCard(event);
   }, this);
   if (this.el) {
-    this.renderEvents_();
     this.layout_();
+    this.renderEvents_();
   }
 };
 
@@ -106,6 +108,7 @@ fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
 fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
   goog.asserts.assert(this.startDate_);
   goog.asserts.assert(this.endDate_);
+  goog.asserts.assert(this.timeMap_);
   goog.array.forEach(this.timeIndicatorEls_, function(el) {
     goog.dom.removeNode(el);
   });
@@ -119,12 +122,13 @@ fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
     timeBoxEl.className = 'time-box';
     timeBoxEl.appendChild(document.createTextNode(timeStr));
     timeEl.appendChild(timeBoxEl);
-    var topPos = this.timeToPixel_(hourIter);
+    var topPos = this.timeMap_.timeToYPos(hourIter);
     timeEl.style.top = topPos + 'px';
     this.el.appendChild(timeEl);
     this.timeIndicatorEls_.push(timeEl);
     hourIter.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
-    timeEl.style.height = (this.timeToPixel_(hourIter) - topPos) + 'px';
+    var bottomPos = this.timeMap_.timeToYPos(hourIter);
+    timeEl.style.height = (bottomPos - topPos) + 'px';
   }
 };
 
@@ -141,8 +145,11 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
     layoutEvent.eventCard = eventCard;
     return layoutEvent;
   }, this);
+  var eventLayoutWidth = goog.style.getContentBoxSize(this.el).width -
+      fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH;
   var layout = new fivemins.EventListLayout();
-  layout.setLayoutWidth(goog.style.getContentBoxSize(this.el).width);
+  layout.setLayoutWidth(eventLayoutWidth);
+  layout.setDistancePerHour(fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT);
   if (this.startDate_) {
     layout.setMinTime(this.startDate_);
   }
@@ -151,14 +158,10 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
   this.timeMap_ = layout.getTimeMap();
   goog.array.forEach(layoutEvents, function(layoutEvent) {
     var eventCard = layoutEvent.eventCard;
-    eventCard.setRect(layoutEvent.rect);
+    var rect = layoutEvent.rect.clone();
+    rect.left += fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH;
+    eventCard.setRect(rect);
   }, this);
   goog.dispose(layout);
-};
-
-fivemins.EventsScrollBox.prototype.timeToPixel_ = function(date) {
-  var startTime = this.startDate_.valueOf();
-  var time = date.valueOf();
-  return ((time - startTime) / 1000 / 60 / 60) *
-      fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT * this.scale_;
+  this.renderTimeIndicators_();
 };

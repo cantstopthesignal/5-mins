@@ -30,9 +30,9 @@ a:hover {
   cursor: pointer;
 }
 .button {
-  background: -webkit-gradient(linear, left top, left bottom, from(#ddd), to(#aaa));
+  background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
   cursor: pointer;
-  border: 1px solid black;
+  border: 1px solid #999;
   border-radius: 3px;
   display: inline-block;
   line-height: 18px;
@@ -41,7 +41,7 @@ a:hover {
   text-align: center;
 }
 .button:active {
-  background: -webkit-gradient(linear, left top, left bottom, from(#aaa), to(#ddd));
+  background: -webkit-gradient(linear, left top, left bottom, from(#ccc), to(#eee));
 }
 .dialog {
   background-color: black;
@@ -73,32 +73,34 @@ a:hover {
 .events-list > .header > .button {
   float: right;
 }
+.events-list > .header > .spinner {
+  float: right;
+  margin-right: 5px;
+}
 .events-list > .header > .title {
   font-weight: bold;
 }
 .events-scroll-box {
-  border: 1px solid #bbb;
+  border: 1px solid #dddddd;
   max-width: 500px;
   overflow: scroll;
-  padding: 5px;
+  margin: 0px 5px 5px 5px;
   position: relative;
 }
 .events-scroll-box > .time-indicator {
   position: absolute;
-  border: 1px solid gray;
-  border-bottom: 0;
-  width: 99%;
+  border-bottom: 1px solid #dddddd;
+  width: 100%;
 }
 .events-scroll-box > .time-indicator > .time-box {
-  border-right: 1px solid gray;
-  color: gray;
-  font-size: 13px;
+  border-right: 1px solid #dddddd;
+  color: #444444;
+  font-size: 12px;
   text-align: right;
   padding: 2px;
-  width: 50px;
+  width: 36px;
   height: 100%;
 }
-
 .events-scroll-box > .event-card {
   padding: 5px;
   position: absolute;
@@ -113,4 +115,9 @@ a:hover {
   color: black;
   display: block;
   margin-top: 5px;
+}
+.spinner {
+  background: url(/images/spinner.gif);
+  width: 32px;
+  height: 32px;
 }
