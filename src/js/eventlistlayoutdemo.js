@@ -25,13 +25,13 @@ fivemins.EventListLayoutDemo = function() {
 
   this.events_ = [];
 
-  this.el_ = document.createElement('div');
-  this.el_.className = 'event-area';
-  document.body.appendChild(this.el_);
+  this.el = document.createElement('div');
+  this.el.className = 'event-area';
+  document.body.appendChild(this.el);
 
   this.eventContainerEl_ = document.createElement('div');
   this.eventContainerEl_.className = 'event-container';
-  this.el_.appendChild(this.eventContainerEl_);
+  this.el.appendChild(this.eventContainerEl_);
 
   this.cursorPopup_ = new fivemins.EventListLayoutDemo.CursorPopup_();
   this.registerDisposable(this.cursorPopup_);
@@ -49,9 +49,9 @@ fivemins.EventListLayoutDemo.prototype.timeMap_;
 
 fivemins.EventListLayoutDemo.prototype.start = function() {
   this.createSomeEvents_();
-  this.eventHandler_.listen(this.el_, goog.events.EventType.MOUSEMOVE,
+  this.eventHandler_.listen(this.el, goog.events.EventType.MOUSEMOVE,
       this.handleMouseMoveEventArea_);
-  this.eventHandler_.listen(this.el_, goog.events.EventType.MOUSEOUT,
+  this.eventHandler_.listen(this.el, goog.events.EventType.MOUSEOUT,
       this.handleMouseOutEventArea_);
 };
 
@@ -117,22 +117,28 @@ fivemins.EventListLayoutDemo.prototype.handleMouseMoveEventArea_ = function(e) {
   if (!this.timeMap_) {
     return;
   }
-  var eventAreaClientPos = goog.style.getClientPosition(this.el_);
-  var eventAreaPagePos = goog.style.getPageOffset(this.el_);
-  var eventAreaPaddingBox = goog.style.getPaddingBox(this.el_);
+  var eventAreaClientPos = goog.style.getClientPosition(this.el);
+  var eventAreaPagePos = goog.style.getPageOffset(this.el);
+  var eventAreaPaddingBox = goog.style.getPaddingBox(this.el);
   var yPos = e.clientY - eventAreaClientPos.y - eventAreaPaddingBox.top;
 
   var cursorTime = this.timeMap_.yPosToTime(yPos);
+  goog.asserts.assert(cursorTime);
+  var roundtripYPos = this.timeMap_.timeToYPos(cursorTime);
+  goog.asserts.assert(yPos == roundtripYPos);
   this.cursorPopup_.setMessageText(cursorTime.toUsTimeString(
       undefined, true, true));
 
   var cursorPopupPos = new goog.math.Coordinate(
-      e.clientX + (eventAreaPagePos.x - eventAreaClientPos.x) + 30,
-      e.clientY + (eventAreaPagePos.y - eventAreaClientPos.y) + 15);
+      e.clientX + (eventAreaPagePos.x - eventAreaClientPos.x),
+      e.clientY + (eventAreaPagePos.y - eventAreaClientPos.y));
   this.cursorPopup_.showAt(cursorPopupPos);
 };
 
 fivemins.EventListLayoutDemo.prototype.handleMouseOutEventArea_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
   this.cursorPopup_.hide()
 };
 
@@ -211,10 +217,14 @@ fivemins.EventListLayoutDemo.CursorPopup_.prototype.showAt = function(pos) {
   if (!this.el.parentNode) {
     document.body.appendChild(this.el);
   }
+  var pos = goog.math.Coordinate.sum(pos, new goog.math.Coordinate(30, 15));
   goog.style.setPosition(this.el, pos);
   goog.style.showElement(this.el, true);
 };
 
 fivemins.EventListLayoutDemo.CursorPopup_.prototype.hide = function() {
+  if (!this.el) {
+    return;
+  }
   goog.style.showElement(this.el, false);
 };
