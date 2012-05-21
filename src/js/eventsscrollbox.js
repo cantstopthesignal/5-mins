@@ -30,6 +30,9 @@ fivemins.EventsScrollBox = function() {
 goog.inherits(fivemins.EventsScrollBox, fivemins.Component);
 
 /** @type {number} */
+fivemins.EventsScrollBox.MIN_EVENT_HEIGHT = 17;
+
+/** @type {number} */
 fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT = 45;
 
 /** @type {number} */
@@ -47,9 +50,14 @@ fivemins.EventsScrollBox.prototype.timeMap_;
 /** @type {number} */
 fivemins.EventsScrollBox.prototype.scale_ = 1.0;
 
+/** @type {number} */
+fivemins.EventsScrollBox.prototype.scrollbarWidth_;
+
 fivemins.EventsScrollBox.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-scroll-box');
+
+  this.scrollbarWidth_ = goog.style.getScrollbarWidth();
 };
 
 fivemins.EventsScrollBox.prototype.render = function(parentEl) {
@@ -146,9 +154,11 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
     return layoutEvent;
   }, this);
   var eventLayoutWidth = goog.style.getContentBoxSize(this.el).width -
-      fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH;
+      fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH -
+      this.scrollbarWidth_;
   var layout = new fivemins.EventListLayout();
   layout.setLayoutWidth(eventLayoutWidth);
+  layout.setMinEventHeight(fivemins.EventsScrollBox.MIN_EVENT_HEIGHT);
   layout.setDistancePerHour(fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT);
   if (this.startDate_) {
     layout.setMinTime(this.startDate_);

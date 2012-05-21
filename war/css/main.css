@@ -83,7 +83,8 @@ a:hover {
 .events-scroll-box {
   border: 1px solid #dddddd;
   max-width: 500px;
-  overflow: scroll;
+  overflow-x: auto;
+  overflow-y: scroll;
   margin: 0px 5px 5px 5px;
   position: relative;
 }
@@ -107,6 +108,10 @@ a:hover {
   border: 1px solid #88f;
   background-color: rgba(200, 200, 255, 0.8);
   font-size: 12px;
+}
+.events-scroll-box > .event-card.compressed-height {
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 .calendar-chooser {
 }

@@ -87,6 +87,7 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
 
   var layout = new fivemins.EventListLayout();
   layout.setLayoutWidth(500);
+  layout.setMinEventHeight(25);
   layout.setMinTime(minTime);
   layout.setEvents(layoutEvents);
   layout.calc();

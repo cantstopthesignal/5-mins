@@ -19,6 +19,9 @@ goog.require('goog.object');
 fivemins.EventListLayout = function() {
   /** @type {Array.<fivemins.EventListLayout.Event>} */
   this.events_ = [];
+
+  /** @type {Array.<fivemins.EventListLayout.Event>} */
+  this.eventsByDuration_ = [];
 };
 goog.inherits(fivemins.EventListLayout, goog.Disposable);
 
@@ -49,6 +52,11 @@ fivemins.EventListLayout.prototype.setLayoutWidth = function(width) {
 };
 
 /** @param {number} width */
+fivemins.EventListLayout.prototype.setMinEventHeight = function(height) {
+  this.minEventHeight_ = height;
+};
+
+/** @param {number} width */
 fivemins.EventListLayout.prototype.setDistancePerHour = function(distance) {
   this.distancePerHour_ = distance;
 };
@@ -72,6 +80,12 @@ fivemins.EventListLayout.prototype.setEvents = function(events) {
   this.events_.sort(function(a, b) {
     return goog.date.Date.compare(a.startTime, b.startTime);
   });
+  this.eventsByDuration_ = goog.array.clone(this.events_);
+  this.eventsByDuration_.sort(function(a, b) {
+    var aDuration = a.endTime.getTime() - a.startTime.getTime();
+    var bDuration = b.endTime.getTime() - b.startTime.getTime();
+    return a - b;
+  });
 };
 
 fivemins.EventListLayout.prototype.calc = function() {
@@ -80,6 +94,8 @@ fivemins.EventListLayout.prototype.calc = function() {
   this.calcTimePoints_();
   this.assignEventsToColumns_();
   this.calcColumnCounts_();
+  this.positionTimePoints_();
+  this.enforceMinEventHeight_();
   this.positionEvents_();
   this.calcTimeMap_();
 };
@@ -187,13 +203,7 @@ fivemins.EventListLayout.prototype.calcTimePoints_ = function() {
 };
 
 fivemins.EventListLayout.prototype.assignEventsToColumns_ = function() {
-  var eventsByDuration = goog.array.clone(this.events_);
-  eventsByDuration.sort(function(a, b) {
-    var aDuration = a.endTime.getTime() - a.startTime.getTime();
-    var bDuration = b.endTime.getTime() - b.startTime.getTime();
-    return a - b;
-  });
-  goog.array.forEach(eventsByDuration, function(event) {
+  goog.array.forEach(this.eventsByDuration_, function(event) {
     var usedColumns = {};
     goog.array.forEach(event.timePoints, function(timePoint) {
       goog.array.forEach(timePoint.openEvents, function(neighborEvent) {
@@ -236,7 +246,7 @@ fivemins.EventListLayout.prototype.calcColumnCounts_ = function() {
   }
 };
 
-fivemins.EventListLayout.prototype.positionEvents_ = function() {
+fivemins.EventListLayout.prototype.positionTimePoints_ = function() {
   var yPos = 0;
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timePoint.yPos = yPos;
@@ -248,12 +258,52 @@ fivemins.EventListLayout.prototype.positionEvents_ = function() {
         (timeInterval / 1000 / 60 / 60));
     yPos += yInterval;
   }, this);
+};
+
+fivemins.EventListLayout.prototype.enforceMinEventHeight_ = function() {
+  function expandTimePointRangeBy(startTimePoint, endTimePoint, height) {
+    // Get all time points between startTimePoint and endTimePoint.
+    var timePointsBetween = [];
+    var timePointIter = startTimePoint.next;
+    while (timePointIter && timePointIter != endTimePoint) {
+      timePointsBetween.push(timePointIter);
+      timePointIter = timePointIter.next;
+    }
+    // If time points were found between, shift each partially.
+    if (timePointsBetween.length) {
+      var expandPerPoint = Math.ceil(height / (timePointsBetween.length + 1));
+      var expand = expandPerPoint;
+      goog.array.forEach(timePointsBetween, function(timePoint) {
+        timePoint.yPos += expand;
+        expand += expandPerPoint;
+      });
+    }
+    // Shift all remaining time points including endTimePoint by height.
+    while (timePointIter) {
+      timePointIter.yPos += height;
+      timePointIter = timePointIter.next;
+    }
+  }
+  goog.array.forEach(this.eventsByDuration_, function(event) {
+    var height = event.endTimePoint.yPos - event.startTimePoint.yPos;
+    if (height < this.minEventHeight_) {
+      expandTimePointRangeBy(event.startTimePoint, event.endTimePoint,
+          this.minEventHeight_ - height);
+    }
+  }, this);
+};
+
+fivemins.EventListLayout.prototype.positionEvents_ = function() {
   goog.array.forEach(this.events_, function(event) {
     var columnWidth = Math.ceil(this.layoutWidth_ / event.columnCount);
     var x = columnWidth * event.column;
+    var width = columnWidth;
+    if (event.column == event.columnCount - 1) {
+      width = this.layoutWidth_ - (columnWidth * (event.columnCount - 1));
+    }
     var height = event.endTimePoint.yPos - event.startTimePoint.yPos;
     event.rect = new goog.math.Rect(x, event.startTimePoint.yPos,
-        columnWidth, height);
+        width, height);
   }, this);
 };
 

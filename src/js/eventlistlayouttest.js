@@ -142,6 +142,34 @@ function testLongEventWithTwoOverlaps() {
   assertEventRectsDoNotOverlap(events);
 }
 
+function testManyShortEventsInSeries() {
+  var events = [
+    createEvent(0, 5, 'event1'),
+    createEvent(5, 5, 'event2'),
+    createEvent(10, 10, 'event3'),
+    createEvent(20, 10, 'event4'),
+    createEvent(30, 15, 'event5'),
+    createEvent(45, 30, 'event6')
+  ];
+  layout.setEvents(events);
+  layout.calc();
+
+  assertEventColumn(events[0], 0, 1);
+  assertRectsEqual(events[0].rect, 0, 0, 100, 10);
+  assertEventColumn(events[1], 0, 1);
+  assertRectsEqual(events[1].rect, 0, 10, 100, 10);
+  assertEventColumn(events[2], 0, 1);
+  assertRectsEqual(events[2].rect, 0, 20, 100, 10);
+  assertEventColumn(events[3], 0, 1);
+  assertRectsEqual(events[3].rect, 0, 30, 100, 10);
+  assertEventColumn(events[4], 0, 1);
+  assertRectsEqual(events[4].rect, 0, 40, 100, 13);
+  assertEventColumn(events[5], 0, 1);
+  assertRectsEqual(events[5].rect, 0, 53, 100, 25);
+
+  assertEventRectsDoNotOverlap(events);
+}
+
 function createEvent(startMinute, duration, name) {
   var startTime = baseTime.clone();
   startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES,
