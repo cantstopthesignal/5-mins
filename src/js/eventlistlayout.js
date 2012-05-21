@@ -17,11 +17,10 @@ goog.require('goog.object');
  * @extends {goog.Disposable}
  */
 fivemins.EventListLayout = function() {
+  /** @type {Array.<fivemins.EventListLayout.Event>} */
+  this.events_ = [];
 };
 goog.inherits(fivemins.EventListLayout, goog.Disposable);
-
-/** @type {Array.<fivemins.EventListLayout.Event>} */
-fivemins.EventListLayout.prototype.events_;
 
 /** @type {Array.<fivemins.EventListLayout.TimePoint_>} */
 fivemins.EventListLayout.prototype.timePoints_;
@@ -132,8 +131,6 @@ fivemins.EventListLayout.prototype.calcTimePoints_ = function() {
       this.registerDisposable(startPoint);
       timePointMap[startPoint] = startPoint;
     }
-    startPoint.openEvents.push(event);
-    event.timePoints.push(startPoint);
     event.startTimePoint = startPoint;
     var endPoint = timePointMap[event.endTime];
     if (!endPoint) {
@@ -165,8 +162,12 @@ fivemins.EventListLayout.prototype.calcTimePoints_ = function() {
     for (var j = minEventIdx; j < this.events_.length; j++) {
       var event = this.events_[j];
       if (goog.date.Date.compare(event.endTime, timePoint.time) <= 0) {
-        // Event ended before this time point, do not revisit it again.
-        minEventIdx = j + 1;
+        // Event ended before this time point, do not revisit it again,
+        // but make sure to not skip over any continuing events, so only
+        // increment.
+        if (minEventIdx == j) {
+          minEventIdx++;
+        }
       } else if (goog.date.Date.compare(event.startTime, timePoint.time) > 0) {
         // Event started after this time point, we are done working with this
         // time point.

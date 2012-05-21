@@ -61,7 +61,6 @@ fivemins.EventListLayoutDemo.prototype.createSomeEvents_ = function() {
   this.events_.push(this.createEvent_('Event 3', 60 + 10, 2 * 60));
   this.events_.push(this.createEvent_('Event 4', 60 + 10, 5 * 60));
   this.events_.push(this.createEvent_('Event 5', 5 * 60, 1.5 * 60));
-
   this.events_.push(this.createEvent_('Event 6', 7 * 60, 5));
   this.events_.push(this.createEvent_('Event 7', 7 * 60 + 5, 5));
   this.events_.push(this.createEvent_('Event 8', 7 * 60 + 10, 10));
@@ -92,6 +91,13 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
   layout.setEvents(layoutEvents);
   layout.calc();
   this.timeMap_ = layout.getTimeMap();
+
+  goog.array.forEach(layout.timePoints_, function(timePoint) {
+    window.console.log('TimePoint ' + timePoint.time.toUsTimeString());
+    goog.array.forEach(timePoint.openEvents, function(event) {
+      window.console.log('  ' + event.startTime.toUsTimeString());
+    });
+  });
 
   var eventContainerHeight = 0;
   goog.array.forEach(layoutEvents, function(layoutEvent) {
