@@ -26,6 +26,9 @@ fivemins.EventsScrollBox = function() {
 
   /** @type {Array.<Element>} */
   this.timeIndicatorEls_ = [];
+
+  /** @type {Array.<fivemins.TimeMarkers>} */
+  this.timeMarkers_ = [];
 };
 goog.inherits(fivemins.EventsScrollBox, fivemins.Component);
 
@@ -44,6 +47,15 @@ fivemins.EventsScrollBox.prototype.startDate_;
 /** @type {goog.date.DateTime} */
 fivemins.EventsScrollBox.prototype.endDate_;
 
+/** @type {Element} */
+fivemins.EventsScrollBox.prototype.eventCardsLayer_;
+
+/** @type {Element} */
+fivemins.EventsScrollBox.prototype.timeIndicatorsLayer_;
+
+/** @type {Element} */
+fivemins.EventsScrollBox.prototype.timeMarkersLayer_;
+
 /** @type {fivemins.EventListLayout.TimeMap} */
 fivemins.EventsScrollBox.prototype.timeMap_;
 
@@ -51,13 +63,18 @@ fivemins.EventsScrollBox.prototype.timeMap_;
 fivemins.EventsScrollBox.prototype.scale_ = 1.0;
 
 /** @type {number} */
-fivemins.EventsScrollBox.prototype.scrollbarWidth_;
+fivemins.EventsScrollBox.prototype.eventAreaWidth_;
 
 fivemins.EventsScrollBox.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-scroll-box');
 
-  this.scrollbarWidth_ = goog.style.getScrollbarWidth();
+  this.timeIndicatorsLayer_ = document.createElement('div');
+  this.el.appendChild(this.timeIndicatorsLayer_);
+  this.eventCardsLayer_ = document.createElement('div');
+  this.el.appendChild(this.eventCardsLayer_);
+  this.timeMarkersLayer_ = document.createElement('div');
+  this.el.appendChild(this.timeMarkersLayer_);
 };
 
 fivemins.EventsScrollBox.prototype.render = function(parentEl) {
@@ -67,6 +84,11 @@ fivemins.EventsScrollBox.prototype.render = function(parentEl) {
   this.createDom();
 
   parentEl.appendChild(this.el);
+
+  this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
+      fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH -
+      goog.style.getScrollbarWidth();
+
   this.layout_();
   this.renderEvents_();
 };
@@ -97,6 +119,19 @@ fivemins.EventsScrollBox.prototype.setEvents = function(events) {
   }
 };
 
+fivemins.EventsScrollBox.prototype.addTimeMarker = function(timeMarker) {
+  timeMarker.setOwner(this);
+  this.registerDisposable(timeMarker);
+  timeMarker.render(this.timeMarkersLayer_);
+  this.timeMarkers_.push(timeMarker);
+};
+
+fivemins.EventsScrollBox.prototype.getTimeMarkerRect = function(time) {
+  var yPos = this.timeMap_.timeToYPos(time);
+  return new goog.math.Rect(fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH, yPos,
+      this.eventAreaWidth_, 0);
+};
+
 /**
  * Scroll to a specified time.  Optionally show context before the time
  * instead of starting exactly at the specified time.
@@ -111,6 +146,31 @@ fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
     yPos -= Math.min(100, this.el.offsetHeight / 4);
   }
   this.el.scrollTop = yPos;
+};
+
+/**
+ * Scroll by a specified time interval, relative to a given time.
+ */
+fivemins.EventsScrollBox.prototype.scrollByTime = function(relativeToTime,
+    interval) {
+  var toTime = relativeToTime.clone();
+  toTime.add(interval);
+  var startYPos = this.timeMap_.timeToYPos(relativeToTime);
+  var endYPos = this.timeMap_.timeToYPos(toTime);
+  this.el.scrollTop = this.el.scrollTop + (endYPos - startYPos);
+};
+
+/**
+ * Return whether a specified time is within the visible area.
+ */
+fivemins.EventsScrollBox.prototype.isTimeInView = function(date) {
+  var yPos = this.timeMap_.timeToYPos(date);
+  if (yPos < this.el.scrollTop) {
+    return false;
+  } else if (yPos > this.el.scrollTop + this.el.offsetHeight) {
+    return false;
+  }
+  return true;
 };
 
 fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
@@ -132,7 +192,7 @@ fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
     timeEl.appendChild(timeBoxEl);
     var topPos = this.timeMap_.timeToYPos(hourIter);
     timeEl.style.top = topPos + 'px';
-    this.el.appendChild(timeEl);
+    this.timeIndicatorsLayer_.appendChild(timeEl);
     this.timeIndicatorEls_.push(timeEl);
     hourIter.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
     var bottomPos = this.timeMap_.timeToYPos(hourIter);
@@ -142,7 +202,7 @@ fivemins.EventsScrollBox.prototype.renderTimeIndicators_ = function() {
 
 fivemins.EventsScrollBox.prototype.renderEvents_ = function() {
   goog.array.forEach(this.eventCards_, function(eventCard) {
-    eventCard.render(this.el);
+    eventCard.render(this.eventCardsLayer_);
   }, this);
 };
 
@@ -153,11 +213,8 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
     layoutEvent.eventCard = eventCard;
     return layoutEvent;
   }, this);
-  var eventLayoutWidth = goog.style.getContentBoxSize(this.el).width -
-      fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH -
-      this.scrollbarWidth_;
   var layout = new fivemins.EventListLayout();
-  layout.setLayoutWidth(eventLayoutWidth);
+  layout.setLayoutWidth(this.eventAreaWidth_);
   layout.setMinEventHeight(fivemins.EventsScrollBox.MIN_EVENT_HEIGHT);
   layout.setDistancePerHour(fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT);
   if (this.startDate_) {
@@ -173,5 +230,9 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
     eventCard.setRect(rect);
   }, this);
   goog.dispose(layout);
+
   this.renderTimeIndicators_();
+  goog.array.forEach(this.timeMarkers_, function(timeMarker) {
+    timeMarker.layout();
+  });
 };

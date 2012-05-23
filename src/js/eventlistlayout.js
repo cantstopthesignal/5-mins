@@ -7,6 +7,7 @@ goog.provide('fivemins.EventListLayout.TimeMap');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.Disposable');
+goog.require('goog.debug.Logger');
 goog.require('goog.dom');
 goog.require('goog.math.Rect');
 goog.require('goog.object');
@@ -24,6 +25,10 @@ fivemins.EventListLayout = function() {
   this.eventsByDuration_ = [];
 };
 goog.inherits(fivemins.EventListLayout, goog.Disposable);
+
+/** @type {goog.debug.Logger} */
+fivemins.EventListLayout.prototype.logger_ = goog.debug.Logger.getLogger(
+    'fivemins.EventListLayout');
 
 /** @type {Array.<fivemins.EventListLayout.TimePoint_>} */
 fivemins.EventListLayout.prototype.timePoints_;
@@ -90,6 +95,7 @@ fivemins.EventListLayout.prototype.setEvents = function(events) {
 
 fivemins.EventListLayout.prototype.calc = function() {
   goog.asserts.assert(this.events_);
+  var startTime = +new Date();
   this.calcTimeRange_();
   this.calcTimePoints_();
   this.assignEventsToColumns_();
@@ -98,6 +104,7 @@ fivemins.EventListLayout.prototype.calc = function() {
   this.enforceMinEventHeight_();
   this.positionEvents_();
   this.calcTimeMap_();
+  this.logger_.info('calc() finished in ' + (+new Date() - startTime) + 'ms');
 };
 
 /** @return {fivemins.EventListLayout.TimeMap} */

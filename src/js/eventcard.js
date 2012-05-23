@@ -28,6 +28,14 @@ fivemins.EventCard = function(event) {
 };
 goog.inherits(fivemins.EventCard, fivemins.Component);
 
+fivemins.EventCard.toTimeString_ = function(date) {
+  var str = date.toUsTimeString(false, false, true);
+  if (date.getHours() >= 12) {
+    str += 'p';
+  }
+  return str;
+};
+
 /** @return {goog.date.DateTime} */
 fivemins.EventCard.prototype.getStartTime = function() {
   return this.startTime_;
@@ -41,6 +49,12 @@ fivemins.EventCard.prototype.getEndTime = function() {
 fivemins.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'event-card');
+  var dateRangeEl = document.createElement('div');
+  goog.dom.classes.add(dateRangeEl, 'date-range');
+  dateRangeEl.appendChild(document.createTextNode(
+      fivemins.EventCard.toTimeString_(this.startTime_) + ' - ' +
+      fivemins.EventCard.toTimeString_(this.endTime_)));
+  this.el.appendChild(dateRangeEl);
   this.el.appendChild(document.createTextNode(this.event_['summary']));
 };
 

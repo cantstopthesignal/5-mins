@@ -88,12 +88,12 @@ a:hover {
   margin: 0px 5px 5px 5px;
   position: relative;
 }
-.events-scroll-box > .time-indicator {
+.time-indicator {
   position: absolute;
   border-bottom: 1px solid #dddddd;
   width: 100%;
 }
-.events-scroll-box > .time-indicator > .time-box {
+.time-indicator > .time-box {
   border-right: 1px solid #dddddd;
   color: #444444;
   font-size: 12px;
@@ -102,16 +102,28 @@ a:hover {
   width: 36px;
   height: 100%;
 }
-.events-scroll-box > .event-card {
-  padding: 5px;
+.time-marker {
+  border-top: 2px solid rgba(255, 0, 0, 0.4);
+  position: absolute;
+}
+.event-card {
+  padding: 3px;
   position: absolute;
   border: 1px solid #88f;
   background-color: rgba(200, 200, 255, 0.8);
   font-size: 12px;
 }
-.events-scroll-box > .event-card.compressed-height {
+.event-card.compressed-height {
   padding-top: 1px;
   padding-bottom: 1px;
+}
+.event-card > .date-range {
+  font-size: 10px;
+  font-weight: bold;
+}
+.event-card.compressed-height > .date-range {
+  display: inline;
+  margin-right: 5px;
 }
 .calendar-chooser {
 }
