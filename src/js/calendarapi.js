@@ -5,8 +5,13 @@ goog.provide('fivemins.CalendarApi');
 goog.require('goog.debug.Logger');
 
 
-/** @constructor */
-fivemins.CalendarApi = function() {
+/**
+ * @constructor
+ * @param {fivemins.Auth} auth
+ */
+fivemins.CalendarApi = function(auth) {
+  /** @type {fivemins.Auth} */
+  this.auth_ = auth;
 };
 
 /** @type {goog.debug.Logger} */
@@ -15,17 +20,16 @@ fivemins.CalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
 
 /** @return {goog.async.Deferred} */
 fivemins.CalendarApi.prototype.loadCalendarList = function() {
-  this.logger_.info('loadCalendarList');
-  var d = new goog.async.Deferred();
-  var request = goog.getObjectByName('gapi.client.request')({
+  var requestParams = {
     path: '/calendar/v3/users/me/calendarList',
     params: {}
-  });
-  request['execute'](goog.bind(function(resp) {
-    this.logger_.info('calendar list loaded');
-    d.callback(resp);
-  }, this));
-  return d;
+  };
+  return this.callApiWithAuthRetry_(requestParams).addCallback(function(resp) {
+    goog.asserts.assert(resp['kind'] == 'calendar#calendarList');
+    this.logger_.info('Loaded ' + (resp['items'] || []).length + ' calendars');
+  }, this).addErrback(function(error) {
+    this.logger_.severe('Error loading calendars: ' + error, error);
+  }, this);
 };
 
 /**
@@ -36,9 +40,7 @@ fivemins.CalendarApi.prototype.loadCalendarList = function() {
  */
 fivemins.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
     endDate) {
-  this.logger_.info('loadEvents');
-  var d = new goog.async.Deferred();
-  var request = goog.getObjectByName('gapi.client.request')({
+  var requestParams = {
     path: '/calendar/v3/calendars/' + calendarId + '/events',
     params: {
       orderBy: 'startTime',
@@ -46,10 +48,38 @@ fivemins.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
       timeMin: new Date(startDate.valueOf()).toISOString(),
       timeMax: new Date(endDate.valueOf()).toISOString()
     }
-  });
-  request['execute'](goog.bind(function(resp) {
-    this.logger_.info('events loaded');
-    d.callback(resp);
-  }, this));
+  };
+  return this.callApiWithAuthRetry_(requestParams).addCallback(function(resp) {
+    goog.asserts.assert(resp['kind'] == 'calendar#events');
+    this.logger_.info('Loaded ' + (resp['items'] || []).length + ' events');
+  }, this).addErrback(function(error) {
+    this.logger_.severe('Error loading events: ' + error, error);
+  }, this);
+};
+
+/** Call an api but retry auth on auth failure. */
+fivemins.CalendarApi.prototype.callApiWithAuthRetry_ = function(requestParams) {
+  var d = new goog.async.Deferred();
+  var attempts = 0;
+  var doRequest = goog.bind(function () {
+    this.logger_.info(requestParams.path);
+    var request = goog.getObjectByName('gapi.client.request')(requestParams);
+    request['execute'](goog.bind(function(resp) {
+      if (resp['error'] && resp['error']['code'] == 401) {
+        // Authorization failure.
+        if (attempts > 0) {
+          d.errback('Auth failed twice');
+          return;
+        }
+        attempts++;
+        this.auth_.restart();
+        this.auth_.getAuthDeferred().branch().addCallbacks(doRequest,
+            goog.bind(d.errback, d));
+      } else {
+        d.callback(resp);
+      }
+    }, this));
+  }, this);
+  doRequest();
   return d;
 };

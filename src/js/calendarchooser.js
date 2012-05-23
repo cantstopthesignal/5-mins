@@ -17,6 +17,9 @@ fivemins.CalendarChooser = function(listResp) {
 
   this.listResp_ = listResp;
 
+  /** @type {Array.<Object>} */
+  this.calendars_ = this.listResp_['items'] || [];
+
   /** @type {goog.net.Cookies} */
   this.cookies_ = new goog.net.Cookies(document);
 
@@ -108,8 +111,8 @@ fivemins.CalendarChooser.prototype.maybeChooseCalendarFromCookie_ = function() {
 
 fivemins.CalendarChooser.prototype.getOwnedCalendars_ = function() {
   var calendars = [];
-  for (var i = 0; i < this.listResp_['items'].length; i++) {
-    var calendar = this.listResp_['items'][i];
+  for (var i = 0; i < this.calendars_.length; i++) {
+    var calendar = this.calendars_[i];
     if (calendar['accessRole'] == 'owner') {
       calendars.push(calendar);
     }
@@ -118,8 +121,8 @@ fivemins.CalendarChooser.prototype.getOwnedCalendars_ = function() {
 };
 
 fivemins.CalendarChooser.prototype.getCalendarById_ = function(calendarId) {
-  for (var i = 0; i < this.listResp_['items'].length; i++) {
-    var calendar = this.listResp_['items'][i];
+  for (var i = 0; i < this.calendars_.length; i++) {
+    var calendar = this.calendars_[i];
     if (calendar['id'] == calendarId) {
       return calendar;
     }
