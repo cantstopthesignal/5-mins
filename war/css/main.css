@@ -112,16 +112,26 @@ a:hover {
   border: 1px solid #88f;
   background-color: rgba(200, 200, 255, 0.8);
   font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
 }
-.event-card.compressed-height {
+.event-card.micro-height,
+.event-card.short-height {
   padding-top: 1px;
   padding-bottom: 1px;
+  text-overflow: ellipsis;
+}
+.event-card.large-height {
+  white-space: normal;
 }
 .event-card > .date-range {
   font-size: 10px;
   font-weight: bold;
 }
-.event-card.compressed-height > .date-range {
+.event-card.short-height > .date-range {
+  margin-bottom: -2px;
+}
+.event-card.micro-height > .date-range {
   display: inline;
   margin-right: 5px;
 }

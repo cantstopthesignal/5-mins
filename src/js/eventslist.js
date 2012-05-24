@@ -157,7 +157,7 @@ fivemins.EventsList.prototype.handleNowTrackerTick_ = function() {
           Math.ceil((now.getTime() - this.nowTrackerLastTickTime_.getTime()) /
               1000));
       this.eventsScrollBox_.scrollByTime(
-          this.nowTrackerLastTickTime_, interval);
+          this.nowTrackerLastTickTime_, interval, true);
       this.nowTrackerLastTickTime_.add(interval);
     } else {
       this.nowTrackerLastTickTime_ = now;

@@ -72,5 +72,8 @@ fivemins.EventCard.prototype.setRect = function(rect) {
   }
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.el, rect.getSize());
-  goog.dom.classes.enable(this.el, 'compressed-height', rect.height < 20);
+  goog.dom.classes.enable(this.el, 'micro-height', rect.height < 26);
+  goog.dom.classes.enable(this.el, 'short-height', rect.height >= 26 &&
+      rect.height < 30);
+  goog.dom.classes.enable(this.el, 'large-height', rect.height >= 44);
 };

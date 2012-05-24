@@ -150,14 +150,27 @@ fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
 
 /**
  * Scroll by a specified time interval, relative to a given time.
+ * @param {boolean} opt_hideScrollAction Make sure auto-show scroll
+ *     bars do not show during this scroll action.
  */
 fivemins.EventsScrollBox.prototype.scrollByTime = function(relativeToTime,
-    interval) {
+    interval, opt_hideScrollAction) {
   var toTime = relativeToTime.clone();
   toTime.add(interval);
   var startYPos = this.timeMap_.timeToYPos(relativeToTime);
   var endYPos = this.timeMap_.timeToYPos(toTime);
+
+  if (opt_hideScrollAction) {
+    // Disable overflow for the scroll event to avoid auto-show scroll bars
+    // on some platforms from activating.
+    this.el.style.overflow = 'hidden';
+  }
+
   this.el.scrollTop = this.el.scrollTop + (endYPos - startYPos);
+
+  if (opt_hideScrollAction) {
+    this.el.style.overflow = '';
+  }
 };
 
 /**
