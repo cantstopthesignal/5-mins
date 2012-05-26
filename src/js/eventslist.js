@@ -154,8 +154,8 @@ fivemins.EventsList.prototype.handleNowTrackerTick_ = function() {
   if (this.eventsScrollBox_.isTimeInView(now)) {
     if (this.nowTrackerLastTickTime_) {
       var interval = new goog.date.Interval(goog.date.Interval.SECONDS,
-          Math.ceil((now.getTime() - this.nowTrackerLastTickTime_.getTime()) /
-              1000));
+          fivemins.util.msToSec(now.getTime() -
+              this.nowTrackerLastTickTime_.getTime()));
       this.eventsScrollBox_.scrollByTime(
           this.nowTrackerLastTickTime_, interval, true);
       this.nowTrackerLastTickTime_.add(interval);
