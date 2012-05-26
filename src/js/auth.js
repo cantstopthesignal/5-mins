@@ -29,16 +29,14 @@ fivemins.Auth.GAPI_SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
 fivemins.Auth.GAPI_FULL_AUTH_TIMEOUT = 5000;
 
-fivemins.Auth.GAPI_CHECK_AUTH_INTERVAL = 5000;
-
 /** @type {goog.debug.Logger} */
 fivemins.Auth.prototype.logger_ = goog.debug.Logger.getLogger('fivemins.Auth');
 
-/** @type {number} */
-fivemins.Auth.prototype.gapiFullAuthTimeoutId_;
+/** @type {fivemins.Auth.ConnectDialog_} */
+fivemins.Auth.prototype.connectDialog_;
 
 /** @type {number} */
-fivemins.Auth.prototype.gapiCheckAuthPollIntervalId_;
+fivemins.Auth.prototype.gapiFullAuthTimeoutId_;
 
 fivemins.Auth.prototype.start = function() {
   this.loadGapiJavascriptClientAndAuth_();
@@ -104,27 +102,18 @@ fivemins.Auth.prototype.checkAuth_ = function() {
 fivemins.Auth.prototype.fullAuth_ = function() {
   this.logger_.info('fullAuth_');
   this.clearFullAuthTimer_();
-  goog.getObjectByName('gapi.auth.authorize')({
-    client_id: fivemins.Auth.GAPI_CLIENT_ID,
-    scope: fivemins.Auth.GAPI_SCOPES,
-    immediate: false
-  }, goog.bind(this.handleAuthResult_, this));
-  this.gapiCheckAuthPollIntervalId_ = window.setInterval(
-      goog.bind(this.checkAuth_, this),
-      fivemins.Auth.GAPI_CHECK_AUTH_INTERVAL);
+  if (!this.connectDialog_) {
+    this.connectDialog_ = new fivemins.Auth.ConnectDialog_(
+        goog.bind(this.handleAuthResult_, this));
+    this.registerDisposable(this.connectDialog_);
+  }
+  this.connectDialog_.show();
 };
 
 fivemins.Auth.prototype.clearFullAuthTimer_ = function() {
   if (this.gapiFullAuthTimeoutId_) {
     window.clearTimeout(this.gapiFullAuthTimeoutId_);
     delete this.gapiFullAuthTimeoutId_;
-  }
-};
-
-fivemins.Auth.prototype.clearCheckAuthPoller_ = function() {
-  if (this.gapiCheckAuthPollIntervalId_) {
-    window.clearInterval(this.gapiCheckAuthPollIntervalId_);
-    delete this.gapiCheckAuthPollIntervalId_;
   }
 };
 
@@ -138,15 +127,51 @@ fivemins.Auth.prototype.handleAuthResult_ = function(authResult) {
     return;
   }
   if (!authResult) {
-    if (!this.gapiCheckAuthPollIntervalId_) {
-      // An empty auth result can happen if the user previously authorized
-      // this service but then de-authorized.  Go immediately to full auth
-      // in this case.
-      this.fullAuth_();
-    }
+    // An empty auth result can happen if the user previously authorized
+    // this service but then de-authorized.  Go immediately to full auth
+    // in this case.
+    this.fullAuth_();
     return;
   }
   this.clearFullAuthTimer_();
-  this.clearCheckAuthPoller_();
+  if (this.connectDialog_) {
+    this.connectDialog_.hide();
+  }
   this.authDeferred_.callback(null);
+};
+
+/**
+ * @constructor
+ * @extends {fivemins.Dialog}
+ */
+fivemins.Auth.ConnectDialog_ = function(authResultCallback) {
+  goog.base(this);
+
+  this.authResultCallback_ = authResultCallback;
+};
+goog.inherits(fivemins.Auth.ConnectDialog_, fivemins.Dialog);
+
+fivemins.Auth.ConnectDialog_.prototype.createDom = function() {
+  goog.base(this, 'createDom');
+
+  var headerEl = document.createElement('div');
+  goog.dom.classes.add(headerEl, 'title');
+  headerEl.appendChild(document.createTextNode(
+      '5 mins needs your authorization to read your calendar'));
+  this.el.appendChild(headerEl);
+
+  var connectButtonEl = document.createElement('div');
+  goog.dom.classes.add(connectButtonEl, 'button');
+  this.eventHandler.listen(connectButtonEl, goog.events.EventType.CLICK,
+      this.handleConnectClick_);
+  connectButtonEl.appendChild(document.createTextNode('Connect'));
+  this.el.appendChild(connectButtonEl);
+};
+
+fivemins.Auth.ConnectDialog_.prototype.handleConnectClick_ = function() {
+  goog.getObjectByName('gapi.auth.authorize')({
+    client_id: fivemins.Auth.GAPI_CLIENT_ID,
+    scope: fivemins.Auth.GAPI_SCOPES,
+    immediate: false
+  }, this.authResultCallback_);
 };

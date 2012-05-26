@@ -33,6 +33,10 @@ fivemins.Dialog.prototype.show = function(opt_parentEl) {
   this.reposition();
 };
 
+fivemins.Dialog.prototype.hide = function() {
+  goog.dom.removeNode(this.el);
+};
+
 fivemins.Dialog.prototype.reposition = function() {
   this.el.style.marginLeft = -(this.el.offsetWidth/2) + 'px';
   this.el.style.marginTop = -(this.el.offsetHeight/2) + 'px';

@@ -31,6 +31,7 @@ a:hover {
 }
 .button {
   background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+  color: black;
   cursor: pointer;
   border: 1px solid #999;
   border-radius: 3px;
@@ -59,6 +60,11 @@ a:hover {
   -webkit-box-shadow: 0px 5px 10px #000;  /* Safari le 5 */
   overflow: hidden;
   z-index: 20;
+}
+.dialog .button {
+  border: 1px solid #aaa;
+  display: block;
+  margin-top: 5px;
 }
 .app-content {
   height: 100%;
@@ -136,12 +142,6 @@ a:hover {
   margin-right: 5px;
 }
 .calendar-chooser {
-}
-.calendar-chooser > .calendar-entry {
-  border: 1px solid #aaa;
-  color: black;
-  display: block;
-  margin-top: 5px;
 }
 .spinner {
   background: url(/images/spinner.gif);
