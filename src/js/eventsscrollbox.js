@@ -84,6 +84,7 @@ fivemins.EventsScrollBox.prototype.render = function(parentEl) {
   this.createDom();
 
   parentEl.appendChild(this.el);
+  this.resize();  // Switch to border box sizing.
 
   this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
       fivemins.EventsScrollBox.TIME_INDICATOR_WIDTH -
