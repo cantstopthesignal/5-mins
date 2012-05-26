@@ -15,17 +15,66 @@ goog.require('goog.object');
 
 
 /**
+ * @param {fivemins.EventListLayout.Params} params
  * @constructor
  * @extends {goog.Disposable}
  */
-fivemins.EventListLayout = function() {
+fivemins.EventListLayout = function(params) {
   /** @type {Array.<fivemins.EventListLayout.Event>} */
   this.events_ = [];
 
   /** @type {Array.<fivemins.EventListLayout.Event>} */
   this.eventsByDuration_ = [];
+
+  /** @type {fivemins.EventListLayout.Params} */
+  this.params_ = params;
+  this.params_.copyTo(this);
 };
 goog.inherits(fivemins.EventListLayout, goog.Disposable);
+
+/**
+ * Layout parameters object.
+ * @constructor
+ */
+fivemins.EventListLayout.Params = function() {
+  /** @type {number} */
+  this.distancePerHour = 50;
+
+  /** @type {number} */
+  this.minEventHeight = 10;
+
+  /** @type {number} */
+  this.layoutWidth = 100;
+
+  /** @type {number} */
+  this.timeAxisPatchWidth = 10;
+
+  /** @type {goog.date.DateTime} */
+  this.minTime = null;
+
+  /** @type {goog.date.DateTime} */
+  this.maxTime = null;
+
+  this.lockFields_();
+};
+
+fivemins.EventListLayout.Params.prototype.copyTo = function(dest) {
+  for (var f in this) {
+    if (this.hasOwnProperty(f)) {
+      goog.asserts.assert(this.fields_[f], 'Unexpected param ' + f);
+      dest[f] = this[f];
+    }
+  }
+};
+
+fivemins.EventListLayout.Params.prototype.lockFields_ = function() {
+  this.fields_ = {};
+  for (var f in this) {
+    if (this.hasOwnProperty(f)) {
+      this.fields_[f] = true;
+    }
+  }
+};
 
 /** @type {goog.debug.Logger} */
 fivemins.EventListLayout.prototype.logger_ = goog.debug.Logger.getLogger(
@@ -37,45 +86,8 @@ fivemins.EventListLayout.prototype.timePoints_;
 /** @type {fivemins.EventListLayout.TimeMap} */
 fivemins.EventListLayout.prototype.timeMap_;
 
-/** @type {number} */
-fivemins.EventListLayout.prototype.distancePerHour_ = 50;
-
-/** @type {number} */
-fivemins.EventListLayout.prototype.minEventHeight_ = 10;
-
-/** @type {number} */
-fivemins.EventListLayout.prototype.layoutWidth_ = 100;
-
-/** @type {goog.date.DateTime} */
-fivemins.EventListLayout.prototype.minTime_;
-
-/** @type {goog.date.DateTime} */
-fivemins.EventListLayout.prototype.maxTime_;
-
-/** @param {number} width */
-fivemins.EventListLayout.prototype.setLayoutWidth = function(width) {
-  this.layoutWidth_ = width;
-};
-
-/** @param {number} width */
-fivemins.EventListLayout.prototype.setMinEventHeight = function(height) {
-  this.minEventHeight_ = height;
-};
-
-/** @param {number} width */
-fivemins.EventListLayout.prototype.setDistancePerHour = function(distance) {
-  this.distancePerHour_ = distance;
-};
-
-/** @param {goog.date.DateTime} minTime */
-fivemins.EventListLayout.prototype.setMinTime = function(minTime) {
-  this.minTime_ = minTime ? minTime.clone() : null;
-};
-
-/** @param {goog.date.DateTime} maxTime */
-fivemins.EventListLayout.prototype.setMaxTime = function(maxTime) {
-  this.maxTime_ = maxTime ? maxTime.clone() : null;
-};
+/** @type {fivemins.EventListLayout.TimeMap} */
+fivemins.EventListLayout.prototype.linearTimeMap_;
 
 /** @param {Array.<fivemins.EventListLayout.Event>} events */
 fivemins.EventListLayout.prototype.setEvents = function(events) {
@@ -103,14 +115,22 @@ fivemins.EventListLayout.prototype.calc = function() {
   this.calcColumnCounts_();
   this.positionTimePoints_();
   this.enforceMinEventHeight_();
-  this.positionEvents_();
   this.calcTimeMap_();
+  this.calcLinearTimes_();
+  this.calcLinearTimeMap_();
+  this.calcTimeAxisPatches_();
+  this.positionEvents_();
   this.logger_.info('calc() finished in ' + (+new Date() - startTime) + 'ms');
 };
 
 /** @return {fivemins.EventListLayout.TimeMap} */
 fivemins.EventListLayout.prototype.getTimeMap = function() {
   return this.timeMap_;
+};
+
+/** @return {fivemins.EventListLayout.TimeMap} */
+fivemins.EventListLayout.prototype.getLinearTimeMap = function() {
+  return this.linearTimeMap_;
 };
 
 fivemins.EventListLayout.prototype.disposeInternal = function() {
@@ -121,13 +141,13 @@ fivemins.EventListLayout.prototype.disposeInternal = function() {
 
 fivemins.EventListLayout.prototype.calcTimeRange_ = function() {
   goog.array.forEach(this.events_, function(event) {
-    if (!this.minTime_ || goog.date.Date.compare(
-        this.minTime_, event.startTime) > 0) {
-      this.minTime_ = event.startTime.clone();
+    if (!this.minTime || goog.date.Date.compare(
+        this.minTime, event.startTime) > 0) {
+      this.minTime = event.startTime.clone();
     }
-    if (!this.maxTime_ || goog.date.Date.compare(
-        this.maxTime_, event.endTime) < 0) {
-      this.maxTime_ = event.endTime.clone();
+    if (!this.maxTime || goog.date.Date.compare(
+        this.maxTime, event.endTime) < 0) {
+      this.maxTime = event.endTime.clone();
     }
   }, this);
 };
@@ -135,13 +155,13 @@ fivemins.EventListLayout.prototype.calcTimeRange_ = function() {
 fivemins.EventListLayout.prototype.calcTimePoints_ = function() {
   var timePointMap = {};
 
-  if (this.minTime_) {
-    var minTimePoint = new fivemins.EventListLayout.TimePoint_(this.minTime_);
+  if (this.minTime) {
+    var minTimePoint = new fivemins.EventListLayout.TimePoint_(this.minTime);
     this.registerDisposable(minTimePoint);
     timePointMap[minTimePoint] = minTimePoint;
   }
-  if (this.maxTime_) {
-    var maxTimePoint = new fivemins.EventListLayout.TimePoint_(this.maxTime_);
+  if (this.maxTime) {
+    var maxTimePoint = new fivemins.EventListLayout.TimePoint_(this.maxTime);
     this.registerDisposable(maxTimePoint);
     timePointMap[maxTimePoint] = maxTimePoint;
   }
@@ -237,6 +257,7 @@ fivemins.EventListLayout.prototype.calcColumnCounts_ = function() {
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timePoint.columnCount = 0;
   });
+  // WARNING: non-linear performance
   var done = false;
   while (!done) {
     done = true;
@@ -260,7 +281,7 @@ fivemins.EventListLayout.prototype.positionTimePoints_ = function() {
   }
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timePoint.yPos = fivemins.util.round(fivemins.util.msToHourFloat(
-        timePoint.getTime() - this.minTime_.getTime()) * this.distancePerHour_);
+        timePoint.getTime() - this.minTime.getTime()) * this.distancePerHour);
   }, this);
 };
 
@@ -291,31 +312,124 @@ fivemins.EventListLayout.prototype.enforceMinEventHeight_ = function() {
   }
   goog.array.forEach(this.eventsByDuration_, function(event) {
     var height = event.endTimePoint.yPos - event.startTimePoint.yPos;
-    if (height < this.minEventHeight_) {
+    if (height < this.minEventHeight) {
       expandTimePointRangeBy(event.startTimePoint, event.endTimePoint,
-          this.minEventHeight_ - height);
+          this.minEventHeight - height);
     }
   }, this);
 };
 
+fivemins.EventListLayout.prototype.calcTimeMap_ = function() {
+  var timeList = [];
+  var yPosList = [];
+  goog.array.forEach(this.timePoints_, function(timePoint) {
+    timeList.push(timePoint.time);
+    yPosList.push(timePoint.yPos);
+  }, this);
+  this.timeMap_ = new fivemins.EventListLayout.TimeMap(timeList, yPosList,
+      this.distancePerHour);
+};
+
+fivemins.EventListLayout.prototype.calcLinearTimes_ = function() {
+  if (!this.timePoints_.length) {
+    return;
+  }
+  // Map all time points to linear hour time.
+  var hourIter = this.minTime.clone();
+  var timePointIdx = 0;
+  while (timePointIdx < this.timePoints_.length) {
+    var timePoint = this.timePoints_[timePointIdx];
+    var nextHour = hourIter.clone();
+    nextHour.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
+    if (goog.date.Date.compare(timePoint.time, hourIter) < 0) {
+      timePointIdx++;
+      continue;
+    } else if (goog.date.Date.compare(timePoint.time, nextHour) >= 0) {
+      hourIter = nextHour;
+      continue;
+    }
+    var hourIterYPos = this.timeMap_.timeToYPos(hourIter);
+    var hourHeight = this.timeMap_.timeToYPos(nextHour) - hourIterYPos;
+    var linearTimeYPos = hourHeight * fivemins.util.msToHourFloat(
+        timePoint.time.getTime() - hourIter.getTime()) + hourIterYPos;
+    if (Math.abs(timePoint.yPos - linearTimeYPos) > 1.0) {
+      timePoint.linearTimeYPos = fivemins.util.round(linearTimeYPos);
+    } else {
+      timePoint.linearTimeYPos = timePoint.yPos;
+    }
+    timePointIdx++;
+  }
+};
+
+fivemins.EventListLayout.prototype.calcLinearTimeMap_ = function() {
+  var timeList = [];
+  var yPosList = [];
+  goog.array.forEach(this.timePoints_, function(timePoint) {
+    timeList.push(timePoint.time);
+    yPosList.push(timePoint.linearTimeYPos);
+  }, this);
+  this.linearTimeMap_ = new fivemins.EventListLayout.TimeMap(timeList, yPosList,
+      this.distancePerHour);
+};
+
+/** Calculate whether time axis patches are needed for any events */
+fivemins.EventListLayout.prototype.calcTimeAxisPatches_ = function() {
+  goog.array.forEach(this.events_, function(event) {
+    // An event needs a patch if its start or end time point needs a patch
+    // line.
+    if (event.startTimePoint.linearTimeYPos != event.startTimePoint.yPos ||
+        event.endTimePoint.linearTimeYPos != event.endTimePoint.yPos) {
+      event.hasTimeAxisPatch = true;
+      event.attachedToTimeAxisPatch = event.column == 0 &&
+          event.timePoints.length == 1;
+    }
+  });
+  // If an event is neighbors with an event that has a time axis patch, or
+  // neighbors of a neighbor, it becomes a neighbor.
+  // WARNING: non-linear performance
+  var done = false;
+  while (!done) {
+    done = true;
+    goog.array.forEach(this.timePoints_, function(timePoint) {
+      var matchingNeighbor = goog.array.some(timePoint.openEvents,
+          function(event) {
+        return event.hasTimeAxisPatch || event.neighborHasTimeAxisPatch;
+      });
+      if (!matchingNeighbor) {
+        return;
+      }
+      goog.array.forEach(timePoint.openEvents, function(event) {
+        if (!event.neighborHasTimeAxisPatch && !event.hasTimeAxisPatch) {
+          event.neighborHasTimeAxisPatch = true;
+          done = false;
+        }
+      });
+    });
+  }
+};
+
 fivemins.EventListLayout.prototype.positionEvents_ = function() {
   goog.array.forEach(this.events_, function(event) {
+    var layoutWidth = this.layoutWidth;
+    var shiftForTimeAxisPatch = event.hasTimeAxisPatch ||
+        event.neighborHasTimeAxisPatch;
+    if (shiftForTimeAxisPatch) {
+      layoutWidth -= this.timeAxisPatchWidth;
+    }
     var columnWidth = fivemins.util.round(
-        this.layoutWidth_ / event.columnCount);
+        layoutWidth / event.columnCount);
     var x = columnWidth * event.column;
+    if (shiftForTimeAxisPatch) {
+      x += this.timeAxisPatchWidth;
+    }
     var width = columnWidth;
     if (event.column == event.columnCount - 1) {
-      width = this.layoutWidth_ - (columnWidth * (event.columnCount - 1));
+      width = layoutWidth - (columnWidth * (event.columnCount - 1));
     }
     var height = event.endTimePoint.yPos - event.startTimePoint.yPos;
     event.rect = new goog.math.Rect(x, event.startTimePoint.yPos,
         width, height);
   }, this);
-};
-
-fivemins.EventListLayout.prototype.calcTimeMap_ = function() {
-  this.timeMap_ = new fivemins.EventListLayout.TimeMap(this.timePoints_,
-      this.distancePerHour_);
 };
 
 /**
@@ -325,13 +439,20 @@ fivemins.EventListLayout.prototype.calcTimeMap_ = function() {
 fivemins.EventListLayout.Event = function(startTime, endTime) {
   this.startTime = startTime;
   this.endTime = endTime;
-  this.column = null;
-  this.columnAssigned = false;
-  this.columnCount = null;
-  this.rect = null;
+
   this.timePoints = [];
   this.startTimePoint = null;
   this.endTimePoint = null;
+
+  this.column = null;
+  this.columnAssigned = false;
+  this.columnCount = null;
+
+  this.hasTimeAxisPatch = false;
+  this.neighborHasTimeAxisPatch = false;
+  this.attachedToTimeAxisPatch = false;
+
+  this.rect = null;
 };
 goog.inherits(fivemins.EventListLayout.Event, goog.Disposable);
 
@@ -346,12 +467,12 @@ fivemins.EventListLayout.Event.prototype.disposeInternal = function() {
  * Helper object to provide a map from times to pixels.
  * @constructor
  */
-fivemins.EventListLayout.TimeMap = function(timePoints,
+fivemins.EventListLayout.TimeMap = function(timeList, yPosList,
     defaultDistancePerHour) {
-  this.timeList_ = [];
-  this.yPosList_ = [];
+  this.timeList_ = timeList;
+  this.yPosList_ = yPosList;
   this.msPerDist_ = 60 * 60 * 1000 / defaultDistancePerHour;
-  this.buildLists_(timePoints);
+  this.checkLists_();
 };
 goog.inherits(fivemins.EventListLayout.TimeMap, goog.Disposable);
 
@@ -422,13 +543,12 @@ fivemins.EventListLayout.TimeMap.prototype.yPosToTime = function(yPos) {
   return new goog.date.DateTime(new Date(timestamp));
 };
 
-fivemins.EventListLayout.TimeMap.prototype.buildLists_ = function(timePoints) {
-  goog.array.forEach(timePoints, function(timePoint) {
-    goog.asserts.assert(timePoint.time);
-    goog.asserts.assertNumber(timePoint.yPos);
-    this.timeList_.push(timePoint.time);
-    this.yPosList_.push(timePoint.yPos);
-  }, this);
+fivemins.EventListLayout.TimeMap.prototype.checkLists_ = function() {
+  goog.asserts.assert(this.timeList_.length == this.yPosList_.length);
+  for (var i = 0; i < this.timeList_.length; i++) {
+    goog.asserts.assert(this.timeList_[i] instanceof goog.date.DateTime);
+    goog.asserts.assertNumber(this.yPosList_[i]);
+  }
 };
 
 /**
@@ -439,6 +559,7 @@ fivemins.EventListLayout.TimePoint_ = function(time) {
   this.time = time;
   this.next = null;
   this.yPos = null;
+  this.linearTimeYPos = null;
   this.openEvents = [];
   this.columnCount = null;
 };

@@ -9,14 +9,15 @@ goog.require('goog.date.DateTime');
 goog.require('goog.date.Interval');
 goog.require('goog.math.Rect');
 goog.require('goog.testing.jsunit');
-goog.require('goog.testing.TestCase');
 
 
 var layout;
 var baseTime;
 
 function setUp() {
-  layout = new fivemins.EventListLayout();
+  var params = new fivemins.EventListLayout.Params();
+  params.timeAxisPatchWidth = 0;
+  layout = new fivemins.EventListLayout(params);
   baseTime = new goog.date.DateTime(new goog.date.Date());
 }
 

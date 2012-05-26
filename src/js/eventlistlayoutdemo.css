@@ -6,7 +6,7 @@ body {
 }
 .event-area {
   float: left;
-  border: 1px solid #bbb;
+  border: 1px solid black;
   padding: 25px;
   margin-bottom: 50px;
 }
@@ -23,6 +23,20 @@ body {
 .event > .title {
   font-weight: bold;
   margin-right: 10px;
+}
+.time-axis {
+  position: absolute;
+  border-bottom: 1px solid black;
+}
+.time-axis > .time-box {
+  border-right: 1px solid black;
+  text-align: right;
+  padding: 2px;
+  width: 36px;
+  height: 100%;
+}
+.time-axis-patch-canvas {
+  position: absolute;
 }
 .cursor-popup {
   position: absolute;

@@ -94,12 +94,12 @@ a:hover {
   margin: 0px 5px 5px 5px;
   position: relative;
 }
-.time-indicator {
+.time-axis {
   position: absolute;
   border-bottom: 1px solid #dddddd;
   width: 100%;
 }
-.time-indicator > .time-box {
+.time-axis > .time-box {
   border-right: 1px solid #dddddd;
   color: #444444;
   font-size: 12px;
