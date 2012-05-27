@@ -28,6 +28,13 @@ fivemins.Component.prototype.createDom = function() {
   this.el = document.createElement('div');
 };
 
+fivemins.Component.prototype.render = function(parentEl) {
+  if (!this.el) {
+    this.createDom();
+  }
+  parentEl.appendChild(this.el);
+};
+
 fivemins.Component.prototype.disposeInternal = function() {
   goog.dom.removeNode(this.el);
   delete this.el;

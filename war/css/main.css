@@ -108,6 +108,9 @@ a:hover {
   width: 36px;
   height: 100%;
 }
+.time-axis-patch-canvas {
+  position: absolute;
+}
 .time-marker {
   border-top: 2px solid rgba(255, 0, 0, 0.4);
   position: absolute;
@@ -129,6 +132,9 @@ a:hover {
 }
 .event-card.large-height {
   white-space: normal;
+}
+.event-card.attached-to-patch {
+  border-left-width: 0;
 }
 .event-card > .date-range {
   font-size: 10px;

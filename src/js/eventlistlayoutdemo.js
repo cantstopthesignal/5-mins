@@ -229,8 +229,6 @@ fivemins.EventListLayoutDemo.prototype.renderTimeAxisPatch_ = function(
     var end = endPoint(timePoint);
     ctx.beginPath();
     ctx.moveTo(start.x, start.y + 0.5);
-    ctx.lineTo(start.x + 1, start.y + 0.5);
-    ctx.lineTo(end.x - 2, end.y + 0.5);
     ctx.lineTo(end.x, end.y + 0.5);
     ctx.stroke();
   }
@@ -316,13 +314,6 @@ fivemins.EventListLayoutDemo.Event.prototype.createDom = function() {
   var timeStr = this.startTime.toUsTimeString(undefined, true, true) + ' - ' +
       this.endTime.toUsTimeString(undefined, true, true);
   this.el.appendChild(document.createTextNode(timeStr));
-};
-
-fivemins.EventListLayoutDemo.Event.prototype.render = function(parentEl) {
-  if (!this.el) {
-    this.createDom();
-  }
-  parentEl.appendChild(this.el);
 };
 
 /** @param {goog.math.Rect} rect */

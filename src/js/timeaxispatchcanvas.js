@@ -1,0 +1,174 @@
+//Copyright cantstopthesignals@gmail.com
+
+goog.provide('fivemins.TimeAxisPatchCanvas');
+
+goog.require('fivemins.Component');
+goog.require('goog.asserts');
+goog.require('goog.dom');
+goog.require('goog.math.Coordinate');
+goog.require('goog.object');
+goog.require('goog.style');
+
+
+/**
+ * @constructor
+ * @extends {fivemins.Component}
+ */
+fivemins.TimeAxisPatchCanvas = function(width) {
+  /** @type {number} */
+  this.width_ = width;
+
+  /** @type {Object.<fivemins.TimeAxisPatch>} */
+  this.patchMap_ = {};
+
+  /** @type {goog.math.Coordinate} */
+  this.pos_ = new goog.math.Coordinate(0, 0);
+};
+goog.inherits(fivemins.TimeAxisPatchCanvas, fivemins.Component);
+
+/** @type {Object} */
+fivemins.TimeAxisPatchCanvas.prototype.ctx_;
+
+/** @type {number} */
+fivemins.TimeAxisPatchCanvas.prototype.batchUpdateDepth_ = 0;
+
+/** @type {boolean} */
+fivemins.TimeAxisPatchCanvas.prototype.paintNeeded_ = false;
+
+/** @type {number} */
+fivemins.TimeAxisPatchCanvas.prototype.topOffset_ = 0;
+
+/** @type {number} */
+fivemins.TimeAxisPatchCanvas.prototype.height_ = 0;
+
+fivemins.TimeAxisPatchCanvas.prototype.createDom = function() {
+  goog.asserts.assert(!this.el);
+  this.el = document.createElement('canvas');
+  goog.dom.classes.add(this.el, 'time-axis-patch-canvas');
+  this.el.setAttribute('width', this.width_ + 'px');
+  this.ctx_ = this.el.getContext('2d');
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.addPatch = function(patch) {
+  patch.setOwner(this);
+  var patchUid = goog.getUid(patch);
+  goog.asserts.assert(!goog.object.containsKey(this.patchMap_, patchUid));
+  this.patchMap_[patchUid] = patch;
+  this.paint();
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.removePatch = function(patch) {
+  patch.setOwner(null);
+  delete this.patchMap_[goog.getUid(patch)];
+  this.paint();
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.setPosition = function(pos) {
+  this.pos_ = pos;
+  goog.style.setPosition(this.el, this.pos_.x, this.pos_.y + this.topOffset_);
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.paint = function() {
+  if (this.batchUpdateDepth_) {
+    this.paintNeeded_ = true;
+  } else {
+    this.doPaint_();
+  }
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.startBatchUpdate = function() {
+  this.batchUpdateDepth_++;
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.finishBatchUpdate = function() {
+  this.batchUpdateDepth_--;
+  goog.asserts.assert(this.batchUpdateDepth_ >= 0);
+  if (!this.batchUpdateDepth_ && this.paintNeeded_) {
+    this.doPaint_();
+  }
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.doPaint_ = function() {
+  this.doPaintUpdateRect_();
+
+  this.ctx_.clearRect(0, 0, this.width_, this.height_);
+
+  this.ctx_.lineWidth = 1;
+  this.ctx_.lineCap = 'square';
+
+  goog.object.forEach(this.patchMap_, function(patch) {
+    if (patch.getAttachedToEvent()) {
+      this.fillPatch_(patch);
+    }
+  }, this);
+  goog.object.forEach(this.patchMap_, function(patch) {
+    this.strokePatch_(patch);
+  }, this);
+
+  this.paintNeeded_ = false;
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.fillPatch_ = function(patch) {
+  this.ctx_.fillStyle = patch.eventBgColor;
+  this.ctx_.beginPath();
+  this.ctx_.moveTo(0, this.yPosToCanvas_(patch.axisTop));
+  this.ctx_.lineTo(1, this.yPosToCanvas_(patch.axisTop));
+  this.ctx_.lineTo(this.width_ - 1, this.yPosToCanvas_(patch.eventTop));
+  this.ctx_.lineTo(this.width_, this.yPosToCanvas_(patch.eventTop));
+  this.ctx_.lineTo(this.width_, this.yPosToCanvas_(patch.eventBottom));
+  this.ctx_.lineTo(this.width_ - 1, this.yPosToCanvas_(patch.eventBottom));
+  this.ctx_.lineTo(1, this.yPosToCanvas_(patch.axisBottom));
+  this.ctx_.lineTo(0, this.yPosToCanvas_(patch.axisBottom));
+  this.ctx_.closePath();
+  this.ctx_.fill();
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.strokePatch_ = function(patch) {
+  this.ctx_.strokeStyle = patch.eventBorderColor;
+  this.strokePatchLine_(patch.axisTop, patch.eventTop);
+  this.strokePatchLine_(patch.axisBottom, patch.eventBottom);
+  if (patch.getAttachedToEvent()) {
+    this.ctx_.beginPath();
+    this.ctx_.moveTo(0, this.yPosToCanvas_(patch.axisTop) + 0.5);
+    this.ctx_.lineTo(0, this.yPosToCanvas_(patch.axisBottom) + 0.5);
+    this.ctx_.stroke();
+  }
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.strokePatchLine_ = function(
+    axisYPos, eventYPos) {
+  this.ctx_.beginPath();
+  this.ctx_.moveTo(0, this.yPosToCanvas_(axisYPos) + 0.5);
+  this.ctx_.lineTo(1, this.yPosToCanvas_(axisYPos) + 0.5);
+  this.ctx_.lineTo(this.width_ - 1, this.yPosToCanvas_(eventYPos) + 0.5);
+  this.ctx_.lineTo(this.width_, this.yPosToCanvas_(eventYPos) + 0.5);
+  this.ctx_.stroke();
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.doPaintUpdateRect_ = function() {
+  var minYPos = null, maxYPos = null;
+  goog.object.forEach(this.patchMap_, function(patch) {
+    var min = Math.min(patch.axisTop, patch.eventTop);
+    if (minYPos === null || min < minYPos) {
+      minYPos = min;
+    }
+    var max = Math.max(patch.axisBottom, patch.eventBottom);
+    if (maxYPos === null || max > maxYPos) {
+      maxYPos = max;
+    }
+  }, this);
+  var oldTopOffset = this.topOffset_;
+  this.topOffset_ = minYPos;
+  if (oldTopOffset != this.topOFfset_) {
+    goog.style.setPosition(this.el, this.pos_.x, this.pos_.y + this.topOffset_);
+  }
+  var oldHeight = this.height_;
+  this.height_ = maxYPos - minYPos + 1;
+  if (oldHeight != this.height_) {
+    this.el.setAttribute('height', this.height_ + 'px');
+  }
+};
+
+fivemins.TimeAxisPatchCanvas.prototype.yPosToCanvas_ = function(yPos) {
+  return yPos - this.topOffset_;
+};

@@ -5,7 +5,6 @@ goog.provide('fivemins.TimeMarker');
 goog.require('fivemins.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
-goog.require('goog.events.EventTarget');
 goog.require('goog.style');
 
 /**

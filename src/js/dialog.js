@@ -6,7 +6,6 @@ goog.require('fivemins.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
-goog.require('goog.events.EventTarget');
 goog.require('goog.style');
 
 /**

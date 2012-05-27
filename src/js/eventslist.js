@@ -11,7 +11,6 @@ goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
-goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
 
 

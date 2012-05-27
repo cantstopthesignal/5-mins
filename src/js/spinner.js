@@ -6,7 +6,6 @@ goog.require('fivemins.Component');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.dom');
-goog.require('goog.events.EventTarget');
 goog.require('goog.style');
 
 /**
@@ -26,13 +25,6 @@ fivemins.Spinner.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'spinner');
   this.checkVisibility_();
-};
-
-fivemins.Spinner.prototype.render = function(parentEl) {
-  if (!this.el) {
-    this.createDom();
-  }
-  parentEl.appendChild(this.el);
 };
 
 /**
