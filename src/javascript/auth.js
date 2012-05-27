@@ -93,9 +93,9 @@ five.Auth.prototype.startAuth_ = function() {
 five.Auth.prototype.checkAuth_ = function() {
   this.logger_.info('checkAuth_');
   goog.getObjectByName('gapi.auth.authorize')({
-    client_id: five.Auth.GAPI_CLIENT_ID,
-    scope: five.Auth.GAPI_SCOPES,
-    immediate: true
+    'client_id': five.Auth.GAPI_CLIENT_ID,
+    'scope': five.Auth.GAPI_SCOPES,
+    'immediate': true
   }, goog.bind(this.handleAuthResult_, this));
 };
 
@@ -170,8 +170,8 @@ five.Auth.ConnectDialog_.prototype.createDom = function() {
 
 five.Auth.ConnectDialog_.prototype.handleConnectClick_ = function() {
   goog.getObjectByName('gapi.auth.authorize')({
-    client_id: five.Auth.GAPI_CLIENT_ID,
-    scope: five.Auth.GAPI_SCOPES,
-    immediate: false
+    'client_id': five.Auth.GAPI_CLIENT_ID,
+    'scope': five.Auth.GAPI_SCOPES,
+    'immediate': false
   }, this.authResultCallback_);
 };
