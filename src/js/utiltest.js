@@ -1,8 +1,8 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.UtilTest');
+goog.provide('five.UtilTest');
 
-goog.require('fivemins.util');
+goog.require('five.util');
 goog.require('goog.array');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
@@ -131,7 +131,7 @@ function testForEachHourRangeWrap_aFewHours() {
 
 function doForEachHourRangeWrap(startDate, endDate) {
   var output = [];
-  fivemins.util.forEachHourRangeWrap(startDate, endDate, function(
+  five.util.forEachHourRangeWrap(startDate, endDate, function(
       hour, nextHour, isLast) {
     output.push([hour, nextHour, isLast]);
   });
@@ -140,7 +140,7 @@ function doForEachHourRangeWrap(startDate, endDate) {
 
 function doForEachHourWrap(startDate, endDate) {
   var output = [];
-  fivemins.util.forEachHourWrap(startDate, endDate, function(
+  five.util.forEachHourWrap(startDate, endDate, function(
       hour, nextHour, isLast) {
     output.push([hour, nextHour, isLast]);
   });

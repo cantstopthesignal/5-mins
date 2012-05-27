@@ -1,11 +1,11 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.App');
+goog.provide('five.App');
 
-goog.require('fivemins.Auth');
-goog.require('fivemins.CalendarApi');
-goog.require('fivemins.CalendarChooser');
-goog.require('fivemins.EventsList');
+goog.require('five.Auth');
+goog.require('five.CalendarApi');
+goog.require('five.CalendarChooser');
+goog.require('five.EventsList');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.debug.Logger');
@@ -18,36 +18,36 @@ goog.require('goog.events.EventType');
  * @constructor
  * @extends {goog.events.EventTarget}
  */
-fivemins.App = function() {
-  this.auth_ = new fivemins.Auth();
+five.App = function() {
+  this.auth_ = new five.Auth();
 
-  this.calendarApi_ = new fivemins.CalendarApi(this.auth_);
+  this.calendarApi_ = new five.CalendarApi(this.auth_);
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler_);
 };
-goog.inherits(fivemins.App, goog.events.EventTarget);
+goog.inherits(five.App, goog.events.EventTarget);
 
 /** @type {goog.debug.Logger} */
-fivemins.App.prototype.logger_ = goog.debug.Logger.getLogger('fivemins.App');
+five.App.prototype.logger_ = goog.debug.Logger.getLogger('five.App');
 
-/** @type {fivemins.CalendarChooser} */
-fivemins.App.prototype.calendarChooser_;
+/** @type {five.CalendarChooser} */
+five.App.prototype.calendarChooser_;
 
-/** @type {fivemins.EventsList} */
-fivemins.App.prototype.eventsList_;
-
-/** @type {Element} */
-fivemins.App.prototype.footerEl_;
+/** @type {five.EventsList} */
+five.App.prototype.eventsList_;
 
 /** @type {Element} */
-fivemins.App.prototype.appContentEl_;
+five.App.prototype.footerEl_;
+
+/** @type {Element} */
+five.App.prototype.appContentEl_;
 
 /** @type {Object} */
-fivemins.App.prototype.calendar_;
+five.App.prototype.calendar_;
 
-fivemins.App.prototype.start = function() {
+five.App.prototype.start = function() {
   this.auth_.getAuthDeferred().branch().
       addCallback(this.chooseCalendar_, this).
       addCallback(this.showEventsList_, this);
@@ -60,16 +60,16 @@ fivemins.App.prototype.start = function() {
       this.handleWindowResize_);
 };
 
-fivemins.App.prototype.disposeInternal = function() {
+five.App.prototype.disposeInternal = function() {
   goog.dispose(this.calendarChooser_);
   goog.base(this, 'disposeInternal');
 };
 
-fivemins.App.prototype.chooseCalendar_ = function() {
+five.App.prototype.chooseCalendar_ = function() {
   return this.calendarApi_.loadCalendarList().
       addCallback(function(resp) {
         goog.asserts.assert(!this.calendarChooser_);
-        this.calendarChooser_ = new fivemins.CalendarChooser(resp);
+        this.calendarChooser_ = new five.CalendarChooser(resp);
         return this.calendarChooser_.chooseCalendar();
       }, this).
       addCallback(function(calendar) {
@@ -79,20 +79,20 @@ fivemins.App.prototype.chooseCalendar_ = function() {
       }, this);
 };
 
-fivemins.App.prototype.showEventsList_ = function() {
+five.App.prototype.showEventsList_ = function() {
   goog.asserts.assert(this.calendar_);
   goog.asserts.assert(!this.eventsList_);
-  this.eventsList_ = new fivemins.EventsList(this.calendarApi_, this.calendar_);
+  this.eventsList_ = new five.EventsList(this.calendarApi_, this.calendar_);
   this.registerDisposable(this.eventsList_);
   this.eventsList_.render(this.appContentEl_);
   this.resize();
 };
 
-fivemins.App.prototype.handleWindowResize_ = function(e) {
+five.App.prototype.handleWindowResize_ = function(e) {
   this.resize();
 };
 
-fivemins.App.prototype.resize = function() {
+five.App.prototype.resize = function() {
   var footerHeight = this.footerEl_.offsetHeight;
   var parentHeight = this.appContentEl_.parentNode.offsetHeight;
   var appHeight = Math.max(0, parentHeight - footerHeight);

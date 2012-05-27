@@ -1,8 +1,8 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.EventListLayoutTest');
+goog.provide('five.EventListLayoutTest');
 
-goog.require('fivemins.EventListLayout');
+goog.require('five.EventListLayout');
 goog.require('goog.array');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
@@ -17,10 +17,10 @@ var layout;
 var baseTime;
 
 function setUp() {
-  var params = new fivemins.EventListLayout.Params();
+  var params = new five.EventListLayout.Params();
   params.timeAxisPatchWidth = 0;
   params.layoutWidth = 300;
-  layout = new fivemins.EventListLayout(params);
+  layout = new five.EventListLayout(params);
   baseTime = new goog.date.DateTime(new goog.date.Date());
 }
 
@@ -225,7 +225,7 @@ function createEvent(startMinute, duration, name) {
   var endTime = startTime.clone();
   endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES,
       duration));
-  var event = new fivemins.EventListLayout.Event(startTime, endTime);
+  var event = new five.EventListLayout.Event(startTime, endTime);
   event.toString = function() {
     return 'Event<' + startMinute + ' for ' + duration + ' "' + name + '">';
   };
@@ -289,7 +289,7 @@ function assertTimeMapsHoursYPos(layout, var_arg) {
 
 function assertTimeMapHoursYPos(timeMap, minTime, maxTime, expectedYPosList) {
   var actualYPosList = [];
-  fivemins.util.forEachHourWrap(minTime, maxTime, function(hour) {
+  five.util.forEachHourWrap(minTime, maxTime, function(hour) {
     actualYPosList.push(timeMap.timeToYPos(hour));
   });
   assertEquals(expectedYPosList.toString(), actualYPosList.toString());
@@ -302,13 +302,13 @@ function show(events, layout) {
 
   var scale = 2;
 
-  fivemins.util.forEachHourWrap(layout.minTime, layout.maxTime, function(hour) {
+  five.util.forEachHourWrap(layout.minTime, layout.maxTime, function(hour) {
     var timeEl = document.createElement('div');
     el.appendChild(timeEl);
     timeEl.style.position = 'absolute';
-    timeEl.style.borderTop = fivemins.util.round(1 * scale) + 'px solid red';
+    timeEl.style.borderTop = five.util.round(1 * scale) + 'px solid red';
     timeEl.style.overflow = 'hidden';
-    timeEl.style.font = fivemins.util.round(10 * scale) + 'px Arial';
+    timeEl.style.font = five.util.round(10 * scale) + 'px Arial';
     timeEl.appendChild(document.createTextNode(hour.toUsTimeString()));
     goog.style.setPosition(timeEl, 0, layout.getTimeMap().timeToYPos(hour) *
         scale);
@@ -321,7 +321,7 @@ function show(events, layout) {
     el.appendChild(patchEl);
     patchEl.style.position = 'absolute';
     patchEl.style.backgroundColor = 'rgba(200, 255, 200, 0.5)';
-    patchEl.style.border = fivemins.util.round(1 * scale) +
+    patchEl.style.border = five.util.round(1 * scale) +
         'px solid rgba(0, 128, 0, 0.5)';
     var top = event.startTimePoint.linearTimeYPos;
     var height = event.endTimePoint.linearTimeYPos - top;
@@ -335,10 +335,10 @@ function show(events, layout) {
     var eventEl = document.createElement('div');
     el.appendChild(eventEl);
     eventEl.style.position = 'absolute';
-    eventEl.style.border = fivemins.util.round(1 * scale) + 'px solid black';
+    eventEl.style.border = five.util.round(1 * scale) + 'px solid black';
     eventEl.style.overflow = 'hidden';
-    eventEl.style.font = fivemins.util.round(10 * scale) + 'px Arial';
-    var duration = fivemins.util.msToMin(event.endTime.getTime() -
+    eventEl.style.font = five.util.round(10 * scale) + 'px Arial';
+    var duration = five.util.msToMin(event.endTime.getTime() -
         event.startTime.getTime());
     eventEl.appendChild(document.createTextNode(
         event.startTime.toUsTimeString() + ' - ' +

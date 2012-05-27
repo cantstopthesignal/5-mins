@@ -1,12 +1,12 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.EventsScrollBox');
+goog.provide('five.EventsScrollBox');
 
-goog.require('fivemins.Component');
-goog.require('fivemins.EventCard');
-goog.require('fivemins.EventListLayout');
-goog.require('fivemins.TimeAxisPatch');
-goog.require('fivemins.TimeAxisPatchCanvas');
+goog.require('five.Component');
+goog.require('five.EventCard');
+goog.require('five.EventListLayout');
+goog.require('five.TimeAxisPatch');
+goog.require('five.TimeAxisPatchCanvas');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
@@ -22,67 +22,67 @@ goog.require('goog.style');
 
 /**
  * @constructor
- * @extends {fivemins.Component}
+ * @extends {five.Component}
  */
-fivemins.EventsScrollBox = function() {
+five.EventsScrollBox = function() {
   goog.base(this);
 
-  /** @type {Array.<fivemins.EventCard>} */
+  /** @type {Array.<five.EventCard>} */
   this.eventCards_ = [];
 
-  /** @type {Array.<fivemins.TimeMarker>} */
+  /** @type {Array.<five.TimeMarker>} */
   this.timeMarkers_ = [];
 };
-goog.inherits(fivemins.EventsScrollBox, fivemins.Component);
+goog.inherits(five.EventsScrollBox, five.Component);
 
 /** @type {number} */
-fivemins.EventsScrollBox.MIN_EVENT_HEIGHT = 17;
+five.EventsScrollBox.MIN_EVENT_HEIGHT = 17;
 
 /** @type {number} */
-fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT = 45;
+five.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT = 45;
 
 /** @type {number} */
-fivemins.EventsScrollBox.TIME_AXIS_WIDTH = 40;
+five.EventsScrollBox.TIME_AXIS_WIDTH = 40;
 
 /** @type {number} */
-fivemins.EventsScrollBox.TIME_AXIS_PATCH_WIDTH = 15;
+five.EventsScrollBox.TIME_AXIS_PATCH_WIDTH = 15;
 
 /** @type {number} */
-fivemins.EventsScrollBox.SCROLL_ANIMATION_DURATION_MS = 500;
+five.EventsScrollBox.SCROLL_ANIMATION_DURATION_MS = 500;
 
 /** @type {goog.date.DateTime} */
-fivemins.EventsScrollBox.prototype.startDate_;
+five.EventsScrollBox.prototype.startDate_;
 
 /** @type {goog.date.DateTime} */
-fivemins.EventsScrollBox.prototype.endDate_;
+five.EventsScrollBox.prototype.endDate_;
 
 /** @type {Element} */
-fivemins.EventsScrollBox.prototype.eventCardsLayer_;
+five.EventsScrollBox.prototype.eventCardsLayer_;
 
 /** @type {Element} */
-fivemins.EventsScrollBox.prototype.timeAxisLayer_;
+five.EventsScrollBox.prototype.timeAxisLayer_;
 
 /** @type {Element} */
-fivemins.EventsScrollBox.prototype.timeMarkersLayer_;
+five.EventsScrollBox.prototype.timeMarkersLayer_;
 
-/** @type {fivemins.TimeAxisPatchCanvas} */
-fivemins.EventsScrollBox.prototype.timeAxisPatchCanvas_;
+/** @type {five.TimeAxisPatchCanvas} */
+five.EventsScrollBox.prototype.timeAxisPatchCanvas_;
 
-/** @type {fivemins.EventListLayout.TimeMap} */
-fivemins.EventsScrollBox.prototype.timeMap_;
+/** @type {five.EventListLayout.TimeMap} */
+five.EventsScrollBox.prototype.timeMap_;
 
 /** @type {number} */
-fivemins.EventsScrollBox.prototype.scale_ = 1.0;
+five.EventsScrollBox.prototype.scale_ = 1.0;
 
 /** @type {number} */
-fivemins.EventsScrollBox.prototype.eventAreaWidth_;
+five.EventsScrollBox.prototype.eventAreaWidth_;
 
-fivemins.EventsScrollBox.prototype.createDom = function() {
+five.EventsScrollBox.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-scroll-box');
 
-  this.timeAxisPatchCanvas_ = new fivemins.TimeAxisPatchCanvas(
-      fivemins.EventsScrollBox.TIME_AXIS_PATCH_WIDTH);
+  this.timeAxisPatchCanvas_ = new five.TimeAxisPatchCanvas(
+      five.EventsScrollBox.TIME_AXIS_PATCH_WIDTH);
   this.timeAxisLayer_ = document.createElement('div');
   this.el.appendChild(this.timeAxisLayer_);
 
@@ -96,7 +96,7 @@ fivemins.EventsScrollBox.prototype.createDom = function() {
   this.el.appendChild(this.timeMarkersLayer_);
 };
 
-fivemins.EventsScrollBox.prototype.render = function(parentEl) {
+five.EventsScrollBox.prototype.render = function(parentEl) {
   goog.asserts.assert(!this.el);
   goog.asserts.assert(this.startDate_);
   goog.asserts.assert(this.endDate_);
@@ -106,7 +106,7 @@ fivemins.EventsScrollBox.prototype.render = function(parentEl) {
   this.resize();  // Switch to border box sizing.
 
   this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
-      fivemins.EventsScrollBox.TIME_AXIS_WIDTH -
+      five.EventsScrollBox.TIME_AXIS_WIDTH -
       goog.style.getScrollbarWidth();
 
   this.layout_();
@@ -117,13 +117,13 @@ fivemins.EventsScrollBox.prototype.render = function(parentEl) {
  * @param {number=} opt_width
  * @param {number=} opt_height
  */
-fivemins.EventsScrollBox.prototype.resize = function(opt_width, opt_height) {
+five.EventsScrollBox.prototype.resize = function(opt_width, opt_height) {
   var width = opt_width || this.el.parentNode.offsetWidth;
   var height = opt_height || this.el.parentNode.offsetHeight;
   goog.style.setBorderBoxSize(this.el, new goog.math.Size(width, height));
 };
 
-fivemins.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
+five.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
   this.startDate_ = startDate;
   this.endDate_ = endDate;
   if (this.el) {
@@ -131,13 +131,13 @@ fivemins.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
   }
 };
 
-fivemins.EventsScrollBox.prototype.setEvents = function(events) {
+five.EventsScrollBox.prototype.setEvents = function(events) {
   this.timeAxisPatchCanvas_.startBatchUpdate();
   goog.array.forEach(this.eventCards_, function(eventCard) {
     goog.dispose(eventCard);
   }, this);
   this.eventCards_ = goog.array.map(events, function(event) {
-    return new fivemins.EventCard(event);
+    return new five.EventCard(event);
   }, this);
   if (this.el) {
     this.layout_();
@@ -146,16 +146,16 @@ fivemins.EventsScrollBox.prototype.setEvents = function(events) {
   this.timeAxisPatchCanvas_.finishBatchUpdate();
 };
 
-fivemins.EventsScrollBox.prototype.addTimeMarker = function(timeMarker) {
+five.EventsScrollBox.prototype.addTimeMarker = function(timeMarker) {
   timeMarker.setOwner(this);
   this.registerDisposable(timeMarker);
   timeMarker.render(this.timeMarkersLayer_);
   this.timeMarkers_.push(timeMarker);
 };
 
-fivemins.EventsScrollBox.prototype.getTimeMarkerRect = function(time) {
+five.EventsScrollBox.prototype.getTimeMarkerRect = function(time) {
   var yPos = this.timeMap_.timeToYPos(time);
-  return new goog.math.Rect(fivemins.EventsScrollBox.TIME_AXIS_WIDTH, yPos,
+  return new goog.math.Rect(five.EventsScrollBox.TIME_AXIS_WIDTH, yPos,
       this.eventAreaWidth_, 0);
 };
 
@@ -163,7 +163,7 @@ fivemins.EventsScrollBox.prototype.getTimeMarkerRect = function(time) {
  * Scroll to a specified time.  Optionally show context before the time
  * instead of starting exactly at the specified time.
  */
-fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
+five.EventsScrollBox.prototype.scrollToTime = function(date,
     opt_showContext, opt_animate) {
   if (!this.timeMap_) {
     return;
@@ -176,7 +176,7 @@ fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
   if (opt_animate) {
     var lastScrollTop = this.el.scrollTop || 0;
     var animation = new goog.fx.Animation([lastScrollTop], [yPos],
-        fivemins.EventsScrollBox.SCROLL_ANIMATION_DURATION_MS,
+        five.EventsScrollBox.SCROLL_ANIMATION_DURATION_MS,
         goog.fx.easing.easeOut);
     var EventType = goog.fx.Animation.EventType;
     animation.registerDisposable(new goog.events.EventHandler(this).
@@ -202,7 +202,7 @@ fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
  * @param {boolean} opt_hideScrollAction Make sure auto-show scroll
  *     bars do not show during this scroll action.
  */
-fivemins.EventsScrollBox.prototype.scrollByTime = function(relativeToTime,
+five.EventsScrollBox.prototype.scrollByTime = function(relativeToTime,
     interval, opt_hideScrollAction) {
   var toTime = relativeToTime.clone();
   toTime.add(interval);
@@ -225,7 +225,7 @@ fivemins.EventsScrollBox.prototype.scrollByTime = function(relativeToTime,
 /**
  * Return whether a specified time is within the visible area.
  */
-fivemins.EventsScrollBox.prototype.isTimeInView = function(date) {
+five.EventsScrollBox.prototype.isTimeInView = function(date) {
   var yPos = this.timeMap_.timeToYPos(date);
   if (yPos < this.el.scrollTop) {
     return false;
@@ -235,12 +235,12 @@ fivemins.EventsScrollBox.prototype.isTimeInView = function(date) {
   return true;
 };
 
-fivemins.EventsScrollBox.prototype.renderTimeAxis_ = function() {
+five.EventsScrollBox.prototype.renderTimeAxis_ = function() {
   goog.asserts.assert(this.startDate_);
   goog.asserts.assert(this.endDate_);
   goog.asserts.assert(this.timeMap_);
   goog.dom.removeChildren(this.timeAxisLayer_);
-  fivemins.util.forEachHourRangeWrap(this.startDate_, this.endDate_, function(
+  five.util.forEachHourRangeWrap(this.startDate_, this.endDate_, function(
       hour, nextHour) {
     var timeStr = hour.toUsTimeString(false, true, true);
     var timeEl = document.createElement('div');
@@ -257,30 +257,30 @@ fivemins.EventsScrollBox.prototype.renderTimeAxis_ = function() {
   }, this);
 };
 
-fivemins.EventsScrollBox.prototype.renderEvents_ = function() {
+five.EventsScrollBox.prototype.renderEvents_ = function() {
   goog.array.forEach(this.eventCards_, function(eventCard) {
     eventCard.render(this.eventCardsLayer_);
   }, this);
 };
 
-fivemins.EventsScrollBox.prototype.layout_ = function() {
+five.EventsScrollBox.prototype.layout_ = function() {
   var layoutEvents = goog.array.map(this.eventCards_, function(eventCard) {
-    var layoutEvent = new fivemins.EventListLayout.Event(
+    var layoutEvent = new five.EventListLayout.Event(
         eventCard.getStartTime(), eventCard.getEndTime());
     layoutEvent.eventCard = eventCard;
     return layoutEvent;
   }, this);
-  var params = new fivemins.EventListLayout.Params();
-  params.minEventHeight = fivemins.EventsScrollBox.MIN_EVENT_HEIGHT;
-  params.distancePerHour = fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT;
-  params.minDistancePerHour = fivemins.EventsScrollBox.
+  var params = new five.EventListLayout.Params();
+  params.minEventHeight = five.EventsScrollBox.MIN_EVENT_HEIGHT;
+  params.distancePerHour = five.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT;
+  params.minDistancePerHour = five.EventsScrollBox.
       DEFAULT_HOUR_PIXEL_HEIGHT;
   params.layoutWidth = this.eventAreaWidth_;
-  params.timeAxisPatchWidth = fivemins.EventsScrollBox.TIME_AXIS_PATCH_WIDTH;
+  params.timeAxisPatchWidth = five.EventsScrollBox.TIME_AXIS_PATCH_WIDTH;
   if (this.startDate_) {
     params.minTime = this.startDate_;
   }
-  var layout = new fivemins.EventListLayout(params);
+  var layout = new five.EventListLayout(params);
   layout.setEvents(layoutEvents);
   layout.calc();
   this.timeMap_ = layout.getTimeMap();
@@ -294,7 +294,7 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
   });
 };
 
-fivemins.EventsScrollBox.prototype.layoutEvents_ = function(layoutEvents) {
+five.EventsScrollBox.prototype.layoutEvents_ = function(layoutEvents) {
   goog.array.forEach(layoutEvents, function(layoutEvent) {
     var eventCard = layoutEvent.eventCard;
     var rect = layoutEvent.rect.clone();
@@ -303,12 +303,12 @@ fivemins.EventsScrollBox.prototype.layoutEvents_ = function(layoutEvents) {
       rect.width += 1;
     }
     rect.height += 1;
-    rect.left += fivemins.EventsScrollBox.TIME_AXIS_WIDTH;
+    rect.left += five.EventsScrollBox.TIME_AXIS_WIDTH;
     eventCard.setRect(rect);
   }, this);
 };
 
-fivemins.EventsScrollBox.prototype.layoutTimeAxisPatches_ = function(
+five.EventsScrollBox.prototype.layoutTimeAxisPatches_ = function(
     layoutEvents) {
   this.timeAxisPatchCanvas_.startBatchUpdate();
   goog.array.forEach(layoutEvents, function(layoutEvent) {
@@ -316,7 +316,7 @@ fivemins.EventsScrollBox.prototype.layoutTimeAxisPatches_ = function(
     if (layoutEvent.hasTimeAxisPatch) {
       var patch = eventCard.getTimeAxisPatch();
       if (!patch) {
-        patch = new fivemins.TimeAxisPatch();
+        patch = new five.TimeAxisPatch();
         eventCard.setTimeAxisPatch(patch);
       }
       patch.setParams(layoutEvent.startTimePoint.linearTimeYPos,
@@ -333,6 +333,6 @@ fivemins.EventsScrollBox.prototype.layoutTimeAxisPatches_ = function(
     }
   }, this);
   this.timeAxisPatchCanvas_.setPosition(new goog.math.Coordinate(
-      fivemins.EventsScrollBox.TIME_AXIS_WIDTH, 0));
+      five.EventsScrollBox.TIME_AXIS_WIDTH, 0));
   this.timeAxisPatchCanvas_.finishBatchUpdate();
 };

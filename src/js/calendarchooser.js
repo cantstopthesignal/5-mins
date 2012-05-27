@@ -1,8 +1,8 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.CalendarChooser');
+goog.provide('five.CalendarChooser');
 
-goog.require('fivemins.Dialog')
+goog.require('five.Dialog')
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
@@ -10,9 +10,9 @@ goog.require('goog.net.Cookies');
 
 /**
  * @constructor
- * @extends {fivemins.Dialog}
+ * @extends {five.Dialog}
  */
-fivemins.CalendarChooser = function(listResp) {
+five.CalendarChooser = function(listResp) {
   goog.base(this);
 
   this.listResp_ = listResp;
@@ -26,19 +26,19 @@ fivemins.CalendarChooser = function(listResp) {
   /** @type {goog.async.Deferred} */
   this.choiceDeferred_ = new goog.async.Deferred();
 };
-goog.inherits(fivemins.CalendarChooser, fivemins.Dialog);
+goog.inherits(five.CalendarChooser, five.Dialog);
 
-fivemins.CalendarChooser.FIVEMINS_CALENDAR_COOKIE = "FIVEMINS_CALENDAR";
+five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE = "FIVEMINS_CALENDAR";
 
-fivemins.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE = -1;
+five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE = -1;
 
 /** @type {Element} */
-fivemins.CalendarChooser.prototype.containerEl_;
+five.CalendarChooser.prototype.containerEl_;
 
 /** @type {string} */
-fivemins.CalendarChooser.prototype.calendarId_;
+five.CalendarChooser.prototype.calendarId_;
 
-fivemins.CalendarChooser.prototype.chooseCalendar = function() {
+five.CalendarChooser.prototype.chooseCalendar = function() {
   if (!this.choiceDeferred_.hasFired()) {
     this.maybeChooseCalendarFromCookie_();
   }
@@ -48,14 +48,14 @@ fivemins.CalendarChooser.prototype.chooseCalendar = function() {
   return this.choiceDeferred_.branch();
 };
 
-fivemins.CalendarChooser.prototype.fireCalendarChoice_ = function(calendarId) {
+five.CalendarChooser.prototype.fireCalendarChoice_ = function(calendarId) {
   goog.asserts.assert(!this.choiceDeferred_.hasFired());
   var calendar = this.getCalendarById_(calendarId);
   goog.asserts.assert(calendar);
   this.choiceDeferred_.callback(calendar);
 }
 
-fivemins.CalendarChooser.prototype.showChooserUi_ = function() {
+five.CalendarChooser.prototype.showChooserUi_ = function() {
   this.createDom();
   this.containerEl_ = document.createElement('div');
   goog.dom.classes.add(this.containerEl_, 'calendar-chooser');
@@ -78,25 +78,25 @@ fivemins.CalendarChooser.prototype.showChooserUi_ = function() {
   this.show();
 };
 
-fivemins.CalendarChooser.prototype.handleCalendarClick_ = function(calendarId) {
+five.CalendarChooser.prototype.handleCalendarClick_ = function(calendarId) {
   this.setCalendarChoiceCookie_(calendarId);
   this.fireCalendarChoice_(calendarId);
 };
 
-fivemins.CalendarChooser.prototype.setCalendarChoiceCookie_ = function(
+five.CalendarChooser.prototype.setCalendarChoiceCookie_ = function(
     calendarId) {
   goog.asserts.assert(calendarId);
   var secure = (window.location.protocol != 'http:');
-  this.cookies_.set(fivemins.CalendarChooser.FIVEMINS_CALENDAR_COOKIE,
+  this.cookies_.set(five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE,
       encodeURIComponent(calendarId),
-      fivemins.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE,
+      five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE,
       /* opt_path */ undefined, /* opt_domain */ undefined,
       /* opt_secure */ secure);
 };
 
-fivemins.CalendarChooser.prototype.maybeChooseCalendarFromCookie_ = function() {
+five.CalendarChooser.prototype.maybeChooseCalendarFromCookie_ = function() {
   var calendarIdFromCookie = this.cookies_.get(
-      fivemins.CalendarChooser.FIVEMINS_CALENDAR_COOKIE);
+      five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE);
   if (calendarIdFromCookie) {
     calendarIdFromCookie = decodeURIComponent(calendarIdFromCookie);
     var ownedCalendars = this.getOwnedCalendars_();
@@ -109,7 +109,7 @@ fivemins.CalendarChooser.prototype.maybeChooseCalendarFromCookie_ = function() {
   }
 };
 
-fivemins.CalendarChooser.prototype.getOwnedCalendars_ = function() {
+five.CalendarChooser.prototype.getOwnedCalendars_ = function() {
   var calendars = [];
   for (var i = 0; i < this.calendars_.length; i++) {
     var calendar = this.calendars_[i];
@@ -120,7 +120,7 @@ fivemins.CalendarChooser.prototype.getOwnedCalendars_ = function() {
   return calendars;
 };
 
-fivemins.CalendarChooser.prototype.getCalendarById_ = function(calendarId) {
+five.CalendarChooser.prototype.getCalendarById_ = function(calendarId) {
   for (var i = 0; i < this.calendars_.length; i++) {
     var calendar = this.calendars_[i];
     if (calendar['id'] == calendarId) {

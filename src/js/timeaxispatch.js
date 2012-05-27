@@ -1,6 +1,6 @@
 //Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.TimeAxisPatch');
+goog.provide('five.TimeAxisPatch');
 
 goog.require('goog.asserts');
 goog.require('goog.events.EventTarget');
@@ -10,50 +10,50 @@ goog.require('goog.events.EventTarget');
  * @constructor
  * @extends {goog.events.EventTarget}
  */
-fivemins.TimeAxisPatch = function() {
+five.TimeAxisPatch = function() {
 };
-goog.inherits(fivemins.TimeAxisPatch, goog.events.EventTarget);
+goog.inherits(five.TimeAxisPatch, goog.events.EventTarget);
 
-/** @type {fivemins.TimeAxisPatchCanvas} */
-fivemins.TimeAxisPatch.prototype.owner_;
+/** @type {five.TimeAxisPatchCanvas} */
+five.TimeAxisPatch.prototype.owner_;
 
 /** @type {boolean} */
-fivemins.TimeAxisPatch.prototype.attachedToEvent_ = false;
+five.TimeAxisPatch.prototype.attachedToEvent_ = false;
 
 /** @type {number} */
-fivemins.TimeAxisPatch.prototype.axisTop;
+five.TimeAxisPatch.prototype.axisTop;
 
 /** @type {number} */
-fivemins.TimeAxisPatch.prototype.axisBottom;
+five.TimeAxisPatch.prototype.axisBottom;
 
 /** @type {number} */
-fivemins.TimeAxisPatch.prototype.eventTop;
+five.TimeAxisPatch.prototype.eventTop;
 
 /** @type {number} */
-fivemins.TimeAxisPatch.prototype.eventBottom;
+five.TimeAxisPatch.prototype.eventBottom;
 
 /** @type {string} */
-fivemins.TimeAxisPatch.prototype.eventBgColor = 'rgba(200, 200, 255, 0.8)';
+five.TimeAxisPatch.prototype.eventBgColor = 'rgba(200, 200, 255, 0.8)';
 
 /** @type {string} */
-fivemins.TimeAxisPatch.prototype.eventBorderColor = '#88f';
+five.TimeAxisPatch.prototype.eventBorderColor = '#88f';
 
-/** @return {fivemins.TimeAxisPatchCanvas} */
-fivemins.TimeAxisPatch.prototype.getOwner = function() {
+/** @return {five.TimeAxisPatchCanvas} */
+five.TimeAxisPatch.prototype.getOwner = function() {
   return this.owner_;
 };
 
-/** @param {fivemins.TimeAxisPatchCanvas} owner */
-fivemins.TimeAxisPatch.prototype.setOwner = function(owner) {
+/** @param {five.TimeAxisPatchCanvas} owner */
+five.TimeAxisPatch.prototype.setOwner = function(owner) {
   this.owner_ = owner;
 };
 
 /** @return {boolean} */
-fivemins.TimeAxisPatch.prototype.getAttachedToEvent = function() {
+five.TimeAxisPatch.prototype.getAttachedToEvent = function() {
   return this.attachedToEvent_;
 };
 
-fivemins.TimeAxisPatch.prototype.setParams = function(axisTop, axisBottom,
+five.TimeAxisPatch.prototype.setParams = function(axisTop, axisBottom,
     eventTop, eventBottom, attachedToEvent) {
   this.axisTop = axisTop;
   this.axisBottom = axisBottom;
@@ -65,7 +65,7 @@ fivemins.TimeAxisPatch.prototype.setParams = function(axisTop, axisBottom,
   }
 };
 
-fivemins.TimeAxisPatch.prototype.disposeInternal = function() {
+five.TimeAxisPatch.prototype.disposeInternal = function() {
   if (this.owner_) {
     this.owner_.removePatch(this);
     goog.asserts.assert(!this.owner_);

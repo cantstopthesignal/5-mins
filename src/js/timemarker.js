@@ -1,28 +1,28 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.TimeMarker');
+goog.provide('five.TimeMarker');
 
-goog.require('fivemins.Component');
+goog.require('five.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.style');
 
 /**
  * @constructor
- * @extends {fivemins.Component}
+ * @extends {five.Component}
  */
-fivemins.TimeMarker = function(time) {
+five.TimeMarker = function(time) {
   /** @type {goog.date.DateTime} */
   this.time_ = time;
 };
-goog.inherits(fivemins.TimeMarker, fivemins.Component);
+goog.inherits(five.TimeMarker, five.Component);
 
 
-/** @type {fivemins.EventsScrollBox} */
-fivemins.TimeMarker.prototype.owner_;
+/** @type {five.EventsScrollBox} */
+five.TimeMarker.prototype.owner_;
 
-/** @param {fivemins.EventsScrollBox} owner */
-fivemins.TimeMarker.prototype.setOwner = function(owner) {
+/** @param {five.EventsScrollBox} owner */
+five.TimeMarker.prototype.setOwner = function(owner) {
   this.owner_ = owner;
   if (!this.owner_) {
     goog.dom.removeNode(this.el);
@@ -30,24 +30,24 @@ fivemins.TimeMarker.prototype.setOwner = function(owner) {
 };
 
 /** @return {goog.date.DateTime} */
-fivemins.TimeMarker.prototype.getTime = function() {
+five.TimeMarker.prototype.getTime = function() {
   return this.time_;
 };
 
 /** @param {goog.date.DateTime} time */
-fivemins.TimeMarker.prototype.setTime = function(time) {
+five.TimeMarker.prototype.setTime = function(time) {
   this.time_ = time;
   if (this.el && this.owner_) {
     this.layout();
   }
 };
 
-fivemins.TimeMarker.prototype.createDom = function() {
+five.TimeMarker.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'time-marker');
 };
 
-fivemins.TimeMarker.prototype.render = function(parentEl) {
+five.TimeMarker.prototype.render = function(parentEl) {
   if (!this.el) {
     this.createDom();
   }
@@ -55,7 +55,7 @@ fivemins.TimeMarker.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 };
 
-fivemins.TimeMarker.prototype.layout = function() {
+five.TimeMarker.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner_);
   var rect = this.owner_.getTimeMarkerRect(this.time_);
@@ -63,7 +63,7 @@ fivemins.TimeMarker.prototype.layout = function() {
   goog.style.setBorderBoxSize(this.el, rect.getSize());
 };
 
-fivemins.TimeMarker.prototype.disposeInternal = function() {
+five.TimeMarker.prototype.disposeInternal = function() {
   delete this.owner_;
   goog.base(this, 'disposeInternal');
 };

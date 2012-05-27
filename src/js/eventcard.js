@@ -1,17 +1,17 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.EventCard');
+goog.provide('five.EventCard');
 
-goog.require('fivemins.Component');
+goog.require('five.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.style');
 
 /**
  * @constructor
- * @extends {fivemins.Component}
+ * @extends {five.Component}
  */
-fivemins.EventCard = function(event) {
+five.EventCard = function(event) {
   /** @type {Object} */
   this.event_ = event;
 
@@ -25,9 +25,9 @@ fivemins.EventCard = function(event) {
   /** @type {goog.date.DateTime} */
   this.endTime_ = new goog.date.DateTime(new Date(endDateStr));
 };
-goog.inherits(fivemins.EventCard, fivemins.Component);
+goog.inherits(five.EventCard, five.Component);
 
-fivemins.EventCard.toTimeString_ = function(date) {
+five.EventCard.toTimeString_ = function(date) {
   var str = date.toUsTimeString(false, false, true);
   if (date.getHours() >= 12) {
     str += 'p';
@@ -35,21 +35,21 @@ fivemins.EventCard.toTimeString_ = function(date) {
   return str;
 };
 
-/** @type {fivemins.TimeAxisPatch} */
-fivemins.EventCard.prototype.timeAxisPatch_;
+/** @type {five.TimeAxisPatch} */
+five.EventCard.prototype.timeAxisPatch_;
 
 /** @return {goog.date.DateTime} */
-fivemins.EventCard.prototype.getStartTime = function() {
+five.EventCard.prototype.getStartTime = function() {
   return this.startTime_;
 };
 
 /** @return {goog.date.DateTime} */
-fivemins.EventCard.prototype.getEndTime = function() {
+five.EventCard.prototype.getEndTime = function() {
   return this.endTime_;
 };
 
-/** @param {fivemins.TimeAxisPatch} patch */
-fivemins.EventCard.prototype.setTimeAxisPatch = function(patch) {
+/** @param {five.TimeAxisPatch} patch */
+five.EventCard.prototype.setTimeAxisPatch = function(patch) {
   if (this.timeAxisPatch_) {
     goog.dispose(this.timeAxisPatch_);
   }
@@ -57,30 +57,30 @@ fivemins.EventCard.prototype.setTimeAxisPatch = function(patch) {
   this.timeAxisPatchUpdated();
 };
 
-/** @return {fivemins.TimeAxisPatch} */
-fivemins.EventCard.prototype.getTimeAxisPatch = function() {
+/** @return {five.TimeAxisPatch} */
+five.EventCard.prototype.getTimeAxisPatch = function() {
   return this.timeAxisPatch_;
 };
 
-fivemins.EventCard.prototype.createDom = function() {
+five.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'event-card');
   var dateRangeEl = document.createElement('div');
   goog.dom.classes.add(dateRangeEl, 'date-range');
   dateRangeEl.appendChild(document.createTextNode(
-      fivemins.EventCard.toTimeString_(this.startTime_) + ' - ' +
-      fivemins.EventCard.toTimeString_(this.endTime_)));
+      five.EventCard.toTimeString_(this.startTime_) + ' - ' +
+      five.EventCard.toTimeString_(this.endTime_)));
   this.el.appendChild(dateRangeEl);
   this.el.appendChild(document.createTextNode(this.event_['summary']));
 };
 
-fivemins.EventCard.prototype.disposeInternal = function() {
+five.EventCard.prototype.disposeInternal = function() {
   goog.dispose(this.timeAxisPatch_);
   goog.base(this, 'disposeInternal');
 };
 
 /** @param {goog.math.Rect} rect */
-fivemins.EventCard.prototype.setRect = function(rect) {
+five.EventCard.prototype.setRect = function(rect) {
   if (!this.el) {
     this.createDom();
   }
@@ -92,7 +92,7 @@ fivemins.EventCard.prototype.setRect = function(rect) {
   goog.dom.classes.enable(this.el, 'large-height', rect.height >= 44);
 };
 
-fivemins.EventCard.prototype.timeAxisPatchUpdated = function() {
+five.EventCard.prototype.timeAxisPatchUpdated = function() {
   goog.dom.classes.enable(this.el, 'attached-to-patch',
       !!this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent());
 };

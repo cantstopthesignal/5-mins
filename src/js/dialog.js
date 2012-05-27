@@ -1,8 +1,8 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.Dialog');
+goog.provide('five.Dialog');
 
-goog.require('fivemins.Component');
+goog.require('five.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
@@ -10,20 +10,20 @@ goog.require('goog.style');
 
 /**
  * @constructor
- * @extends {fivemins.Component}
+ * @extends {five.Component}
  */
-fivemins.Dialog = function() {
+five.Dialog = function() {
   goog.base(this);
 };
-goog.inherits(fivemins.Dialog, fivemins.Component);
+goog.inherits(five.Dialog, five.Component);
 
-fivemins.Dialog.prototype.createDom = function() {
+five.Dialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'dialog');
 };
 
 /** @param {Element=} opt_parentEl */
-fivemins.Dialog.prototype.show = function(opt_parentEl) {
+five.Dialog.prototype.show = function(opt_parentEl) {
   if (!this.el) {
     this.createDom();
   }
@@ -33,11 +33,11 @@ fivemins.Dialog.prototype.show = function(opt_parentEl) {
   this.reposition();
 };
 
-fivemins.Dialog.prototype.hide = function() {
+five.Dialog.prototype.hide = function() {
   goog.dom.removeNode(this.el);
 };
 
-fivemins.Dialog.prototype.reposition = function() {
+five.Dialog.prototype.reposition = function() {
   this.el.style.marginLeft = -(this.el.offsetWidth/2) + 'px';
   this.el.style.marginTop = -(this.el.offsetHeight/2) + 'px';
 };

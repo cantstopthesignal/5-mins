@@ -1,8 +1,8 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.main');
+goog.provide('five.main');
 
-goog.require('fivemins.App');
+goog.require('five.App');
 goog.require('goog.debug.Console');
 
 // To appease closure missing types warnings.
@@ -12,5 +12,5 @@ goog.require('goog.events.EventHandler');
 
 window.onload = function() {
   goog.debug.Console.autoInstall();
-  new fivemins.App().start();
+  new five.App().start();
 };

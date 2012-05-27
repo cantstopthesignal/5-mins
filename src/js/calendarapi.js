@@ -1,25 +1,25 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.CalendarApi');
+goog.provide('five.CalendarApi');
 
 goog.require('goog.debug.Logger');
 
 
 /**
  * @constructor
- * @param {fivemins.Auth} auth
+ * @param {five.Auth} auth
  */
-fivemins.CalendarApi = function(auth) {
-  /** @type {fivemins.Auth} */
+five.CalendarApi = function(auth) {
+  /** @type {five.Auth} */
   this.auth_ = auth;
 };
 
 /** @type {goog.debug.Logger} */
-fivemins.CalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
-    'fivemins.CalendarApi');
+five.CalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
+    'five.CalendarApi');
 
 /** @return {goog.async.Deferred} */
-fivemins.CalendarApi.prototype.loadCalendarList = function() {
+five.CalendarApi.prototype.loadCalendarList = function() {
   var requestParams = {
     path: '/calendar/v3/users/me/calendarList',
     params: {}
@@ -38,7 +38,7 @@ fivemins.CalendarApi.prototype.loadCalendarList = function() {
  * @param {goog.date.DateTime} endDate
  * @return {goog.async.Deferred}
  */
-fivemins.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
+five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
     endDate) {
   var requestParams = {
     path: '/calendar/v3/calendars/' + calendarId + '/events',
@@ -58,7 +58,7 @@ fivemins.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
 };
 
 /** Call an api but retry auth on auth failure. */
-fivemins.CalendarApi.prototype.callApiWithAuthRetry_ = function(requestParams) {
+five.CalendarApi.prototype.callApiWithAuthRetry_ = function(requestParams) {
   var d = new goog.async.Deferred();
   var attempts = 0;
   var doRequest = goog.bind(function () {

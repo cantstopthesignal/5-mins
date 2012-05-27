@@ -1,11 +1,11 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.EventsList');
+goog.provide('five.EventsList');
 
-goog.require('fivemins.Component');
-goog.require('fivemins.EventsScrollBox');
-goog.require('fivemins.Spinner');
-goog.require('fivemins.TimeMarker');
+goog.require('five.Component');
+goog.require('five.EventsScrollBox');
+goog.require('five.Spinner');
+goog.require('five.TimeMarker');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
@@ -15,57 +15,57 @@ goog.require('goog.events.EventType');
 
 
 /**
- * @param calendarApi {fivemins.CalendarApi}
+ * @param calendarApi {five.CalendarApi}
  * @param calendar {Object}
  * @constructor
- * @extends {fivemins.Component}
+ * @extends {five.Component}
  */
-fivemins.EventsList = function(calendarApi, calendar) {
+five.EventsList = function(calendarApi, calendar) {
   goog.base(this);
 
-  /** @type {fivemins.CalendarApi} */
+  /** @type {five.CalendarApi} */
   this.calendarApi_ = calendarApi;
 
   /** @type {Object} */
   this.calendar_ = calendar;
 
-  /** @type {fivemins.EventsScrollBox} */
-  this.eventsScrollBox_ = new fivemins.EventsScrollBox();
+  /** @type {five.EventsScrollBox} */
+  this.eventsScrollBox_ = new five.EventsScrollBox();
   this.registerDisposable(this.eventsScrollBox_);
 
-  /** @type {fivemins.Spinner} */
-  this.spinner_ = new fivemins.Spinner();
+  /** @type {five.Spinner} */
+  this.spinner_ = new five.Spinner();
   this.registerDisposable(this.spinner_);
 
   this.initDefaultDateRange_();
 };
-goog.inherits(fivemins.EventsList, fivemins.Component);
+goog.inherits(five.EventsList, five.Component);
 
 /** @type {number} */
-fivemins.EventsList.NOW_TRACKER_INTERVAL_ = 15 * 1000;
+five.EventsList.NOW_TRACKER_INTERVAL_ = 15 * 1000;
 
 /** @type {goog.date.DateTime} */
-fivemins.EventsList.prototype.startDate_;
+five.EventsList.prototype.startDate_;
 
 /** @type {goog.date.DateTime} */
-fivemins.EventsList.prototype.endDate_;
+five.EventsList.prototype.endDate_;
 
 /** @type {Element} */
-fivemins.EventsList.prototype.headerEl_;
+five.EventsList.prototype.headerEl_;
 
 /** @type {Array.<Object>} */
-fivemins.EventsList.prototype.events_;
+five.EventsList.prototype.events_;
 
-/** @type {fivemins.TimeMarker} */
-fivemins.EventsList.prototype.nowMarker_;
+/** @type {five.TimeMarker} */
+five.EventsList.prototype.nowMarker_;
 
 /** @type {goog.date.DateTime} */
-fivemins.EventsList.prototype.nowTrackerLastTickTime_;
+five.EventsList.prototype.nowTrackerLastTickTime_;
 
 /** @type {number} */
-fivemins.EventsList.prototype.nowTrackerIntervalId_;
+five.EventsList.prototype.nowTrackerIntervalId_;
 
-fivemins.EventsList.prototype.createDom = function() {
+five.EventsList.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-list');
 
@@ -96,7 +96,7 @@ fivemins.EventsList.prototype.createDom = function() {
   this.headerEl_.appendChild(titleEl);
 };
 
-fivemins.EventsList.prototype.render = function(parentEl) {
+five.EventsList.prototype.render = function(parentEl) {
   goog.asserts.assert(!this.el);
   this.createDom();
 
@@ -105,7 +105,7 @@ fivemins.EventsList.prototype.render = function(parentEl) {
   this.eventsScrollBox_.setDateRange(this.startDate_, this.endDate_);
   this.eventsScrollBox_.render(this.el);
 
-  this.nowMarker_ = new fivemins.TimeMarker(new goog.date.DateTime());
+  this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime());
   this.eventsScrollBox_.addTimeMarker(this.nowMarker_);
 
   if (!this.events_) {
@@ -115,18 +115,18 @@ fivemins.EventsList.prototype.render = function(parentEl) {
   if (!this.nowTrackerIntervalId_) {
     this.nowTrackerIntervalId_ = window.setInterval(goog.bind(
         this.handleNowTrackerTick_, this),
-        fivemins.EventsList.NOW_TRACKER_INTERVAL_);
+        five.EventsList.NOW_TRACKER_INTERVAL_);
   }
 };
 
-fivemins.EventsList.prototype.resize = function(opt_width, opt_height) {
+five.EventsList.prototype.resize = function(opt_width, opt_height) {
   var height = opt_height || this.el.parentNode.offsetHeight;
   var headerHeight = this.headerEl_.offsetHeight;
 
   this.eventsScrollBox_.resize(undefined, Math.max(50, height - headerHeight));
 };
 
-fivemins.EventsList.prototype.disposeInternal = function() {
+five.EventsList.prototype.disposeInternal = function() {
   if (this.nowTrackerIntervalId_) {
     window.clearInterval(this.nowTrackerIntervalId_);
     delete this.nowTrackerIntervalId_;
@@ -134,7 +134,7 @@ fivemins.EventsList.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
-fivemins.EventsList.prototype.loadEvents_ = function() {
+five.EventsList.prototype.loadEvents_ = function() {
   var spinEntry = this.spinner_.spin(150);
   return this.calendarApi_.loadEvents(this.calendar_['id'], this.startDate_,
       this.endDate_).
@@ -146,22 +146,22 @@ fivemins.EventsList.prototype.loadEvents_ = function() {
       }, this);
 };
 
-fivemins.EventsList.prototype.displayEvents_ = function() {
+five.EventsList.prototype.displayEvents_ = function() {
   this.eventsScrollBox_.setEvents(this.events_);
 };
 
-fivemins.EventsList.prototype.scrollToNow_ = function(opt_animate) {
+five.EventsList.prototype.scrollToNow_ = function(opt_animate) {
   this.eventsScrollBox_.scrollToTime(new goog.date.DateTime(), true,
       opt_animate);
 };
 
-fivemins.EventsList.prototype.handleNowTrackerTick_ = function() {
+five.EventsList.prototype.handleNowTrackerTick_ = function() {
   var now = new goog.date.DateTime();
   this.nowMarker_.setTime(now);
   if (this.eventsScrollBox_.isTimeInView(now)) {
     if (this.nowTrackerLastTickTime_) {
       var interval = new goog.date.Interval(goog.date.Interval.SECONDS,
-          fivemins.util.msToSec(now.getTime() -
+          five.util.msToSec(now.getTime() -
               this.nowTrackerLastTickTime_.getTime()));
       this.eventsScrollBox_.scrollByTime(
           this.nowTrackerLastTickTime_, interval, true);
@@ -174,7 +174,7 @@ fivemins.EventsList.prototype.handleNowTrackerTick_ = function() {
   }
 };
 
-fivemins.EventsList.prototype.initDefaultDateRange_ = function() {
+five.EventsList.prototype.initDefaultDateRange_ = function() {
   var yesterday = new goog.date.Date();
   yesterday.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
   this.startDate_ = new goog.date.DateTime();
@@ -187,13 +187,13 @@ fivemins.EventsList.prototype.initDefaultDateRange_ = function() {
 };
 
 /** @param {goog.events.Event} e */
-fivemins.EventsList.prototype.handleRefreshClick_ = function(e) {
+five.EventsList.prototype.handleRefreshClick_ = function(e) {
   e.preventDefault();
   this.loadEvents_();
 };
 
 /** @param {goog.events.Event} e */
-fivemins.EventsList.prototype.handleNowClick_ = function(e) {
+five.EventsList.prototype.handleNowClick_ = function(e) {
   e.preventDefault();
   this.scrollToNow_(true);
 };

@@ -1,6 +1,6 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('fivemins.Component');
+goog.provide('five.Component');
 
 goog.require('goog.asserts');
 goog.require('goog.dom');
@@ -11,31 +11,31 @@ goog.require('goog.style');
  * @constructor
  * @extends {goog.events.EventTarget}
  */
-fivemins.Component = function() {
+five.Component = function() {
   goog.base(this);
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler);
 };
-goog.inherits(fivemins.Component, goog.events.EventTarget);
+goog.inherits(five.Component, goog.events.EventTarget);
 
 /** @type {Element} */
-fivemins.Component.prototype.el;
+five.Component.prototype.el;
 
-fivemins.Component.prototype.createDom = function() {
+five.Component.prototype.createDom = function() {
   goog.asserts.assert(!this.el);
   this.el = document.createElement('div');
 };
 
-fivemins.Component.prototype.render = function(parentEl) {
+five.Component.prototype.render = function(parentEl) {
   if (!this.el) {
     this.createDom();
   }
   parentEl.appendChild(this.el);
 };
 
-fivemins.Component.prototype.disposeInternal = function() {
+five.Component.prototype.disposeInternal = function() {
   goog.dom.removeNode(this.el);
   delete this.el;
   goog.base(this, 'disposeInternal');
