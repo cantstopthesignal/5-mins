@@ -22,6 +22,7 @@ fivemins.Dialog.prototype.createDom = function() {
   goog.dom.classes.add(this.el, 'dialog');
 };
 
+/** @param {Element=} opt_parentEl */
 fivemins.Dialog.prototype.show = function(opt_parentEl) {
   if (!this.el) {
     this.createDom();

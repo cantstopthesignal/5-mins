@@ -16,7 +16,7 @@ fivemins.Component = function() {
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
-  this.registerDisposable(this.eventHandler_);
+  this.registerDisposable(this.eventHandler);
 };
 goog.inherits(fivemins.Component, goog.events.EventTarget);
 

@@ -30,7 +30,7 @@ fivemins.EventsScrollBox = function() {
   /** @type {Array.<fivemins.EventCard>} */
   this.eventCards_ = [];
 
-  /** @type {Array.<fivemins.TimeMarkers>} */
+  /** @type {Array.<fivemins.TimeMarker>} */
   this.timeMarkers_ = [];
 };
 goog.inherits(fivemins.EventsScrollBox, fivemins.Component);
@@ -65,7 +65,7 @@ fivemins.EventsScrollBox.prototype.timeAxisLayer_;
 /** @type {Element} */
 fivemins.EventsScrollBox.prototype.timeMarkersLayer_;
 
-/** @type {Element} */
+/** @type {fivemins.TimeAxisPatchCanvas} */
 fivemins.EventsScrollBox.prototype.timeAxisPatchCanvas_;
 
 /** @type {fivemins.EventListLayout.TimeMap} */
@@ -113,9 +113,14 @@ fivemins.EventsScrollBox.prototype.render = function(parentEl) {
   this.renderEvents_();
 };
 
+/**
+ * @param {number=} opt_width
+ * @param {number=} opt_height
+ */
 fivemins.EventsScrollBox.prototype.resize = function(opt_width, opt_height) {
+  var width = opt_width || this.el.parentNode.offsetWidth;
   var height = opt_height || this.el.parentNode.offsetHeight;
-  goog.style.setBorderBoxSize(this.el, new goog.math.Size(undefined, height));
+  goog.style.setBorderBoxSize(this.el, new goog.math.Size(width, height));
 };
 
 fivemins.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {

@@ -18,10 +18,10 @@ fivemins.TimeMarker = function(time) {
 goog.inherits(fivemins.TimeMarker, fivemins.Component);
 
 
-/** @type {fivemins.EventScrollBox} */
+/** @type {fivemins.EventsScrollBox} */
 fivemins.TimeMarker.prototype.owner_;
 
-/** @param {fivemins.EventScrollBox} owner */
+/** @param {fivemins.EventsScrollBox} owner */
 fivemins.TimeMarker.prototype.setOwner = function(owner) {
   this.owner_ = owner;
   if (!this.owner_) {

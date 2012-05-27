@@ -21,7 +21,7 @@ fivemins.TimeAxisPatch.prototype.owner_;
 fivemins.TimeAxisPatch.prototype.attachedToEvent_ = false;
 
 /** @type {number} */
-fivemins.TimeAxisPatch.prototype.axisTop = false;
+fivemins.TimeAxisPatch.prototype.axisTop;
 
 /** @type {number} */
 fivemins.TimeAxisPatch.prototype.axisBottom;

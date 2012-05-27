@@ -94,5 +94,5 @@ fivemins.EventCard.prototype.setRect = function(rect) {
 
 fivemins.EventCard.prototype.timeAxisPatchUpdated = function() {
   goog.dom.classes.enable(this.el, 'attached-to-patch',
-      this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent());
+      !!this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent());
 };

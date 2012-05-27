@@ -95,11 +95,14 @@ fivemins.EventListLayout.prototype.timeMap_;
 /** @type {fivemins.EventListLayout.TimeMap} */
 fivemins.EventListLayout.prototype.linearTimeMap_;
 
-/** @type {number} */
+/** @type {goog.date.DateTime} */
 fivemins.EventListLayout.prototype.minEventTime_;
 
-/** @type {number} */
+/** @type {goog.date.DateTime} */
 fivemins.EventListLayout.prototype.maxEventTime_;
+
+/** @type {number} (see Params) */
+fivemins.EventListLayout.prototype.distancePerHour;
 
 /** @param {Array.<fivemins.EventListLayout.Event>} events */
 fivemins.EventListLayout.prototype.setEvents = function(events) {
@@ -527,6 +530,7 @@ fivemins.EventListLayout.Event.prototype.disposeInternal = function() {
 /**
  * Helper object to provide a map from times to pixels.
  * @constructor
+ * @extends {goog.Disposable}
  */
 fivemins.EventListLayout.TimeMap = function(timeList, yPosList,
     defaultDistancePerHour) {
@@ -542,7 +546,8 @@ fivemins.EventListLayout.TimeMap.prototype.timeToYPos = function(time) {
   var timestamp = time.getTime();
   var beforeIndex = -goog.array.binarySelect(this.timeList_,
       function(candidateTime) {
-    return goog.date.Date.compare(time, candidateTime) || 1;
+    return goog.date.Date.compare(goog.asserts.assertObject(time),
+        candidateTime) || 1;
   }) - 2;
   var afterIndex = beforeIndex + 1;
   if (beforeIndex < 0 || afterIndex >= this.timeList_.length) {

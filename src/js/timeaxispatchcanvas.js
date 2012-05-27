@@ -158,8 +158,8 @@ fivemins.TimeAxisPatchCanvas.prototype.doPaintUpdateRect_ = function() {
     }
   }, this);
   var oldTopOffset = this.topOffset_;
-  this.topOffset_ = minYPos;
-  if (oldTopOffset != this.topOFfset_) {
+  this.topOffset_ = minYPos || 0;
+  if (oldTopOffset != this.topOffset_) {
     goog.style.setPosition(this.el, this.pos_.x, this.pos_.y + this.topOffset_);
   }
   var oldHeight = this.height_;
