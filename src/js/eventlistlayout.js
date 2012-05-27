@@ -41,6 +41,12 @@ fivemins.EventListLayout.Params = function() {
   this.distancePerHour = 50;
 
   /** @type {number} */
+  this.minDistancePerHour = 20;
+
+  /** @type {number} */
+  this.minTimePointSpacing = 2;
+
+  /** @type {number} */
   this.minEventHeight = 10;
 
   /** @type {number} */
@@ -89,6 +95,12 @@ fivemins.EventListLayout.prototype.timeMap_;
 /** @type {fivemins.EventListLayout.TimeMap} */
 fivemins.EventListLayout.prototype.linearTimeMap_;
 
+/** @type {number} */
+fivemins.EventListLayout.prototype.minEventTime_;
+
+/** @type {number} */
+fivemins.EventListLayout.prototype.maxEventTime_;
+
 /** @param {Array.<fivemins.EventListLayout.Event>} events */
 fivemins.EventListLayout.prototype.setEvents = function(events) {
   this.events_ = events;
@@ -114,7 +126,9 @@ fivemins.EventListLayout.prototype.calc = function() {
   this.assignEventsToColumns_();
   this.calcColumnCounts_();
   this.positionTimePoints_();
+  this.calcInitialTimePointConstraints_();
   this.enforceMinEventHeight_();
+  this.resolveTimePointConstraints_();
   this.calcTimeMap_();
   this.calcLinearTimes_();
   this.calcLinearTimeMap_();
@@ -141,15 +155,25 @@ fivemins.EventListLayout.prototype.disposeInternal = function() {
 
 fivemins.EventListLayout.prototype.calcTimeRange_ = function() {
   goog.array.forEach(this.events_, function(event) {
-    if (!this.minTime || goog.date.Date.compare(
-        this.minTime, event.startTime) > 0) {
-      this.minTime = event.startTime.clone();
+    if (!this.minEventTime_ || goog.date.Date.compare(
+        this.minEventTime_, event.startTime) > 0) {
+      this.minEventTime_ = event.startTime.clone();
     }
-    if (!this.maxTime || goog.date.Date.compare(
-        this.maxTime, event.endTime) < 0) {
-      this.maxTime = event.endTime.clone();
+    if (!this.maxEventTime_ || goog.date.Date.compare(
+        this.maxEventTime_, event.endTime) < 0) {
+      this.maxEventTime_ = event.endTime.clone();
     }
   }, this);
+  if (this.minEventTime_ && this.maxEventTime_) {
+    if (!this.minTime || goog.date.Date.compare(
+        this.minTime, this.minEventTime_) > 0) {
+      this.minTime = this.minEventTime_.clone();
+    }
+    if (!this.maxTime || goog.date.Date.compare(
+        this.maxTime, this.minEventTime_) < 0) {
+      this.maxTime = this.maxEventTime_.clone();
+    }
+  }
 };
 
 fivemins.EventListLayout.prototype.calcTimePoints_ = function() {
@@ -276,46 +300,58 @@ fivemins.EventListLayout.prototype.calcColumnCounts_ = function() {
 };
 
 fivemins.EventListLayout.prototype.positionTimePoints_ = function() {
-  if (!this.timePoints_.length) {
-    return;
-  }
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timePoint.yPos = fivemins.util.round(fivemins.util.msToHourFloat(
         timePoint.getTime() - this.minTime.getTime()) * this.distancePerHour);
   }, this);
 };
 
+fivemins.EventListLayout.prototype.calcInitialTimePointConstraints_ =
+    function() {
+  goog.array.forEach(this.timePoints_, function(timePoint) {
+    timePoint.minHeight = this.minTimePointSpacing;
+    if (timePoint.next) {
+      var timeBasedMinHeight = Math.ceil(fivemins.util.msToHourFloat(
+          timePoint.next.time.getTime() - timePoint.time.getTime()) *
+          this.minDistancePerHour);
+      timePoint.minHeight = Math.max(timePoint.minHeight, timeBasedMinHeight);
+    }
+  }, this);
+};
+
 fivemins.EventListLayout.prototype.enforceMinEventHeight_ = function() {
-  function expandTimePointRangeBy(startTimePoint, endTimePoint, height) {
-    // Get all time points between startTimePoint and endTimePoint.
-    var timePointsBetween = [];
-    var timePointIter = startTimePoint.next;
-    while (timePointIter && timePointIter != endTimePoint) {
-      timePointsBetween.push(timePointIter);
+  // Apply minimum height constraints to time points such that once resolved
+  // each event will have minimum sizing obeyed.
+  goog.array.forEach(this.events_, function(event) {
+    // Heuristic: find the time point in [start and end) that has the largest
+    // time gap and make it the victim of the constraint.
+    var maxTimeGapTimePoint = null;
+    var maxTimeGap = 0;
+    var totalMinHeights = 0;
+    var timePointIter = event.startTimePoint;
+    while (timePointIter != event.endTimePoint) {
+      var timeGap = timePointIter.next.getTime() - timePointIter.getTime();
+      if (timeGap > maxTimeGap || maxTimeGapTimePoint === null) {
+        maxTimeGap = timeGap;
+        maxTimeGapTimePoint = timePointIter;
+      }
+      totalMinHeights += timePointIter.minHeight;
       timePointIter = timePointIter.next;
     }
-    // If time points were found between, shift each partially.
-    if (timePointsBetween.length) {
-      var expandPerPoint = fivemins.util.round(
-          height / (timePointsBetween.length + 1));
-      var expand = expandPerPoint;
-      goog.array.forEach(timePointsBetween, function(timePoint) {
-        timePoint.yPos += expand;
-        expand += expandPerPoint;
-      });
+    if (this.minEventHeight > totalMinHeights) {
+      maxTimeGapTimePoint.minHeight += this.minEventHeight - totalMinHeights;
     }
-    // Shift all remaining time points including endTimePoint by height.
-    while (timePointIter) {
-      timePointIter.yPos += height;
-      timePointIter = timePointIter.next;
+  }, this);
+};
+
+fivemins.EventListLayout.prototype.resolveTimePointConstraints_ = function() {
+  goog.array.forEach(this.timePoints_, function(timePoint) {
+    var nextTimePoint = timePoint.next;
+    if (!timePoint.next || !timePoint.minHeight) {
+      return;
     }
-  }
-  goog.array.forEach(this.eventsByDuration_, function(event) {
-    var height = event.endTimePoint.yPos - event.startTimePoint.yPos;
-    if (height < this.minEventHeight) {
-      expandTimePointRangeBy(event.startTimePoint, event.endTimePoint,
-          this.minEventHeight - height);
-    }
+    nextTimePoint.yPos = Math.max(nextTimePoint.yPos,
+        timePoint.yPos + timePoint.minHeight);
   }, this);
 };
 
@@ -335,13 +371,14 @@ fivemins.EventListLayout.prototype.calcLinearTimes_ = function() {
     return;
   }
   // Map all time points to linear hour time.
-  var hourIter = this.minTime.clone();
+  var hourIter = fivemins.util.hourFloor(this.minTime);
   var timePointIdx = 0;
   while (timePointIdx < this.timePoints_.length) {
     var timePoint = this.timePoints_[timePointIdx];
     var nextHour = hourIter.clone();
     nextHour.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
     if (goog.date.Date.compare(timePoint.time, hourIter) < 0) {
+      timePoint.linearTimeYPos = timePoint.yPos;
       timePointIdx++;
       continue;
     } else if (goog.date.Date.compare(timePoint.time, nextHour) >= 0) {
@@ -362,11 +399,35 @@ fivemins.EventListLayout.prototype.calcLinearTimes_ = function() {
 };
 
 fivemins.EventListLayout.prototype.calcLinearTimeMap_ = function() {
+  // Add all relevant hours with direct maps to non-linear yPos to enforce
+  // matching at each hour.
+  var timeAndYPosList = [];
+  var hourTimeSet = {};
+  if (this.minEventTime_ && this.maxEventTime_) {
+    fivemins.util.forEachHourWrap(this.minEventTime_, this.maxEventTime_,
+        function(hour) {
+      var yPos = this.timeMap_.timeToYPos(hour);
+      timeAndYPosList.push([hour, yPos]);
+      hourTimeSet[hour.toString()] = true;
+    }, this);
+  }
+
+  // Stitch in linear time yPos from time points.
+  goog.array.forEach(this.timePoints_, function(timePoint) {
+    if (!goog.object.containsKey(hourTimeSet, timePoint.time.toString())) {
+      timeAndYPosList.push([timePoint.time, timePoint.linearTimeYPos]);
+    }
+  }, this);
+
+  timeAndYPosList.sort(function(a, b) {
+    return goog.date.Date.compare(a[0], b[0]);
+  });
+
   var timeList = [];
   var yPosList = [];
-  goog.array.forEach(this.timePoints_, function(timePoint) {
-    timeList.push(timePoint.time);
-    yPosList.push(timePoint.linearTimeYPos);
+  goog.array.forEach(timeAndYPosList, function(entry) {
+    timeList.push(entry[0]);
+    yPosList.push(entry[1]);
   }, this);
   this.linearTimeMap_ = new fivemins.EventListLayout.TimeMap(timeList, yPosList,
       this.distancePerHour);
@@ -560,6 +621,7 @@ fivemins.EventListLayout.TimePoint_ = function(time) {
   this.next = null;
   this.yPos = null;
   this.linearTimeYPos = null;
+  this.minHeight = null;
   this.openEvents = [];
   this.columnCount = null;
 };

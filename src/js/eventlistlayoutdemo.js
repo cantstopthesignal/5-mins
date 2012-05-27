@@ -34,11 +34,11 @@ fivemins.EventListLayoutDemo = function() {
   this.eventContainerEl_.className = 'event-container';
   this.el.appendChild(this.eventContainerEl_);
 
-  this.timeAxisLayer_ = document.createElement('div');
-  this.eventContainerEl_.appendChild(this.timeAxisLayer_);
-
   this.timeAxisPatchLayer_ = document.createElement('div');
   this.eventContainerEl_.appendChild(this.timeAxisPatchLayer_);
+
+  this.timeAxisLayer_ = document.createElement('div');
+  this.eventContainerEl_.appendChild(this.timeAxisLayer_);
 
   this.eventsLayer_ = document.createElement('div');
   this.eventContainerEl_.appendChild(this.eventsLayer_);
@@ -113,10 +113,13 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
       maxTime = event.endTime.clone();
     }
   }, this);
-  maxTime.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
+  maxTime = fivemins.util.hourCeil(maxTime);
+  minTime.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
 
   var params = new fivemins.EventListLayout.Params();
   params.minEventHeight = 25;
+  params.distancePerHour = 50;
+  params.minDistancePerHour = 50;
   params.layoutWidth = 500 - fivemins.EventListLayoutDemo.TIME_AXIS_WIDTH;
   params.timeAxisPatchWidth = fivemins.EventListLayoutDemo.
       TIME_AXIS_PATCH_WIDTH;
@@ -129,7 +132,9 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
   this.linearTimeMap_ = layout.getLinearTimeMap();
 
   goog.array.forEach(layout.timePoints_, function(timePoint) {
-    window.console.log('TimePoint ' + timePoint.time.toUsTimeString());
+    window.console.log('TimePoint', timePoint.time.toUsTimeString(),
+        'minHeight', timePoint.minHeight, 'height',
+        timePoint.next ? (timePoint.next.yPos - timePoint.yPos) : 0);
     goog.array.forEach(timePoint.openEvents, function(event) {
       window.console.log('  ' + event.startTime.toUsTimeString());
     });
@@ -168,7 +173,8 @@ fivemins.EventListLayoutDemo.prototype.layout_ = function() {
 
 fivemins.EventListLayoutDemo.prototype.renderTimeAxis_ = function(minTime,
     maxTime) {
-  fivemins.util.forEachHourWrap(minTime, maxTime, function(hour, nextHour) {
+  fivemins.util.forEachHourRangeWrap(minTime, maxTime, function(hour,
+      nextHour) {
     var timeStr = hour.toUsTimeString(false, true, true);
     var timeEl = document.createElement('div');
     timeEl.className = 'time-axis';
@@ -187,8 +193,7 @@ fivemins.EventListLayoutDemo.prototype.renderTimeAxis_ = function(minTime,
 fivemins.EventListLayoutDemo.prototype.renderTimeAxisPatch_ = function(
     layoutEvents) {
   var canvasEl = document.createElement('canvas');
-  canvasEl.style.left = (fivemins.EventListLayoutDemo.TIME_AXIS_WIDTH + 1) +
-      "px";
+  canvasEl.style.left = fivemins.EventListLayoutDemo.TIME_AXIS_WIDTH + "px";
   canvasEl.setAttribute('width', fivemins.EventListLayoutDemo.
       TIME_AXIS_PATCH_WIDTH - 1);
   canvasEl.setAttribute('height', 700);
@@ -201,8 +206,7 @@ fivemins.EventListLayoutDemo.prototype.renderTimeAxisPatch_ = function(
   ctx.lineCap = 'square';
 
   function startPoint(timePoint) {
-    return new goog.math.Coordinate(0,
-        timePoint.linearTimeYPos);
+    return new goog.math.Coordinate(0, timePoint.linearTimeYPos);
   }
 
   function endPoint(timePoint) {

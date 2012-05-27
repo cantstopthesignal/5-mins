@@ -26,6 +26,10 @@ fivemins.util.msToSec = function(ms) {
   return fivemins.util.round(ms / 1000);
 };
 
+fivemins.util.msToMin = function(ms) {
+  return fivemins.util.round(ms / 1000 / 60);
+};
+
 fivemins.util.hourFloor = function(date) {
   var hourFloor = date.clone();
   hourFloor.setMinutes(0);
@@ -43,18 +47,40 @@ fivemins.util.hourCeil = function(date) {
 }
 
 /**
- * Call fn for each hour surrounding startTime and ending at or past endTime.
- * The arguments to fn are (hour, nextHour, isLast).
+ * Call fn for each hour range surrounding startTime and endTime.
+ * fn is called with arguments (hour, nextHour, isLast).
  */
-fivemins.util.forEachHourWrap = function(startTime, endTime, fn,
+fivemins.util.forEachHourRangeWrap = function(startTime, endTime, fn,
     opt_scope) {
+  fivemins.util.forEachHourWrapInternal_(startTime, endTime, fn, false,
+      opt_scope);
+};
+
+/**
+ * Call fn for each hour surrounding startTime and endTime.
+ * fn is called with arguments (hour, nextHour, isLast).
+ */
+fivemins.util.forEachHourWrap = function(startTime, endTime, fn, opt_scope) {
+  fivemins.util.forEachHourWrapInternal_(startTime, endTime, fn, true,
+      opt_scope);
+};
+
+fivemins.util.forEachHourWrapInternal_ = function(startTime, endTime, fn,
+    callWithFinal, opt_scope) {
+  goog.asserts.assert(startTime instanceof goog.date.DateTime);
+  goog.asserts.assert(endTime instanceof goog.date.DateTime);
   var hourIter = fivemins.util.hourFloor(startTime);
   var maxTime = endTime.getTime();
-  while (hourIter.getTime() <= maxTime) {
+  var firstIter = true;
+  while (hourIter.getTime() < maxTime || firstIter) {
     var nextHour = hourIter.clone();
     nextHour.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
-    var isLast = nextHour.getTime() > maxTime;
+    var isLast = nextHour.getTime() >= maxTime && !callWithFinal;
     fn.call(opt_scope, hourIter, nextHour, isLast);
+    firstIter = false;
     hourIter = nextHour;
+  }
+  if (callWithFinal) {
+    fn.call(opt_scope, hourIter, null, true);
   }
 };

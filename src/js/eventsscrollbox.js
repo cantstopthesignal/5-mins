@@ -235,7 +235,7 @@ fivemins.EventsScrollBox.prototype.renderTimeAxis_ = function() {
   goog.asserts.assert(this.endDate_);
   goog.asserts.assert(this.timeMap_);
   goog.dom.removeChildren(this.timeAxisLayer_);
-  fivemins.util.forEachHourWrap(this.startDate_, this.endDate_, function(
+  fivemins.util.forEachHourRangeWrap(this.startDate_, this.endDate_, function(
       hour, nextHour) {
     var timeStr = hour.toUsTimeString(false, true, true);
     var timeEl = document.createElement('div');
@@ -268,6 +268,8 @@ fivemins.EventsScrollBox.prototype.layout_ = function() {
   var params = new fivemins.EventListLayout.Params();
   params.minEventHeight = fivemins.EventsScrollBox.MIN_EVENT_HEIGHT;
   params.distancePerHour = fivemins.EventsScrollBox.DEFAULT_HOUR_PIXEL_HEIGHT;
+  params.minDistancePerHour = fivemins.EventsScrollBox.
+      DEFAULT_HOUR_PIXEL_HEIGHT;
   params.layoutWidth = this.eventAreaWidth_;
   params.timeAxisPatchWidth = fivemins.EventsScrollBox.TIME_AXIS_PATCH_WIDTH;
   if (this.startDate_) {
