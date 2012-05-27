@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <project basedir="." default="compile">
 
-  <property name="js-source.dir" location="src/js" />
+  <property name="js-source.relative-dir" value="src/javascript" />
+  <property name="js-source.dir" location="${js-source.relative-dir}" />
   <property name="js-output.dir" location="war/js" />
 
   <property name="closure-library.dir" location="lib/closure-library" />
@@ -15,16 +16,20 @@
   <property name="closure-deps-writer.bin"
       value="${closure-library.dir}/closure/bin/build/depswriter.py" />
 
-  <target name="compile-debug">
+  <target name="deps-debug">
+
+    <closure-deps-writer root="${js-source.dir}"
+        rootRelativeToClosure="../../../../${js-source.relative-dir}/"
+        destfile="${js-source.dir}/deps.js" />
+
+  </target>
+
+  <target name="compile-debug" depends="deps-debug">
 
     <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
         namespace="five.main"
         warningLevel="QUIET"
         destfile="${js-output.dir}/main_debug.js" />
-
-    <closure-deps-writer root="${js-source.dir}"
-        rootRelativeToClosure="../../../../src/js/"
-        destfile="${js-source.dir}/deps.js" />
 
   </target>
 
