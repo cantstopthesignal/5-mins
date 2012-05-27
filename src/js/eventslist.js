@@ -80,6 +80,13 @@ fivemins.EventsList.prototype.createDom = function() {
       this.handleRefreshClick_);
   this.headerEl_.appendChild(refreshEl);
 
+  var nowEl = document.createElement('div');
+  nowEl.className = 'button';
+  nowEl.appendChild(document.createTextNode('Now'));
+  this.eventHandler.listen(nowEl, goog.events.EventType.CLICK,
+      this.handleNowClick_);
+  this.headerEl_.appendChild(nowEl);
+
   this.spinner_.render(this.headerEl_);
 
   var titleEl = document.createElement('div');
@@ -102,7 +109,7 @@ fivemins.EventsList.prototype.render = function(parentEl) {
   this.eventsScrollBox_.addTimeMarker(this.nowMarker_);
 
   if (!this.events_) {
-    this.loadEvents_().addCallback(this.scrollToNow_, this);
+    this.loadEvents_().addCallback(function() {this.scrollToNow_(); }, this);
   }
 
   if (!this.nowTrackerIntervalId_) {
@@ -143,8 +150,9 @@ fivemins.EventsList.prototype.displayEvents_ = function() {
   this.eventsScrollBox_.setEvents(this.events_);
 };
 
-fivemins.EventsList.prototype.scrollToNow_ = function() {
-  this.eventsScrollBox_.scrollToTime(new goog.date.DateTime(), true);
+fivemins.EventsList.prototype.scrollToNow_ = function(opt_animate) {
+  this.eventsScrollBox_.scrollToTime(new goog.date.DateTime(), true,
+      opt_animate);
 };
 
 fivemins.EventsList.prototype.handleNowTrackerTick_ = function() {
@@ -182,4 +190,10 @@ fivemins.EventsList.prototype.initDefaultDateRange_ = function() {
 fivemins.EventsList.prototype.handleRefreshClick_ = function(e) {
   e.preventDefault();
   this.loadEvents_();
+};
+
+/** @param {goog.events.Event} e */
+fivemins.EventsList.prototype.handleNowClick_ = function(e) {
+  e.preventDefault();
+  this.scrollToNow_(true);
 };

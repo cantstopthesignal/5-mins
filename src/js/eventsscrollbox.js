@@ -14,6 +14,9 @@ goog.require('goog.date.DateRange');
 goog.require('goog.date.Interval');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
+goog.require('goog.events.EventHandler');
+goog.require('goog.fx.Animation');
+goog.require('goog.fx.easing');
 goog.require('goog.math.Coordinate');
 goog.require('goog.style');
 
@@ -43,6 +46,9 @@ fivemins.EventsScrollBox.TIME_AXIS_WIDTH = 40;
 
 /** @type {number} */
 fivemins.EventsScrollBox.TIME_AXIS_PATCH_WIDTH = 15;
+
+/** @type {number} */
+fivemins.EventsScrollBox.SCROLL_ANIMATION_DURATION_MS = 500;
 
 /** @type {goog.date.DateTime} */
 fivemins.EventsScrollBox.prototype.startDate_;
@@ -153,7 +159,7 @@ fivemins.EventsScrollBox.prototype.getTimeMarkerRect = function(time) {
  * instead of starting exactly at the specified time.
  */
 fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
-    opt_showContext) {
+    opt_showContext, opt_animate) {
   if (!this.timeMap_) {
     return;
   }
@@ -161,7 +167,29 @@ fivemins.EventsScrollBox.prototype.scrollToTime = function(date,
   if (opt_showContext) {
     yPos -= Math.min(100, this.el.offsetHeight / 4);
   }
-  this.el.scrollTop = yPos;
+
+  if (opt_animate) {
+    var lastScrollTop = this.el.scrollTop || 0;
+    var animation = new goog.fx.Animation([lastScrollTop], [yPos],
+        fivemins.EventsScrollBox.SCROLL_ANIMATION_DURATION_MS,
+        goog.fx.easing.easeOut);
+    var EventType = goog.fx.Animation.EventType;
+    animation.registerDisposable(new goog.events.EventHandler(this).
+        listen(animation, [EventType.END, EventType.ANIMATE], function(e) {
+      if (this.el.scrollTop != lastScrollTop) {
+        // Detect user intervention.
+        goog.dispose(animation);
+        return;
+      }
+      this.el.scrollTop = lastScrollTop = Math.round(e.coords[0]);
+      if (e.type == EventType.END) {
+        goog.dispose(animation);
+      }
+    }));
+    animation.play();
+  } else {
+    this.el.scrollTop = yPos;
+  }
 };
 
 /**

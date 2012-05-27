@@ -34,9 +34,9 @@ a:hover {
   color: black;
   cursor: pointer;
   border: 1px solid #999;
-  border-radius: 3px;
+  border-radius: 2px;
   display: inline-block;
-  line-height: 18px;
+  line-height: 16px;
   font-size: 14px;
   padding: 5px 10px;
   text-align: center;
@@ -73,11 +73,12 @@ a:hover {
 }
 .events-list > .header {
   padding: 5px;
-  line-height: 30px;
+  line-height: 28px;
   max-width: 500px;
 }
 .events-list > .header > .button {
   float: right;
+  margin-left: 5px;
 }
 .events-list > .header > .spinner {
   float: right;
@@ -153,4 +154,9 @@ a:hover {
   background: url(/images/spinner.gif);
   width: 32px;
   height: 32px;
+  transform: scale(0.93, 0.93);
+  -moz-transform: scale(0.93, 0.93);
+  -webkit-transform: scale(0.93, 0.93);
+  -ms-transform: scale(0.93, 0.93);
+  -o-transform: scale(0.93, 0.93);
 }
