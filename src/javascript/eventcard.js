@@ -8,22 +8,15 @@ goog.require('goog.dom');
 goog.require('goog.style');
 
 /**
+ * @param {five.Event} event
  * @constructor
  * @extends {five.Component}
  */
 five.EventCard = function(event) {
-  /** @type {Object} */
+  /** @type {five.Event} */
   this.event_ = event;
 
-  var startDateStr = event['start']['dateTime'];
-  goog.asserts.assertString(startDateStr);
-  /** @type {goog.date.DateTime} */
-  this.startTime_ = new goog.date.DateTime(new Date(startDateStr));
-
-  var endDateStr = event['end']['dateTime'];
-  goog.asserts.assertString(endDateStr);
-  /** @type {goog.date.DateTime} */
-  this.endTime_ = new goog.date.DateTime(new Date(endDateStr));
+  this.event_.attachDisplay(this);
 };
 goog.inherits(five.EventCard, five.Component);
 
@@ -40,19 +33,17 @@ five.EventCard.prototype.timeAxisPatch_;
 
 /** @return {goog.date.DateTime} */
 five.EventCard.prototype.getStartTime = function() {
-  return this.startTime_;
+  return this.event_.getStartTime();
 };
 
 /** @return {goog.date.DateTime} */
 five.EventCard.prototype.getEndTime = function() {
-  return this.endTime_;
+  return this.event_.getEndTime();
 };
 
 /** @param {five.TimeAxisPatch} patch */
 five.EventCard.prototype.setTimeAxisPatch = function(patch) {
-  if (this.timeAxisPatch_) {
-    goog.dispose(this.timeAxisPatch_);
-  }
+  goog.dispose(this.timeAxisPatch_);
   this.timeAxisPatch_ = patch;
   this.timeAxisPatchUpdated();
 };
@@ -68,13 +59,15 @@ five.EventCard.prototype.createDom = function() {
   var dateRangeEl = document.createElement('div');
   goog.dom.classes.add(dateRangeEl, 'date-range');
   dateRangeEl.appendChild(document.createTextNode(
-      five.EventCard.toTimeString_(this.startTime_) + ' - ' +
-      five.EventCard.toTimeString_(this.endTime_)));
+      five.EventCard.toTimeString_(this.getStartTime()) + ' - ' +
+      five.EventCard.toTimeString_(this.getEndTime())));
   this.el.appendChild(dateRangeEl);
-  this.el.appendChild(document.createTextNode(this.event_['summary']));
+  this.el.appendChild(document.createTextNode(this.event_.getSummary()));
 };
 
+/** @override */
 five.EventCard.prototype.disposeInternal = function() {
+  this.event_.detachDisplay(this);
   goog.dispose(this.timeAxisPatch_);
   goog.base(this, 'disposeInternal');
 };

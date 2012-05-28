@@ -3,6 +3,7 @@
 goog.provide('five.EventsList');
 
 goog.require('five.Component');
+goog.require('five.Event');
 goog.require('five.EventsScrollBox');
 goog.require('five.Spinner');
 goog.require('five.TimeMarker');
@@ -53,7 +54,7 @@ five.EventsList.prototype.endDate_;
 /** @type {Element} */
 five.EventsList.prototype.headerEl_;
 
-/** @type {Array.<Object>} */
+/** @type {Array.<five.Event>} */
 five.EventsList.prototype.events_;
 
 /** @type {five.TimeMarker} */
@@ -126,11 +127,13 @@ five.EventsList.prototype.resize = function(opt_width, opt_height) {
   this.eventsScrollBox_.resize(undefined, Math.max(50, height - headerHeight));
 };
 
+/** @override */
 five.EventsList.prototype.disposeInternal = function() {
   if (this.nowTrackerIntervalId_) {
     window.clearInterval(this.nowTrackerIntervalId_);
     delete this.nowTrackerIntervalId_;
   }
+  goog.disposeAll(this.events_);
   goog.base(this, 'disposeInternal');
 };
 
@@ -140,10 +143,18 @@ five.EventsList.prototype.loadEvents_ = function() {
       this.endDate_).
       addCallback(function(resp) {
         goog.asserts.assert(resp['kind'] == 'calendar#events');
-        this.events_ = resp['items'] || [];
-        this.displayEvents_();
+        this.updateEventsData_(resp['items'] || []);
         spinEntry.release();
       }, this);
+};
+
+/** @param {Array.<Object>} eventsData */
+five.EventsList.prototype.updateEventsData_ = function(eventsData) {
+  goog.disposeAll(this.events_);
+  this.events_ = goog.array.map(eventsData, function(eventData) {
+    return new five.Event(eventData);
+  });
+  this.displayEvents_();
 };
 
 five.EventsList.prototype.displayEvents_ = function() {
