@@ -45,6 +45,7 @@ five.Spinner.prototype.releaseEntry = function(entry) {
   this.checkVisibility_();
 };
 
+/** @override */
 five.Spinner.prototype.disposeInternal = function() {
   this.clearCheckTimer_();
   goog.base(this, 'disposeInternal');

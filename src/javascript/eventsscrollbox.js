@@ -131,11 +131,10 @@ five.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
   }
 };
 
+/** @param {Array.<five.Event>} events */
 five.EventsScrollBox.prototype.setEvents = function(events) {
   this.timeAxisPatchCanvas_.startBatchUpdate();
-  goog.array.forEach(this.eventCards_, function(eventCard) {
-    goog.dispose(eventCard);
-  }, this);
+  goog.disposeAll(this.eventCards_);
   this.eventCards_ = goog.array.map(events, function(event) {
     return new five.EventCard(event);
   }, this);

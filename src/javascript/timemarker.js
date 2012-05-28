@@ -63,6 +63,7 @@ five.TimeMarker.prototype.layout = function() {
   goog.style.setBorderBoxSize(this.el, rect.getSize());
 };
 
+/** @override */
 five.TimeMarker.prototype.disposeInternal = function() {
   delete this.owner_;
   goog.base(this, 'disposeInternal');

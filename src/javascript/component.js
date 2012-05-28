@@ -35,6 +35,7 @@ five.Component.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 };
 
+/** @override */
 five.Component.prototype.disposeInternal = function() {
   goog.dom.removeNode(this.el);
   delete this.el;

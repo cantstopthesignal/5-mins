@@ -65,6 +65,7 @@ five.TimeAxisPatch.prototype.setParams = function(axisTop, axisBottom,
   }
 };
 
+/** @override */
 five.TimeAxisPatch.prototype.disposeInternal = function() {
   if (this.owner_) {
     this.owner_.removePatch(this);

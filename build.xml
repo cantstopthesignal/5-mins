@@ -71,6 +71,30 @@
         <arg value="--compiler_jar=${closure-compiler.jar}" />
         <arg value="--compiler_flags=--compilation_level=@{compilationLevel}" />
         <arg value="--compiler_flags=--warning_level=@{warningLevel}" />
+        <arg value="--compiler_flags=--jscomp_error=accessControls" />
+        <arg value="--compiler_flags=--jscomp_error=ambiguousFunctionDecl" />
+        <arg value="--compiler_flags=--jscomp_error=checkDebuggerStatement" />
+        <arg value="--compiler_flags=--jscomp_error=checkRegExp" />
+        <arg value="--compiler_flags=--jscomp_error=checkTypes" />
+        <arg value="--compiler_flags=--jscomp_error=checkVars" />
+        <arg value="--compiler_flags=--jscomp_error=const" />
+        <arg value="--compiler_flags=--jscomp_error=constantProperty" />
+        <arg value="--compiler_flags=--jscomp_error=deprecated" />
+        <arg value="--compiler_flags=--jscomp_error=duplicate" />
+        <!-- es5strict -->
+        <arg value="--compiler_flags=--jscomp_error=externsValidation" />
+        <arg value="--compiler_flags=--jscomp_error=fileoverviewTags" />
+        <arg value="--compiler_flags=--jscomp_error=globalThis" />
+        <arg value="--compiler_flags=--jscomp_error=internetExplorerChecks" />
+        <arg value="--compiler_flags=--jscomp_error=invalidCasts" />
+        <arg value="--compiler_flags=--jscomp_error=missingProperties" />
+        <arg value="--compiler_flags=--jscomp_error=nonStandardJsDocs" />
+        <arg value="--compiler_flags=--jscomp_error=strictModuleDepCheck" />
+        <arg value="--compiler_flags=--jscomp_error=undefinedNames" />
+        <arg value="--compiler_flags=--jscomp_error=undefinedVars" />
+        <arg value="--compiler_flags=--jscomp_error=unknownDefines" />
+        <arg value="--compiler_flags=--jscomp_error=uselessCode" />
+        <arg value="--compiler_flags=--jscomp_error=visibility" />
       </exec>
     </sequential>
   </macrodef>

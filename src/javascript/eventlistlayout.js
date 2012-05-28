@@ -150,6 +150,7 @@ five.EventListLayout.prototype.getLinearTimeMap = function() {
   return this.linearTimeMap_;
 };
 
+/** @override */
 five.EventListLayout.prototype.disposeInternal = function() {
   delete this.events_;
   delete this.timePoints_;
@@ -520,6 +521,7 @@ five.EventListLayout.Event = function(startTime, endTime) {
 };
 goog.inherits(five.EventListLayout.Event, goog.Disposable);
 
+/** @override */
 five.EventListLayout.Event.prototype.disposeInternal = function() {
   delete this.timePoints;
   delete this.startTimePoint;
@@ -632,6 +634,7 @@ five.EventListLayout.TimePoint_ = function(time) {
 };
 goog.inherits(five.EventListLayout.TimePoint_, goog.Disposable);
 
+/** @override */
 five.EventListLayout.TimePoint_.prototype.disposeInternal =
     function() {
   delete this.openEvents;

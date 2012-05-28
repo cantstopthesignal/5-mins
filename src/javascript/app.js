@@ -60,6 +60,7 @@ five.App.prototype.start = function() {
       this.handleWindowResize_);
 };
 
+/** @override */
 five.App.prototype.disposeInternal = function() {
   goog.dispose(this.calendarChooser_);
   goog.base(this, 'disposeInternal');
