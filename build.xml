@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <project basedir="." default="compile">
 
+  <property name="war.dir" location="war/" />
+
   <property name="js-source.relative-dir" value="src/javascript" />
   <property name="js-source.dir" location="${js-source.relative-dir}" />
-  <property name="js-output.dir" location="war/js" />
+  <property name="js-output.dir" location="${war.dir}/js" />
 
   <property name="closure-library.dir" location="lib/closure-library" />
   <property name="closure-compiler.dir" location="lib/closure-compiler" />
@@ -16,45 +18,67 @@
   <property name="closure-deps-writer.bin"
       value="${closure-library.dir}/closure/bin/build/depswriter.py" />
 
-  <target name="deps-debug">
+  <property name="create-symlinks.bin" value="tools/create_symlinks.py" />
 
+  <target name="deps-debug">
     <closure-deps-writer root="${js-source.dir}"
         rootRelativeToClosure="../../../../${js-source.relative-dir}/"
         destfile="${js-source.dir}/deps.js" />
-
   </target>
 
   <target name="compile-debug" depends="deps-debug">
-
     <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
         namespace="five.main"
         warningLevel="VERBOSE"
         destfile="${js-output.dir}/main_debug.js" />
-
   </target>
 
   <target name="compile-optimized">
-
     <closure-builder-compile compilationLevel="ADVANCED_OPTIMIZATIONS"
         namespace="five.main"
         warningLevel="VERBOSE"
         destfile="${js-output.dir}/main_optimized.js" />
-
   </target>
 
   <target name="compile" depends="compile-debug,compile-optimized" />
 
   <target name="clean">
-
     <delete>
-      <fileset dir="war/js">
+      <fileset dir="${war.dir}/js">
         <include name="*.js"/>
       </fileset>
     </delete>
-
   </target>
 
-  <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask"
+  <target name="deploy" depends="clean,compile,uninstall-debug-dirs" />
+
+  <target name="develop" depends="compile-debug,install-debug-dirs" />
+
+  <target name="install-debug-dirs">
+    <mkdir dir="${war.dir}/debug" />
+    <mkdir dir="${war.dir}/debug/src" />
+    <mkdir dir="${war.dir}/debug/lib" />
+    <symlink link="${war.dir}/debug/src/javascript"
+        resource="${js-source.dir}" overwrite="true" />
+    <symlink link="${war.dir}/debug/lib/closure-library"
+        resource="${closure-library.dir}" overwrite="true" />
+  </target>
+
+  <target name="uninstall-debug-dirs">
+    <symlink action="delete" link="${war.dir}/debug/src/javascript" />
+    <symlink action="delete" link="${war.dir}/debug/lib/closure-library" />
+    <delete includeemptydirs="true" failonerror="false">
+      <fileset dir="${war.dir}/debug">
+        <and>
+          <size value="0"/>
+          <type type="dir"/>
+         </and>
+      </fileset>
+    </delete>
+  </target>
+
+  <taskdef name="jscomp"
+      classname="com.google.javascript.jscomp.ant.CompileTask"
       classpath="${closure-compiler.jar}"/>
 
   <macrodef name="closure-builder-compile">
@@ -63,7 +87,8 @@
     <attribute name="namespace" />
     <attribute name="destfile" />
     <sequential>
-      <exec executable="${closure-builder.bin}" output="@{destfile}" logError="true">
+      <exec executable="${closure-builder.bin}" output="@{destfile}"
+          logError="true">
         <arg value="--root=${closure-library.dir}" />
         <arg value="--root=${js-source.dir}" />
         <arg value="--namespace=@{namespace}" />
