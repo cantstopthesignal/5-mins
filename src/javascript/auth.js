@@ -61,6 +61,12 @@ five.Auth.prototype.getAuthDeferred = function() {
 };
 
 five.Auth.prototype.loadGapiJavascriptClientAndAuth_ = function() {
+  if (goog.getObjectByName('gapi.client') &&
+      goog.getObjectByName('gapi.auth')) {
+    this.logger_.info('loadGapiJavascriptClientAndAuth_ already present');
+    this.handleGapiClientLoad_();
+    return;
+  }
   var callbackName = 'callback_' + goog.getUid(this);
   goog.exportSymbol(callbackName,
       goog.bind(this.handleGapiClientLoad_, this));
