@@ -43,6 +43,9 @@ five.CalendarChooser.prototype.chooseCalendar = function() {
     this.maybeChooseCalendarFromCookie_();
   }
   if (!this.choiceDeferred_.hasFired()) {
+    this.maybeChooseOnlyCalendar_();
+  }
+  if (!this.choiceDeferred_.hasFired()) {
     this.showChooserUi_();
   }
   return this.choiceDeferred_.branch();
@@ -92,6 +95,13 @@ five.CalendarChooser.prototype.setCalendarChoiceCookie_ = function(
       five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE,
       /* opt_path */ undefined, /* opt_domain */ undefined,
       /* opt_secure */ secure);
+};
+
+five.CalendarChooser.prototype.maybeChooseOnlyCalendar_ = function() {
+  var ownedCalendars = this.getOwnedCalendars_();
+  if (ownedCalendars.length == 1) {
+    this.fireCalendarChoice_(ownedCalendars[0]['id']);
+  }
 };
 
 five.CalendarChooser.prototype.maybeChooseCalendarFromCookie_ = function() {
