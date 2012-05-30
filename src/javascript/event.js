@@ -15,20 +15,29 @@ five.Event = function(eventData) {
   /** @type {Object} */
   this.eventData_ = eventData;
 
-  var startDateStr = this.eventData_['start']['dateTime'];
-  goog.asserts.assertString(startDateStr);
   /** @type {goog.date.DateTime} */
-  this.startTime_ = new goog.date.DateTime(new Date(startDateStr));
+  this.startTime_ = five.Event.parseEventDataDate_(this.eventData_['start']);
 
-  var endDateStr = this.eventData_['end']['dateTime'];
-  goog.asserts.assertString(endDateStr);
   /** @type {goog.date.DateTime} */
-  this.endTime_ = new goog.date.DateTime(new Date(endDateStr));
+  this.endTime_ = five.Event.parseEventDataDate_(this.eventData_['end']);
 
   /** @type {Array.<five.EventCard>} */
   this.eventDisplays_ = [];
 };
 goog.inherits(five.Event, goog.events.EventTarget);
+
+/** @return {goog.date.DateTime} */
+five.Event.parseEventDataDate_ = function(dateData) {
+  if ('dateTime' in dateData) {
+    var dateStr = goog.asserts.assertString(dateData['dateTime']);
+    return new goog.date.DateTime(new Date(dateStr));
+  } else if ('date' in dateData) {
+    var dateStr = goog.asserts.assertString(dateData['date']);
+    return new goog.date.DateTime(new Date(dateStr));
+  }
+  goog.asserts.fail('Unexpected date data');
+  return null;
+};
 
 /** @return {goog.date.DateTime} */
 five.Event.prototype.getStartTime = function() {

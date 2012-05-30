@@ -21,8 +21,8 @@ five.CalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
 /** @return {goog.async.Deferred} */
 five.CalendarApi.prototype.loadCalendarList = function() {
   var requestParams = {
-    path: '/calendar/v3/users/me/calendarList',
-    params: {}
+    'path': '/calendar/v3/users/me/calendarList',
+    'params': {}
   };
   return this.callApiWithAuthRetry_(requestParams).addCallback(function(resp) {
     goog.asserts.assert(resp['kind'] == 'calendar#calendarList');
@@ -41,12 +41,12 @@ five.CalendarApi.prototype.loadCalendarList = function() {
 five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
     endDate) {
   var requestParams = {
-    path: '/calendar/v3/calendars/' + calendarId + '/events',
-    params: {
-      orderBy: 'startTime',
-      singleEvents: true,
-      timeMin: new Date(startDate.valueOf()).toISOString(),
-      timeMax: new Date(endDate.valueOf()).toISOString()
+    'path': '/calendar/v3/calendars/' + calendarId + '/events',
+    'params': {
+      'orderBy': 'startTime',
+      'singleEvents': true,
+      'timeMin': new Date(startDate.valueOf()).toISOString(),
+      'timeMax': new Date(endDate.valueOf()).toISOString()
     }
   };
   return this.callApiWithAuthRetry_(requestParams).addCallback(function(resp) {
