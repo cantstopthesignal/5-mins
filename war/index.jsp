@@ -22,7 +22,6 @@
     </script>
     <script type="text/javascript" src="js/main_<%= jsMode %>.js"></script>
     <link rel="stylesheet" href="css/main.css" type="text/css" />
-    <link rel="shortcut icon" href="about:blank" />
     <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-31450279-1']);
