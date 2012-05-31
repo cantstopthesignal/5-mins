@@ -1,11 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.cantstopthesignals.JsMode" %>
 <%@ page import="com.google.appengine.api.users.User" %>
 <%@ page import="com.google.appengine.api.users.UserService" %>
 <%@ page import="com.google.appengine.api.users.UserServiceFactory" %>
 <%
-  String jsMode = request.getParameter("jsmode");
+  JsMode jsMode = JsMode.fromString(request.getParameter("jsmode"));
   if (jsMode == null) {
-    jsMode = "optimized";
+    jsMode = JsMode.OPTIMIZED;
   }
   UserService userService = UserServiceFactory.getUserService();
   User user = userService.getCurrentUser();
@@ -20,7 +21,21 @@
     <script type="text/javascript">
       var userEmail = "<%= user != null ? user.getEmail() : "" %>";
     </script>
-    <script type="text/javascript" src="js/main_<%= jsMode %>.js"></script>
+    <%
+      if (jsMode == JsMode.UNCOMPILED) {
+        %>
+        <script type="text/javascript" src="debug/lib/closure-library/closure/goog/base.js"></script>
+        <script type="text/javascript" src="debug/src/javascript/deps.js"></script>
+        <script type="text/javascript">
+          goog.require('five.main');
+        </script>
+        <%
+      } else {
+        %>
+        <script type="text/javascript" src="js/main_<%= jsMode.getName() %>.js"></script>
+        <%
+      }
+    %>
     <link rel="stylesheet" href="css/main.css" type="text/css" />
     <script type="text/javascript">
       var _gaq = _gaq || [];

@@ -22,6 +22,7 @@ goog.inherits(five.AllTests, goog.events.EventTarget);
 five.AllTests.TESTS = [
     'endtoenddebugtest.html',
     'endtoendoptimizedtest.html',
+    'endtoenduncompiledtest.html',
     'eventlistlayouttest.html',
     'utiltest.html'
     ];
