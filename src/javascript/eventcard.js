@@ -5,6 +5,9 @@ goog.provide('five.EventCard');
 goog.require('five.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
+goog.require('goog.dom.classes');
+goog.require('goog.events.EventType');
+goog.require('goog.events.KeyCodes');
 goog.require('goog.style');
 
 /**
@@ -13,6 +16,8 @@ goog.require('goog.style');
  * @extends {five.Component}
  */
 five.EventCard = function(event) {
+  goog.base(this);
+
   /** @type {five.Event} */
   this.event_ = event;
 
@@ -56,6 +61,7 @@ five.EventCard.prototype.getTimeAxisPatch = function() {
 five.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'event-card');
+  this.el.tabIndex = 0;
   var dateRangeEl = document.createElement('div');
   goog.dom.classes.add(dateRangeEl, 'date-range');
   dateRangeEl.appendChild(document.createTextNode(
@@ -63,6 +69,11 @@ five.EventCard.prototype.createDom = function() {
       five.EventCard.toTimeString_(this.getEndTime())));
   this.el.appendChild(dateRangeEl);
   this.el.appendChild(document.createTextNode(this.event_.getSummary()));
+
+  this.eventHandler.
+      listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.BLUR, this.handleBlur_).
+      listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_);
 };
 
 /** @override */
@@ -85,7 +96,45 @@ five.EventCard.prototype.setRect = function(rect) {
   goog.dom.classes.enable(this.el, 'large-height', rect.height >= 44);
 };
 
+/** @param {boolean} selected */
+five.EventCard.prototype.setSelected = function(selected) {
+  if (!this.el) {
+    this.createDom();
+  }
+  goog.dom.classes.enable(this.el, 'selected', selected);
+};
+
 five.EventCard.prototype.timeAxisPatchUpdated = function() {
   goog.dom.classes.enable(this.el, 'attached-to-patch',
       !!this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent());
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventCard.prototype.handleClick_ = function(e) {
+  var event = new goog.events.Event(goog.dom.classes.has(this.el, 'selected') ?
+      five.Event.EventType.DESELECT : five.Event.EventType.SELECT);
+  event.shiftKey = e.shiftKey;
+  this.dispatchEvent(event);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventCard.prototype.handleBlur_ = function(e) {
+  window.setTimeout(goog.bind(function() {
+    if (!goog.dom.classes.has(document.activeElement, 'event-card')) {
+      this.dispatchEvent(five.Event.EventType.DESELECT);
+    }
+  }, this), 0);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventCard.prototype.handleKeyDown_ = function(e) {
+  if (e.keyCode == goog.events.KeyCodes.UP) {
+    if (this.dispatchEvent(five.Event.EventType.MOVE_UP)) {
+      e.preventDefault();
+    }
+  } else if (e.keyCode == goog.events.KeyCodes.DOWN) {
+    if (this.dispatchEvent(five.Event.EventType.MOVE_DOWN)) {
+      e.preventDefault();
+    }
+  }
 };

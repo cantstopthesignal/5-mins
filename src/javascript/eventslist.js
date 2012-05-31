@@ -38,6 +38,9 @@ five.EventsList = function(calendarApi, calendar) {
   this.spinner_ = new five.Spinner();
   this.registerDisposable(this.spinner_);
 
+  /** @type {Array.<five.Event>} */
+  this.selectedEvents_ = [];
+
   this.initDefaultDateRange_();
 };
 goog.inherits(five.EventsList, five.Component);
@@ -151,14 +154,50 @@ five.EventsList.prototype.loadEvents_ = function() {
 /** @param {Array.<Object>} eventsData */
 five.EventsList.prototype.updateEventsData_ = function(eventsData) {
   goog.disposeAll(this.events_);
+  this.selectedEvents_ = [];
   this.events_ = goog.array.map(eventsData, function(eventData) {
-    return new five.Event(eventData);
-  });
+    var event = new five.Event(eventData);
+    var EventType = five.Event.EventType;
+    this.eventHandler.listen(event, [EventType.SELECT, EventType.DESELECT],
+        this.handleEventToggleSelect_);
+    return event;
+  }, this);
   this.displayEvents_();
 };
 
 five.EventsList.prototype.displayEvents_ = function() {
   this.eventsScrollBox_.setEvents(this.events_);
+};
+
+five.EventsList.prototype.clearSelectedEvents_ = function() {
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    selectedEvent.setSelected(false);
+  });
+  this.selectedEvents_ = [];
+};
+
+/** @param {goog.events.Event} e */
+five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
+  goog.asserts.assertInstanceof(e.target, five.Event);
+  goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
+  if (e.shiftKey) {
+    var existingIndex = this.selectedEvents_.indexOf(e.target);
+    if (e.type == five.Event.EventType.SELECT) {
+      goog.asserts.assert(existingIndex < 0);
+      e.target.setSelected(true);
+      this.selectedEvents_.push(e.target);
+    } else {
+      goog.asserts.assert(existingIndex >= 0);
+      e.target.setSelected(false);
+      this.selectedEvents_.splice(existingIndex, 1);
+    }
+  } else {
+    this.clearSelectedEvents_();
+    if (e.type == five.Event.EventType.SELECT) {
+      e.target.setSelected(true);
+      this.selectedEvents_ = [e.target];
+    }
+  }
 };
 
 five.EventsList.prototype.scrollToNow_ = function(opt_animate) {
