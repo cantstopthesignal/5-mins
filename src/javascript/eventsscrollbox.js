@@ -145,6 +145,13 @@ five.EventsScrollBox.prototype.setEvents = function(events) {
   this.timeAxisPatchCanvas_.finishBatchUpdate();
 };
 
+/** @param {Array.<five.Event>} changedEvents */
+five.EventsScrollBox.prototype.eventsChanged = function(changedEvents) {
+  this.timeAxisPatchCanvas_.startBatchUpdate();
+  this.layout_();
+  this.timeAxisPatchCanvas_.finishBatchUpdate();
+};
+
 five.EventsScrollBox.prototype.addTimeMarker = function(timeMarker) {
   timeMarker.setOwner(this);
   this.registerDisposable(timeMarker);

@@ -3,6 +3,7 @@
 goog.provide('five.Event');
 goog.provide('five.Event.EventType');
 
+goog.require('five.EventMutation');
 goog.require('goog.array');
 goog.require('goog.date.DateTime');
 goog.require('goog.events.EventHandler');
@@ -29,6 +30,9 @@ five.Event = function(eventData) {
   /** @type {Array.<five.EventCard>} */
   this.displays_ = [];
 
+  /** @type {Array.<five.EventMutation>} */
+  this.mutations_ = [];
+
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler_);
@@ -43,9 +47,6 @@ five.Event.EventType = {
   MOVE_DOWN: goog.events.getUniqueId('move_down')
 };
 
-/** @type {boolean} */
-five.Event.prototype.selected_ = false;
-
 /** @return {goog.date.DateTime} */
 five.Event.parseEventDataDate_ = function(dateData) {
   if ('dateTime' in dateData) {
@@ -59,14 +60,23 @@ five.Event.parseEventDataDate_ = function(dateData) {
   return null;
 };
 
+/** @type {boolean} */
+five.Event.prototype.selected_ = false;
+
+/** @type {goog.date.DateTime} */
+five.Event.prototype.mutatedStartTime_;
+
+/** @type {goog.date.DateTime} */
+five.Event.prototype.mutatedEndTime_;
+
 /** @return {goog.date.DateTime} */
 five.Event.prototype.getStartTime = function() {
-  return this.startTime_;
+  return this.mutatedStartTime_ || this.startTime_;
 };
 
 /** @return {goog.date.DateTime} */
 five.Event.prototype.getEndTime = function() {
-  return this.endTime_;
+  return this.mutatedEndTime_ || this.endTime_;
 };
 
 /** @return {string} */
@@ -94,9 +104,19 @@ five.Event.prototype.detachDisplay = function(display) {
   });
 };
 
+/** @param {five.EventMutation} mutation */
+five.Event.prototype.addMutation = function(mutation) {
+  this.mutations_.push(mutation);
+  this.calcMutations_();
+  goog.array.forEach(this.displays_, function(display) {
+    display.updateDisplay();
+  }, this);
+};
+
 /** @override */
 five.Event.prototype.disposeInternal = function() {
   delete this.displays_;
+  delete this.mutations_;
   goog.base(this, 'disposeInternal');
 };
 
@@ -119,4 +139,17 @@ five.Event.prototype.dispatchDisplayEvent_ = function(e) {
   if (!this.dispatchEvent(e)) {
     e.preventDefault();
   }
+};
+
+five.Event.prototype.calcMutations_ = function() {
+  this.mutatedStartTime_ = this.startTime_.clone();
+  this.mutatedEndTime_ = this.endTime_.clone();
+  goog.array.forEach(this.mutations_, function(mutation) {
+    if (mutation instanceof five.EventMutation.MoveBy) {
+      this.mutatedStartTime_.add(mutation.getInterval());
+      this.mutatedEndTime_.add(mutation.getInterval());
+    } else {
+      goog.asserts.fail('Unexpected mutation: ' + mutation);
+    }
+  }, this);
 };

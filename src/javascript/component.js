@@ -35,6 +35,22 @@ five.Component.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 };
 
+/**
+ * @param {string} className
+ * @return {!goog.array.ArrayLike}
+ */
+five.Component.prototype.getElementsByClass = function(className) {
+  return goog.dom.getElementsByClass(className, this.el);
+};
+
+/**
+ * @param {string} className
+ * @return {Element}
+ */
+five.Component.prototype.getElementByClass = function(className) {
+  return goog.dom.getElementByClass(className, this.el);
+};
+
 /** @override */
 five.Component.prototype.disposeInternal = function() {
   goog.dom.removeNode(this.el);

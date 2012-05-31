@@ -4,6 +4,7 @@ goog.provide('five.EventsList');
 
 goog.require('five.Component');
 goog.require('five.Event');
+goog.require('five.EventMutation');
 goog.require('five.EventsScrollBox');
 goog.require('five.Spinner');
 goog.require('five.TimeMarker');
@@ -157,9 +158,7 @@ five.EventsList.prototype.updateEventsData_ = function(eventsData) {
   this.selectedEvents_ = [];
   this.events_ = goog.array.map(eventsData, function(eventData) {
     var event = new five.Event(eventData);
-    var EventType = five.Event.EventType;
-    this.eventHandler.listen(event, [EventType.SELECT, EventType.DESELECT],
-        this.handleEventToggleSelect_);
+    this.registerListenersForEvent_(event);
     return event;
   }, this);
   this.displayEvents_();
@@ -167,6 +166,15 @@ five.EventsList.prototype.updateEventsData_ = function(eventsData) {
 
 five.EventsList.prototype.displayEvents_ = function() {
   this.eventsScrollBox_.setEvents(this.events_);
+};
+
+/** @param {five.Event} event */
+five.EventsList.prototype.registerListenersForEvent_ = function(event) {
+  var EventType = five.Event.EventType;
+  this.eventHandler.listen(event, [EventType.SELECT, EventType.DESELECT],
+      this.handleEventToggleSelect_);
+  this.eventHandler.listen(event, [EventType.MOVE_UP, EventType.MOVE_DOWN],
+      this.handleMoveSelectedEventsCommand_);
 };
 
 five.EventsList.prototype.clearSelectedEvents_ = function() {
@@ -186,10 +194,12 @@ five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
       goog.asserts.assert(existingIndex < 0);
       e.target.setSelected(true);
       this.selectedEvents_.push(e.target);
-    } else {
+    } else if (e.type == five.Event.EventType.DESELECT) {
       goog.asserts.assert(existingIndex >= 0);
       e.target.setSelected(false);
       this.selectedEvents_.splice(existingIndex, 1);
+    } else {
+      goog.asserts.fail('Type unexpected: ' + e.type);
     }
   } else {
     this.clearSelectedEvents_();
@@ -198,6 +208,27 @@ five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
       this.selectedEvents_ = [e.target];
     }
   }
+};
+
+/** @param {goog.events.Event} e */
+five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
+  goog.asserts.assertInstanceof(e.target, five.Event);
+  goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
+  goog.asserts.assert(this.selectedEvents_.length);
+  var mutation;
+  if (e.type == five.Event.EventType.MOVE_DOWN) {
+    mutation = new five.EventMutation.MoveBy(
+        new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+  } else if (e.type == five.Event.EventType.MOVE_UP) {
+    mutation = new five.EventMutation.MoveBy(
+        new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+  } else {
+    goog.asserts.fail('Unexpected type: ' + e.type);
+  }
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    selectedEvent.addMutation(mutation);
+  });
+  this.eventsScrollBox_.eventsChanged(this.selectedEvents_);
 };
 
 five.EventsList.prototype.scrollToNow_ = function(opt_animate) {

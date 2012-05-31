@@ -64,11 +64,10 @@ five.EventCard.prototype.createDom = function() {
   this.el.tabIndex = 0;
   var dateRangeEl = document.createElement('div');
   goog.dom.classes.add(dateRangeEl, 'date-range');
-  dateRangeEl.appendChild(document.createTextNode(
-      five.EventCard.toTimeString_(this.getStartTime()) + ' - ' +
-      five.EventCard.toTimeString_(this.getEndTime())));
   this.el.appendChild(dateRangeEl);
   this.el.appendChild(document.createTextNode(this.event_.getSummary()));
+
+  this.updateDisplay();
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
@@ -81,6 +80,14 @@ five.EventCard.prototype.disposeInternal = function() {
   this.event_.detachDisplay(this);
   goog.dispose(this.timeAxisPatch_);
   goog.base(this, 'disposeInternal');
+};
+
+five.EventCard.prototype.updateDisplay = function() {
+  var dateRangeEl = this.getElementByClass('date-range');
+  goog.dom.removeChildren(dateRangeEl);
+  dateRangeEl.appendChild(document.createTextNode(
+      five.EventCard.toTimeString_(this.getStartTime()) + ' - ' +
+      five.EventCard.toTimeString_(this.getEndTime())));
 };
 
 /** @param {goog.math.Rect} rect */

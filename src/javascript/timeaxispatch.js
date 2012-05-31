@@ -11,6 +11,7 @@ goog.require('goog.events.EventTarget');
  * @extends {goog.events.EventTarget}
  */
 five.TimeAxisPatch = function() {
+  goog.base(this);
 };
 goog.inherits(five.TimeAxisPatch, goog.events.EventTarget);
 
