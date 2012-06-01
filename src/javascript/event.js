@@ -44,7 +44,8 @@ five.Event.EventType = {
   SELECT: goog.events.getUniqueId('select'),
   DESELECT: goog.events.getUniqueId('deselect'),
   MOVE_UP: goog.events.getUniqueId('move_up'),
-  MOVE_DOWN: goog.events.getUniqueId('move_down')
+  MOVE_DOWN: goog.events.getUniqueId('move_down'),
+  MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed')
 };
 
 /** @return {goog.date.DateTime} */
@@ -111,6 +112,12 @@ five.Event.prototype.addMutation = function(mutation) {
   goog.array.forEach(this.displays_, function(display) {
     display.updateDisplay();
   }, this);
+  this.dispatchEvent(five.Event.EventType.MUTATIONS_CHANGED);
+};
+
+/** @return {boolean} */
+five.Event.prototype.hasMutations = function() {
+  return this.mutations_.length > 0;
 };
 
 /** @override */

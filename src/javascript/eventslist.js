@@ -17,19 +17,15 @@ goog.require('goog.events.EventType');
 
 
 /**
- * @param calendarApi {five.CalendarApi}
- * @param calendar {Object}
+ * @param calendarManager {five.CalendarManager}
  * @constructor
  * @extends {five.Component}
  */
-five.EventsList = function(calendarApi, calendar) {
+five.EventsList = function(calendarManager) {
   goog.base(this);
 
-  /** @type {five.CalendarApi} */
-  this.calendarApi_ = calendarApi;
-
-  /** @type {Object} */
-  this.calendar_ = calendar;
+  /** @type {five.CalendarManager} */
+  this.calendarManager_ = calendarManager;
 
   /** @type {five.EventsScrollBox} */
   this.eventsScrollBox_ = new five.EventsScrollBox();
@@ -43,6 +39,17 @@ five.EventsList = function(calendarApi, calendar) {
   this.selectedEvents_ = [];
 
   this.initDefaultDateRange_();
+
+  this.eventHandler.
+      listen(this.calendarManager_,
+          five.CalendarManager.EventType.MUTATIONS_STATE_CHANGED,
+          this.handleCalendarManagerMutationsStateChange_).
+      listen(this.calendarManager_,
+          five.CalendarManager.EventType.REQUESTS_STATE_CHANGED,
+          this.handleCalendarManagerRequestsStateChange_).
+      listen(this.calendarManager_,
+          five.CalendarManager.EventType.EVENTS_CHANGED,
+          this.handleCalendarManagerEventsChange_);
 };
 goog.inherits(five.EventsList, five.Component);
 
@@ -58,6 +65,9 @@ five.EventsList.prototype.endDate_;
 /** @type {Element} */
 five.EventsList.prototype.headerEl_;
 
+/** @type {Element} */
+five.EventsList.prototype.saveEl_;
+
 /** @type {Array.<five.Event>} */
 five.EventsList.prototype.events_;
 
@@ -69,6 +79,9 @@ five.EventsList.prototype.nowTrackerLastTickTime_;
 
 /** @type {number} */
 five.EventsList.prototype.nowTrackerIntervalId_;
+
+/** @type {five.Spinner.Entry} */
+five.EventsList.prototype.calendarManagerSpinEntry_;
 
 five.EventsList.prototype.createDom = function() {
   goog.base(this, 'createDom');
@@ -92,12 +105,20 @@ five.EventsList.prototype.createDom = function() {
       this.handleNowClick_);
   this.headerEl_.appendChild(nowEl);
 
+  this.saveEl_ = document.createElement('div');
+  this.saveEl_.className = 'button';
+  goog.style.showElement(this.saveEl_, false);
+  this.saveEl_.appendChild(document.createTextNode('Save'));
+  this.eventHandler.listen(this.saveEl_, goog.events.EventType.CLICK,
+      this.handleSaveClick_);
+  this.headerEl_.appendChild(this.saveEl_);
+
   this.spinner_.render(this.headerEl_);
 
   var titleEl = document.createElement('div');
   titleEl.className = 'title';
   titleEl.appendChild(document.createTextNode(
-      'Calendar ' + this.calendar_['summary']));
+      'Calendar ' + this.calendarManager_.getCalendarSummary()));
   this.headerEl_.appendChild(titleEl);
 };
 
@@ -142,26 +163,7 @@ five.EventsList.prototype.disposeInternal = function() {
 };
 
 five.EventsList.prototype.loadEvents_ = function() {
-  var spinEntry = this.spinner_.spin(150);
-  return this.calendarApi_.loadEvents(this.calendar_['id'], this.startDate_,
-      this.endDate_).
-      addCallback(function(resp) {
-        goog.asserts.assert(resp['kind'] == 'calendar#events');
-        this.updateEventsData_(resp['items'] || []);
-        spinEntry.release();
-      }, this);
-};
-
-/** @param {Array.<Object>} eventsData */
-five.EventsList.prototype.updateEventsData_ = function(eventsData) {
-  goog.disposeAll(this.events_);
-  this.selectedEvents_ = [];
-  this.events_ = goog.array.map(eventsData, function(eventData) {
-    var event = new five.Event(eventData);
-    this.registerListenersForEvent_(event);
-    return event;
-  }, this);
-  this.displayEvents_();
+  return this.calendarManager_.loadEvents(this.startDate_, this.endDate_);
 };
 
 five.EventsList.prototype.displayEvents_ = function() {
@@ -171,10 +173,11 @@ five.EventsList.prototype.displayEvents_ = function() {
 /** @param {five.Event} event */
 five.EventsList.prototype.registerListenersForEvent_ = function(event) {
   var EventType = five.Event.EventType;
-  this.eventHandler.listen(event, [EventType.SELECT, EventType.DESELECT],
-      this.handleEventToggleSelect_);
-  this.eventHandler.listen(event, [EventType.MOVE_UP, EventType.MOVE_DOWN],
-      this.handleMoveSelectedEventsCommand_);
+  this.eventHandler.
+      listen(event, [EventType.SELECT, EventType.DESELECT],
+          this.handleEventToggleSelect_).
+      listen(event, [EventType.MOVE_UP, EventType.MOVE_DOWN],
+          this.handleMoveSelectedEventsCommand_);
 };
 
 five.EventsList.prototype.clearSelectedEvents_ = function() {
@@ -231,6 +234,36 @@ five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   this.eventsScrollBox_.eventsChanged(this.selectedEvents_);
 };
 
+/** @param {goog.events.Event} e */
+five.EventsList.prototype.handleCalendarManagerEventsChange_ = function(e) {
+  this.events_ = this.calendarManager_.getEvents();
+  this.selectedEvents_ = [];
+  goog.array.forEach(this.events_, function(event) {
+    this.registerListenersForEvent_(event);
+  }, this);
+  this.displayEvents_();
+};
+
+/** @param {goog.events.Event} e */
+five.EventsList.prototype.handleCalendarManagerMutationsStateChange_ =
+    function(e) {
+  goog.style.showElement(this.saveEl_, this.calendarManager_.hasMutations());
+};
+
+/** @param {goog.events.Event} e */
+five.EventsList.prototype.handleCalendarManagerRequestsStateChange_ =
+    function(e) {
+  if (this.calendarManager_.hasRequestsInProgress()) {
+    goog.asserts.assert(!this.calendarManagerSpinEntry_);
+    this.calendarManagerSpinEntry_ = this.spinner_.spin(150);
+  } else {
+    if (this.calendarManagerSpinEntry_) {
+      this.calendarManagerSpinEntry_.release();
+      delete this.calendarManagerSpinEntry_;
+    }
+  }
+};
+
 five.EventsList.prototype.scrollToNow_ = function(opt_animate) {
   this.eventsScrollBox_.scrollToTime(new goog.date.DateTime(), true,
       opt_animate);
@@ -277,4 +310,10 @@ five.EventsList.prototype.handleRefreshClick_ = function(e) {
 five.EventsList.prototype.handleNowClick_ = function(e) {
   e.preventDefault();
   this.scrollToNow_(true);
+};
+
+/** @param {goog.events.Event} e */
+five.EventsList.prototype.handleSaveClick_ = function(e) {
+  e.preventDefault();
+  this.calendarManager_.saveMutations();
 };
