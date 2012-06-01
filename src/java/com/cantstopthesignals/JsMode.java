@@ -10,7 +10,7 @@ public enum JsMode {
 
   private final String name;
 
-  private static Map<String, JsMode> byNameMap = new HashMap<>();
+  private static Map<String, JsMode> byNameMap = new HashMap<String, JsMode>();
   static {
     for (JsMode jsMode : values()) {
       byNameMap.put(jsMode.getName(), jsMode);
