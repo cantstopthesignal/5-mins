@@ -21,12 +21,6 @@ five.Event = function(eventData) {
   /** @type {Object} */
   this.eventData_ = eventData;
 
-  /** @type {goog.date.DateTime} */
-  this.startTime_ = five.Event.parseEventDataDate_(this.eventData_['start']);
-
-  /** @type {goog.date.DateTime} */
-  this.endTime_ = five.Event.parseEventDataDate_(this.eventData_['end']);
-
   /** @type {Array.<five.EventCard>} */
   this.displays_ = [];
 
@@ -36,6 +30,8 @@ five.Event = function(eventData) {
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler_);
+
+  this.parseEventData_();
 };
 goog.inherits(five.Event, goog.events.EventTarget);
 
@@ -45,7 +41,8 @@ five.Event.EventType = {
   DESELECT: goog.events.getUniqueId('deselect'),
   MOVE_UP: goog.events.getUniqueId('move_up'),
   MOVE_DOWN: goog.events.getUniqueId('move_down'),
-  MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed')
+  MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),
+  DATA_CHANGED: goog.events.getUniqueId('data_changed')
 };
 
 /** @return {goog.date.DateTime} */
@@ -63,6 +60,12 @@ five.Event.parseEventDataDate_ = function(dateData) {
 
 /** @type {boolean} */
 five.Event.prototype.selected_ = false;
+
+/** @type {goog.date.DateTime} */
+five.Event.prototype.startTime_;
+
+/** @type {goog.date.DateTime} */
+five.Event.prototype.endTime_;
 
 /** @type {goog.date.DateTime} */
 five.Event.prototype.mutatedStartTime_;
@@ -108,6 +111,10 @@ five.Event.prototype.detachDisplay = function(display) {
 /** @param {five.EventMutation} mutation */
 five.Event.prototype.addMutation = function(mutation) {
   this.mutations_.push(mutation);
+  this.updateMutations_();
+};
+
+five.Event.prototype.updateMutations_ = function() {
   this.calcMutations_();
   goog.array.forEach(this.displays_, function(display) {
     display.updateDisplay();
@@ -118,6 +125,60 @@ five.Event.prototype.addMutation = function(mutation) {
 /** @return {boolean} */
 five.Event.prototype.hasMutations = function() {
   return this.mutations_.length > 0;
+};
+
+/** @return {Object} */
+five.Event.prototype.getEventData = function() {
+  return this.eventData_;
+};
+
+/** @return {Object} */
+five.Event.prototype.startMutationPatch = function() {
+  goog.asserts.assert(this.hasMutations());
+  goog.asserts.assert(!goog.array.some(this.mutations_, function(mutation) {
+    return mutation.isLocked();
+  }));
+  var patchData = {};
+  patchData['etag'] = goog.asserts.assertString(this.eventData_['etag']);
+  if (this.mutatedStartTime_ && goog.date.Date.compare(this.mutatedStartTime_,
+      goog.asserts.assertObject(this.startTime_)) != 0) {
+    patchData['start'] = {
+      'dateTime': new Date(this.mutatedStartTime_.valueOf()).toISOString()
+    };
+  }
+  if (this.mutatedEndTime_ && goog.date.Date.compare(this.mutatedEndTime_,
+      goog.asserts.assertObject(this.endTime_)) != 0) {
+    patchData['end'] = {
+      'dateTime': new Date(this.mutatedEndTime_.valueOf()).toISOString()
+    };
+  }
+  goog.array.forEach(this.mutations_, function(mutation) {
+    mutation.setLocked(true);
+  });
+  return patchData;
+};
+
+/** @param {Object} eventData */
+five.Event.prototype.endMutationPatch = function(eventData) {
+  goog.asserts.assert(eventData['kind'] == 'calendar#event');
+  goog.asserts.assert(this.eventData_['id'] == goog.asserts.assertString(
+      eventData['id']));
+  this.eventData_ = eventData;
+  this.parseEventData_();
+
+  // Remove all locked mutations, they should now be saved.
+  goog.array.removeIf(this.mutations_, function(mutation) {
+    return mutation.isLocked();
+  });
+  // TODO: Verify that response data matches expectations for in progress patch.
+
+  this.updateMutations_();
+  this.dispatchEvent(five.Event.EventType.DATA_CHANGED);
+};
+
+five.Event.prototype.parseEventData_ = function() {
+  this.startTime_ = five.Event.parseEventDataDate_(this.eventData_['start']);
+  this.endTime_ = five.Event.parseEventDataDate_(this.eventData_['end']);
 };
 
 /** @override */
@@ -149,6 +210,7 @@ five.Event.prototype.dispatchDisplayEvent_ = function(e) {
 };
 
 five.Event.prototype.calcMutations_ = function() {
+  this.collapseMutations_();
   this.mutatedStartTime_ = this.startTime_.clone();
   this.mutatedEndTime_ = this.endTime_.clone();
   goog.array.forEach(this.mutations_, function(mutation) {
@@ -160,3 +222,43 @@ five.Event.prototype.calcMutations_ = function() {
     }
   }, this);
 };
+
+five.Event.prototype.collapseMutations_ = function() {
+  var newMutations = [];
+  var topMutation = null;
+  goog.array.forEach(this.mutations_, function(mutation) {
+    if (!topMutation) {
+      topMutation = mutation;
+      return;
+    }
+    var mergedMutation = this.maybeGetMergedMutation_(topMutation, mutation);
+    if (mergedMutation) {
+      topMutation = mergedMutation;
+    } else {
+      newMutations.push(topMutation);
+      topMutation = mutation;
+    }
+  }, this);
+  if (topMutation) {
+    newMutations.push(topMutation);
+  }
+  this.mutations_ = newMutations;
+};
+
+/**
+ * @return {five.EventMutation} A merged mutation or null if no merge is
+ *     possible.
+ */
+five.Event.prototype.maybeGetMergedMutation_ = function(mutation1, mutation2) {
+  if (mutation1.isLocked() || mutation2.isLocked()) {
+    return null;
+  }
+  if (mutation1 instanceof five.EventMutation.MoveBy) {
+    if (mutation2 instanceof five.EventMutation.MoveBy) {
+      var interval = mutation1.getInterval().clone();
+      interval.add(mutation2.getInterval());
+      return new five.EventMutation.MoveBy(interval);
+    }
+  }
+  return null;
+}

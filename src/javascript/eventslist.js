@@ -177,7 +177,9 @@ five.EventsList.prototype.registerListenersForEvent_ = function(event) {
       listen(event, [EventType.SELECT, EventType.DESELECT],
           this.handleEventToggleSelect_).
       listen(event, [EventType.MOVE_UP, EventType.MOVE_DOWN],
-          this.handleMoveSelectedEventsCommand_);
+          this.handleMoveSelectedEventsCommand_).
+      listen(event, [EventType.DATA_CHANGED],
+          this.handleEventDataChanged_);
 };
 
 five.EventsList.prototype.clearSelectedEvents_ = function() {
@@ -214,6 +216,13 @@ five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
 };
 
 /** @param {goog.events.Event} e */
+five.EventsList.prototype.handleEventDataChanged_ = function(e) {
+  goog.asserts.assertInstanceof(e.target, five.Event);
+  goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
+  this.eventsScrollBox_.eventsChanged([e.target]);
+};
+
+/** @param {goog.events.Event} e */
 five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
   goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
@@ -229,7 +238,7 @@ five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
     goog.asserts.fail('Unexpected type: ' + e.type);
   }
   goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
-    selectedEvent.addMutation(mutation);
+    selectedEvent.addMutation(mutation.clone());
   });
   this.eventsScrollBox_.eventsChanged(this.selectedEvents_);
 };

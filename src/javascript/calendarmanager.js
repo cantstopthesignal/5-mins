@@ -42,8 +42,8 @@ five.CalendarManager.EventType = {
 /** @type {Array.<five.Event>} */
 five.CalendarManager.prototype.events_;
 
-/** @type {boolean} */
-five.CalendarManager.prototype.hasRequestsInProgress_ = false;
+/** @type {number} */
+five.CalendarManager.prototype.numRequestsInProgress_ = 0;
 
 /** @type {boolean} */
 five.CalendarManager.prototype.hasMutations_ = false;
@@ -71,7 +71,7 @@ five.CalendarManager.prototype.hasMutations = function() {
 
 /** @return {boolean} */
 five.CalendarManager.prototype.hasRequestsInProgress = function() {
-  return this.hasRequestsInProgress_;
+  return this.numRequestsInProgress_ > 0;
 };
 
 /**
@@ -80,13 +80,13 @@ five.CalendarManager.prototype.hasRequestsInProgress = function() {
  * @return {goog.async.Deferred}
  */
 five.CalendarManager.prototype.loadEvents = function(startDate, endDate) {
-  this.updateHasRequestsInProgress_(true);
+  this.requestStarted_();
   return this.calendarApi_.loadEvents(this.calendarData_['id'], startDate,
       endDate).
       addCallback(function(resp) {
         goog.asserts.assert(resp['kind'] == 'calendar#events');
         this.updateEventsData_(resp['items'] || []);
-        this.updateHasRequestsInProgress_(false);
+        this.requestEnded_();
         return this.events_;
       }, this);
 };
@@ -95,15 +95,41 @@ five.CalendarManager.prototype.saveMutations = function() {
   if (!this.hasMutations()) {
     return;
   }
+  goog.array.forEach(this.events_, function(event) {
+    if (event.hasMutations()) {
+      this.saveMutatedEvent_(event);
+    }
+  }, this);
 };
 
-/** @param {boolean} requestsInProgress */
-five.CalendarManager.prototype.updateHasRequestsInProgress_ = function(
-    requestsInProgress) {
-  goog.asserts.assert(this.hasRequestsInProgress() != requestsInProgress);
-  this.hasRequestsInProgress_ = requestsInProgress;
-  this.dispatchEvent(five.CalendarManager.EventType.
-      REQUESTS_STATE_CHANGED);
+/** @param {five.Event} event */
+five.CalendarManager.prototype.saveMutatedEvent_ = function(event) {
+  goog.asserts.assert(event.hasMutations());
+  this.requestStarted_();
+  this.calendarApi_.saveEvent(this.calendarData_['id'],
+      event.getEventData(), event.startMutationPatch()).
+      addCallback(function(resp) {
+        goog.asserts.assert(resp['kind'] == 'calendar#event');
+        event.endMutationPatch(resp);
+        this.requestEnded_();
+      }, this);
+};
+
+five.CalendarManager.prototype.requestStarted_ = function() {
+  this.numRequestsInProgress_++;
+  if (this.numRequestsInProgress_ == 1) {
+    this.dispatchEvent(five.CalendarManager.EventType.
+        REQUESTS_STATE_CHANGED);
+  }
+};
+
+five.CalendarManager.prototype.requestEnded_ = function() {
+  this.numRequestsInProgress_--;
+  goog.asserts.assert(this.numRequestsInProgress_ >= 0);
+  if (this.numRequestsInProgress_ == 0) {
+    this.dispatchEvent(five.CalendarManager.EventType.
+        REQUESTS_STATE_CHANGED);
+  }
 };
 
 /** @param {Array.<Object>} eventsData */

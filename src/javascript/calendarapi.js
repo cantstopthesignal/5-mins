@@ -3,6 +3,7 @@
 goog.provide('five.CalendarApi');
 
 goog.require('goog.debug.Logger');
+goog.require('goog.json');
 
 
 /**
@@ -57,12 +58,36 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
   }, this);
 };
 
+/**
+ * @param {string} calendarId
+ * @param {Object} eventData
+ * @param {Object} eventPatchData
+ * @return {goog.async.Deferred}
+ */
+five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
+    eventPatchData) {
+  var requestParams = {
+    'path': '/calendar/v3/calendars/' + calendarId + '/events/' +
+        goog.asserts.assertString(eventData['id']),
+    'method': 'PATCH',
+    'params': {},
+    'body': goog.json.serialize(eventPatchData)
+  };
+  return this.callApiWithAuthRetry_(requestParams).addCallback(function(resp) {
+    goog.asserts.assert(resp['kind'] == 'calendar#event');
+    this.logger_.info('Event saved');
+  }, this).addErrback(function(error) {
+    this.logger_.severe('Error saving event: ' + error, error);
+  }, this);
+};
+
 /** Call an api but retry auth on auth failure. */
 five.CalendarApi.prototype.callApiWithAuthRetry_ = function(requestParams) {
   var d = new goog.async.Deferred();
   var attempts = 0;
   var doRequest = goog.bind(function () {
-    this.logger_.info(requestParams.path);
+    this.logger_.info((requestParams.method ? requestParams.method + ' ' : '') +
+        requestParams.path);
     var request = goog.getObjectByName('gapi.client.request')(requestParams);
     request['execute'](goog.bind(function(resp) {
       if (resp['error'] && resp['error']['code'] == 401) {

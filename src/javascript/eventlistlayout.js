@@ -137,7 +137,10 @@ five.EventListLayout.prototype.calc = function() {
   this.calcLinearTimeMap_();
   this.calcTimeAxisPatches_();
   this.positionEvents_();
-  this.logger_.info('calc() finished in ' + (+new Date() - startTime) + 'ms');
+  var calcTimeMs = +new Date() - startTime;
+  if (calcTimeMs > 10) {
+    this.logger_.info('calc() finished in ' + calcTimeMs + 'ms');
+  }
 };
 
 /** @return {five.EventListLayout.TimeMap} */
