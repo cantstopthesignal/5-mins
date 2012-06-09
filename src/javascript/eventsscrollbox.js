@@ -133,7 +133,7 @@ five.EventsScrollBox.prototype.setDateRange = function(startDate, endDate) {
 
 /** @param {Array.<five.Event>} events */
 five.EventsScrollBox.prototype.setEvents = function(events) {
-  this.timeAxisPatchCanvas_.startBatchUpdate();
+  this.startBatchUpdate();
   goog.disposeAll(this.eventCards_);
   this.eventCards_ = goog.array.map(events, function(event) {
     return new five.EventCard(event);
@@ -142,14 +142,14 @@ five.EventsScrollBox.prototype.setEvents = function(events) {
     this.layout_();
     this.renderEvents_();
   }
-  this.timeAxisPatchCanvas_.finishBatchUpdate();
+  this.finishBatchUpdate();
 };
 
 /** @param {Array.<five.Event>} changedEvents */
 five.EventsScrollBox.prototype.eventsChanged = function(changedEvents) {
-  this.timeAxisPatchCanvas_.startBatchUpdate();
+  this.startBatchUpdate();
   this.layout_();
-  this.timeAxisPatchCanvas_.finishBatchUpdate();
+  this.finishBatchUpdate();
 };
 
 five.EventsScrollBox.prototype.addTimeMarker = function(timeMarker) {
@@ -239,6 +239,18 @@ five.EventsScrollBox.prototype.isTimeInView = function(date) {
     return false;
   }
   return true;
+};
+
+five.EventsScrollBox.prototype.startBatchUpdate = function() {
+  if (this.timeAxisPatchCanvas_) {
+    this.timeAxisPatchCanvas_.startBatchUpdate();
+  }
+};
+
+five.EventsScrollBox.prototype.finishBatchUpdate = function() {
+  if (this.timeAxisPatchCanvas_) {
+    this.timeAxisPatchCanvas_.finishBatchUpdate();
+  }
 };
 
 five.EventsScrollBox.prototype.renderTimeAxis_ = function() {

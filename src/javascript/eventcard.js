@@ -109,6 +109,9 @@ five.EventCard.prototype.setSelected = function(selected) {
     this.createDom();
   }
   goog.dom.classes.enable(this.el, 'selected', selected);
+  if (this.timeAxisPatch_) {
+    this.timeAxisPatch_.setSelected(selected);
+  }
 };
 
 five.EventCard.prototype.timeAxisPatchUpdated = function() {

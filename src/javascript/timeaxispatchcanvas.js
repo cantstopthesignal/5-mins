@@ -109,7 +109,8 @@ five.TimeAxisPatchCanvas.prototype.doPaint_ = function() {
 };
 
 five.TimeAxisPatchCanvas.prototype.fillPatch_ = function(patch) {
-  this.ctx_.fillStyle = patch.eventBgColor;
+  this.ctx_.fillStyle = patch.selected ? patch.selectedEventBgColor :
+      patch.eventBgColor;
   this.ctx_.beginPath();
   this.ctx_.moveTo(0, this.yPosToCanvas_(patch.axisTop));
   this.ctx_.lineTo(1, this.yPosToCanvas_(patch.axisTop));
@@ -124,7 +125,8 @@ five.TimeAxisPatchCanvas.prototype.fillPatch_ = function(patch) {
 };
 
 five.TimeAxisPatchCanvas.prototype.strokePatch_ = function(patch) {
-  this.ctx_.strokeStyle = patch.eventBorderColor;
+  this.ctx_.strokeStyle = patch.selected ? patch.selectedEventBorderColor :
+      patch.eventBorderColor;
   this.strokePatchLine_(patch.axisTop, patch.eventTop);
   this.strokePatchLine_(patch.axisBottom, patch.eventBottom);
   if (patch.getAttachedToEvent()) {

@@ -21,6 +21,9 @@ five.TimeAxisPatch.prototype.owner_;
 /** @type {boolean} */
 five.TimeAxisPatch.prototype.attachedToEvent_ = false;
 
+/** @type {boolean} */
+five.TimeAxisPatch.prototype.selected = false;
+
 /** @type {number} */
 five.TimeAxisPatch.prototype.axisTop;
 
@@ -39,6 +42,12 @@ five.TimeAxisPatch.prototype.eventBgColor = 'rgba(200, 200, 255, 0.8)';
 /** @type {string} */
 five.TimeAxisPatch.prototype.eventBorderColor = '#88f';
 
+/** @type {string} */
+five.TimeAxisPatch.prototype.selectedEventBgColor = 'rgba(150, 150, 220, 0.8)';
+
+/** @type {string} */
+five.TimeAxisPatch.prototype.selectedEventBorderColor = '#66d';
+
 /** @return {five.TimeAxisPatchCanvas} */
 five.TimeAxisPatch.prototype.getOwner = function() {
   return this.owner_;
@@ -54,6 +63,13 @@ five.TimeAxisPatch.prototype.getAttachedToEvent = function() {
   return this.attachedToEvent_;
 };
 
+/**
+ * @param {number} axisTop
+ * @param {number} axisBottom
+ * @param {number} eventTop
+ * @param {number} eventBottom
+ * @param {boolean} attachedToEvent
+ */
 five.TimeAxisPatch.prototype.setParams = function(axisTop, axisBottom,
     eventTop, eventBottom, attachedToEvent) {
   this.axisTop = axisTop;
@@ -61,6 +77,14 @@ five.TimeAxisPatch.prototype.setParams = function(axisTop, axisBottom,
   this.eventTop = eventTop;
   this.eventBottom = eventBottom;
   this.attachedToEvent_ = attachedToEvent;
+  if (this.owner_) {
+    this.owner_.paint();
+  }
+};
+
+/** @param {boolean} selected */
+five.TimeAxisPatch.prototype.setSelected = function(selected) {
+  this.selected = selected;
   if (this.owner_) {
     this.owner_.paint();
   }
