@@ -1,6 +1,7 @@
 // Copyright cantstopthesignals@gmail.com
 
 goog.provide('five.testing.FakeAuth');
+goog.provide('five.testing.FakeAuth.RequestHandler');
 
 goog.require('goog.array');
 goog.require('goog.asserts');
@@ -14,19 +15,33 @@ goog.require('goog.events.EventType');
 /**
  * Fake server authorization for tests.
  * @param {goog.dom.DomHelper} domHelper
+ * @param {five.testing.FakeAuth.RequestHandler} requestHandler
  * @constructor
  * @extends {goog.events.EventTarget}
  */
-five.testing.FakeAuth = function(domHelper) {
+five.testing.FakeAuth = function(domHelper, requestHandler) {
   goog.base(this);
 
   /** @type {goog.dom.DomHelper} */
   this.domHelper_ = domHelper;
 
-  /** @type {Array.<Function>} */
-  this.requestHandlers_ = [];
+  /** @type {!five.testing.FakeAuth.RequestHandler} */
+  this.requestHandler_ = requestHandler;
 };
 goog.inherits(five.testing.FakeAuth, goog.events.EventTarget);
+
+/** @constructor */
+five.testing.FakeAuth.RequestHandler = function() {};
+
+/**
+ * @param {string} path
+ * @param {string} method
+ * @param {Object} params
+ * @param {Object} body
+ * @return {Object} result
+ */
+five.testing.FakeAuth.RequestHandler.prototype.handleRequest =
+    goog.abstractMethod;
 
 /** @type {goog.debug.Logger} */
 five.testing.FakeAuth.prototype.logger_ = goog.debug.Logger.getLogger(
@@ -72,11 +87,6 @@ five.testing.FakeAuth.prototype.unregister = function() {
   this.registered_ = false;
 };
 
-/** @param {Function} handler */
-five.testing.FakeAuth.prototype.addRequestHandler = function(handler) {
-  this.requestHandlers_.push(handler);
-};
-
 five.testing.FakeAuth.prototype.authCompleted = function() {
   return this.authComplete_;
 };
@@ -102,18 +112,15 @@ five.testing.FakeAuth.prototype.receiveClientSetApiKey_ = function(apiKey) {
 five.testing.FakeAuth.prototype.receiveClientRequest_ = function(
     requestParams) {
   var path = requestParams['path'];
+  var method = requestParams['method'] || 'GET';
   var params = requestParams['params'] || {};
+  var body = requestParams['body'] || null;
   goog.asserts.assertString(path, 'Path request param expected');
 
   var execute = goog.bind(function(callback) {
-    var handler = goog.array.find(this.requestHandlers_, function(
-        requestHandler) {
-      var handled = requestHandler(path, params, callback);
-      goog.asserts.assert(goog.isBoolean(handled),
-          'Request handler returned unexpected value');
-      return handled;
-    });
-    goog.asserts.assert(handler, 'No request handler matched ' + path);
+    var result = this.requestHandler_.handleRequest(path, method, params, body);
+    goog.asserts.assertObject(result);
+    callback(result);
   }, this);
 
   return {

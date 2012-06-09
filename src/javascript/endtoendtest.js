@@ -14,9 +14,11 @@ goog.require('goog.date.Interval');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('goog.events.EventType');
+goog.require('goog.events.KeyCodes');
 goog.require('goog.style');
 goog.require('goog.testing.jsunit');
 goog.require('goog.testing.DeferredTestCase');
+goog.require('goog.testing.MockControl');
 
 
 var test;
@@ -40,6 +42,9 @@ goog.inherits(five.EndToEndTest, goog.testing.DeferredTestCase);
 /** @type {goog.async.Deferred} */
 five.EndToEndTest.prototype.testDeferred;
 
+/** @type {goog.testing.MockControl} */
+five.EndToEndTest.prototype.mockControl;
+
 /** @type {Element} */
 five.EndToEndTest.prototype.appFrame;
 
@@ -48,6 +53,9 @@ five.EndToEndTest.prototype.appDom;
 
 /** @type {five.testing.FakeAuth} */
 five.EndToEndTest.prototype.fakeAuth;
+
+/** @type {five.testing.FakeAuth.RequestHandler} */
+five.EndToEndTest.prototype.mockRequestHandler;
 
 /** @type {five.testing.FakeCalendarApi} */
 five.EndToEndTest.prototype.fakeCalendarApi;
@@ -72,6 +80,13 @@ five.EndToEndTest.prototype.setUp = function() {
 
   this.testDeferred = new goog.async.Deferred();
   goog.dom.removeNode(this.appFrame);
+
+  this.mockControl = new goog.testing.MockControl();
+
+  this.mockRequestHandler = this.mockControl.createStrictMock(
+      five.testing.FakeAuth.RequestHandler);
+  this.fakeCalendarApi = new five.testing.FakeCalendarApi(
+      this.mockRequestHandler);
 };
 
 /** @override */
@@ -83,6 +98,8 @@ five.EndToEndTest.prototype.tearDown = function() {
   goog.dispose(this.appDom);
   delete this.appDom;
   delete this.testDeferred;
+  this.mockControl.$tearDown();
+  delete this.mockControl;
 
   goog.base(this, 'tearDown');
 
@@ -93,7 +110,7 @@ five.EndToEndTest.prototype.tearDown = function() {
   }, this));
 };
 
-five.EndToEndTest.prototype.addLoadApp = function(paused) {
+five.EndToEndTest.prototype.addLoadApp = function() {
   var appLoadDeferred = new goog.async.Deferred();
 
   var loadApp = goog.bind(function() {
@@ -102,9 +119,7 @@ five.EndToEndTest.prototype.addLoadApp = function(paused) {
     var url = new goog.Uri('/');
     url.setParameterValue('jsmode', this.jsMode);
     url.setParameterValue('Debug', 'true');
-    if (paused) {
-      url.setParameterValue('pause', '1');
-    }
+    url.setParameterValue('test', '1');
     this.appFrame.src = url.toString();
     this.appFrame.addEventListener(goog.events.EventType.LOAD, goog.bind(
         function() {
@@ -129,7 +144,8 @@ five.EndToEndTest.prototype.addInstallFakeAuth = function() {
   this.testDeferred.addCallback(goog.bind(function() {
     assertTrue(!this.fakeAuth);
     assertTrue(!!this.appDom);
-    this.fakeAuth = new five.testing.FakeAuth(this.appDom);
+    this.fakeAuth = new five.testing.FakeAuth(this.appDom,
+        this.mockRequestHandler);
     this.fakeAuth.register();
   }, this));
 };
@@ -140,17 +156,21 @@ five.EndToEndTest.prototype.addVerifyFakeAuth = function() {
   }, this));
 };
 
-five.EndToEndTest.prototype.addInstallFakeCalendarApi = function() {
+five.EndToEndTest.prototype.addReplayMocks = function() {
   this.testDeferred.addCallback(goog.bind(function() {
-    assertTrue(!this.fakeCalendarApi);
-    assertTrue(!!this.fakeAuth);
-    this.fakeCalendarApi = new five.testing.FakeCalendarApi(this.fakeAuth);
+    this.mockControl.$replayAll();
   }, this));
 };
 
-five.EndToEndTest.prototype.addResumeApp = function() {
+five.EndToEndTest.prototype.addVerifyMocks = function() {
   this.testDeferred.addCallback(goog.bind(function() {
-    var resumeFunction = goog.getObjectByName('five.main.resume',
+    this.mockControl.$verifyAll();
+  }, this));
+};
+
+five.EndToEndTest.prototype.addStartApp = function() {
+  this.testDeferred.addCallback(goog.bind(function() {
+    var resumeFunction = goog.getObjectByName('five.mainTestMode.start',
         this.appDom.getWindow());
     assertTrue(!!resumeFunction);
     resumeFunction();
@@ -193,6 +213,34 @@ five.EndToEndTest.prototype.addWaitForAppContent = function() {
   });
 };
 
+five.EndToEndTest.prototype.addCheckSaveButtonVisible = function(visible) {
+  this.addWaitForAsync('Check save button visible == ' + visible);
+  this.testDeferred.addCallback(function() {
+    var saveButton = this.getButton_('Save');
+    assertTrue(!!saveButton);
+    assertEquals(visible, goog.style.isElementShown(saveButton));
+  }, this);
+};
+
+five.EndToEndTest.prototype.addClickSaveButton = function() {
+  this.addWaitForAsync('Click save button');
+  this.testDeferred.addCallback(function() {
+    var saveButton = this.getButton_('Save');
+    assertTrue(!!saveButton);
+    this.fireAppClickSequence_(saveButton);
+  }, this);
+};
+
+five.EndToEndTest.prototype.addMoveOneEventDown = function() {
+  this.addWaitForAsync('Moving one event');
+  this.testDeferred.addCallback(function() {
+    var eventCard = goog.asserts.assertObject(this.appDom.getElementsByClass(
+        'event-card')[0]);
+    this.fireAppClickSequence_(eventCard);
+    this.fireAppKeySequence_(eventCard, goog.events.KeyCodes.DOWN);
+  }, this);
+};
+
 /** Forward errors from a window to this test harness */
 five.EndToEndTest.prototype.forwardWindowErrors_ = function(win) {
   var oldOnError = this.appDom.getWindow().onerror;
@@ -206,12 +254,71 @@ five.EndToEndTest.prototype.forwardWindowErrors_ = function(win) {
   };
 };
 
+five.EndToEndTest.prototype.getButton_ = function(buttonName) {
+  return goog.array.find(this.appDom.getElementsByClass('button'),
+      function(buttonEl) {
+    return goog.dom.getTextContent(buttonEl) == buttonName;
+  });
+};
+
+five.EndToEndTest.prototype.fireAppClickSequence_ = function(var_args) {
+  var fireClickSequenceFunction = goog.getObjectByName(
+      'five.mainTestMode.fireClickSequence', this.appDom.getWindow());
+  fireClickSequenceFunction.apply(null, arguments);
+};
+
+five.EndToEndTest.prototype.fireAppKeySequence_ = function(var_args) {
+  var fireKeySequenceFunction = goog.getObjectByName(
+      'five.mainTestMode.fireKeySequence', this.appDom.getWindow());
+  fireKeySequenceFunction.apply(null, arguments);
+};
+
 function testLoad() {
-  test.addLoadApp(true);
+  test.fakeCalendarApi.expectLoadCalendars();
+  test.fakeCalendarApi.expectLoadCalendar1Events();
+  test.addReplayMocks();
+  test.addLoadApp();
   test.addInstallFakeAuth();
-  test.addInstallFakeCalendarApi();
-  test.addResumeApp();
+  test.addStartApp();
   test.addWaitForAppContent();
   test.addVerifyFakeAuth();
+  test.addVerifyMocks();
+  test.waitForDeferred();
+}
+
+function testSave() {
+  test.fakeCalendarApi.expectLoadCalendars();
+  test.fakeCalendarApi.expectLoadCalendar1Events();
+
+  var event = test.fakeCalendarApi.event1;
+  var start = new goog.date.DateTime(new Date(event['start']['dateTime']));
+  start.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+  var end = new goog.date.DateTime(new Date(event['end']['dateTime']));
+  end.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+  var expectedBody = {
+    'etag': goog.asserts.assertString(event['etag']),
+    'start': {
+      'dateTime': new Date(start.valueOf()).toISOString()
+    },
+    'end': {
+      'dateTime': new Date(end.valueOf()).toISOString()
+    }
+  };
+  var resultEvent = goog.object.unsafeClone(event);
+  resultEvent['start'] = expectedBody['start'];
+  resultEvent['end'] = expectedBody['end'];
+  test.fakeCalendarApi.expectEventPatch(event, expectedBody, resultEvent);
+
+  test.addReplayMocks();
+  test.addLoadApp();
+  test.addInstallFakeAuth();
+  test.addStartApp();
+  test.addWaitForAppContent();
+  test.addVerifyFakeAuth();
+  test.addCheckSaveButtonVisible(false);
+  test.addMoveOneEventDown();
+  test.addClickSaveButton();
+  test.addCheckSaveButtonVisible(false);
+  test.addVerifyMocks();
   test.waitForDeferred();
 }
