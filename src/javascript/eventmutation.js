@@ -39,13 +39,29 @@ five.EventMutation.prototype.clone = goog.abstractMethod;
  * @constructor
  * @extends {five.EventMutation}
  */
-five.EventMutation.MoveBy = function(interval, opt_locked) {
+five.EventMutation.IntervalMutation_ = function(interval, opt_locked) {
   goog.base(this, opt_locked);
 
   /** @type {goog.date.Interval} */
   this.interval_ = interval;
 };
-goog.inherits(five.EventMutation.MoveBy, five.EventMutation);
+goog.inherits(five.EventMutation.IntervalMutation_, five.EventMutation);
+
+/** @return {goog.date.Interval} */
+five.EventMutation.IntervalMutation_.prototype.getInterval = function() {
+  return this.interval_;
+};
+
+/**
+ * @param {goog.date.Interval} interval
+ * @param {boolean=} opt_locked
+ * @constructor
+ * @extends {five.EventMutation.IntervalMutation_}
+ */
+five.EventMutation.MoveBy = function(interval, opt_locked) {
+  goog.base(this, interval, opt_locked);
+};
+goog.inherits(five.EventMutation.MoveBy, five.EventMutation.IntervalMutation_);
 
 /** @override */
 five.EventMutation.MoveBy.prototype.clone = function() {
@@ -53,7 +69,38 @@ five.EventMutation.MoveBy.prototype.clone = function() {
       this.isLocked());
 };
 
-/** @return {goog.date.Interval} */
-five.EventMutation.MoveBy.prototype.getInterval = function() {
-  return this.interval_;
+/**
+ * @param {goog.date.Interval} interval
+ * @param {boolean=} opt_locked
+ * @constructor
+ * @extends {five.EventMutation.IntervalMutation_}
+ */
+five.EventMutation.MoveStartBy = function(interval, opt_locked) {
+  goog.base(this, interval, opt_locked);
+};
+goog.inherits(five.EventMutation.MoveStartBy,
+    five.EventMutation.IntervalMutation_);
+
+/** @override */
+five.EventMutation.MoveStartBy.prototype.clone = function() {
+  return new five.EventMutation.MoveStartBy(this.getInterval().clone(),
+      this.isLocked());
+};
+
+/**
+ * @param {goog.date.Interval} interval
+ * @param {boolean=} opt_locked
+ * @constructor
+ * @extends {five.EventMutation.IntervalMutation_}
+ */
+five.EventMutation.MoveEndBy = function(interval, opt_locked) {
+  goog.base(this, interval, opt_locked);
+};
+goog.inherits(five.EventMutation.MoveEndBy,
+    five.EventMutation.IntervalMutation_);
+
+/** @override */
+five.EventMutation.MoveEndBy.prototype.clone = function() {
+  return new five.EventMutation.MoveEndBy(this.getInterval().clone(),
+      this.isLocked());
 };

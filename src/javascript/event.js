@@ -3,6 +3,7 @@
 goog.provide('five.Event');
 goog.provide('five.Event.EventType');
 
+goog.require('five.EventMoveEvent');
 goog.require('five.EventMutation');
 goog.require('goog.array');
 goog.require('goog.date.DateTime');
@@ -39,8 +40,7 @@ goog.inherits(five.Event, goog.events.EventTarget);
 five.Event.EventType = {
   SELECT: goog.events.getUniqueId('select'),
   DESELECT: goog.events.getUniqueId('deselect'),
-  MOVE_UP: goog.events.getUniqueId('move_up'),
-  MOVE_DOWN: goog.events.getUniqueId('move_down'),
+  MOVE: five.EventMoveEvent.EventType.MOVE,
   MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),
   DATA_CHANGED: goog.events.getUniqueId('data_changed')
 };
@@ -94,8 +94,8 @@ five.Event.prototype.attachDisplay = function(display) {
   display.setSelected(this.selected_);
   var Event = five.Event.EventType;
   this.eventHandler_.
-      listen(display, [Event.MOVE_UP, Event.MOVE_DOWN, Event.SELECT,
-          Event.DESELECT], this.dispatchDisplayEvent_);
+      listen(display, [Event.MOVE, Event.SELECT, Event.DESELECT],
+          this.dispatchDisplayEvent_);
 };
 
 /** @param {five.EventCard} display */
@@ -217,6 +217,10 @@ five.Event.prototype.calcMutations_ = function() {
     if (mutation instanceof five.EventMutation.MoveBy) {
       this.mutatedStartTime_.add(mutation.getInterval());
       this.mutatedEndTime_.add(mutation.getInterval());
+    } else if (mutation instanceof five.EventMutation.MoveStartBy) {
+      this.mutatedStartTime_.add(mutation.getInterval());
+    } else if (mutation instanceof five.EventMutation.MoveEndBy) {
+      this.mutatedEndTime_.add(mutation.getInterval());
     } else {
       goog.asserts.fail('Unexpected mutation: ' + mutation);
     }
@@ -259,6 +263,19 @@ five.Event.prototype.maybeGetMergedMutation_ = function(mutation1, mutation2) {
       interval.add(mutation2.getInterval());
       return new five.EventMutation.MoveBy(interval);
     }
+  } else if (mutation1 instanceof five.EventMutation.MoveStartBy) {
+    if (mutation2 instanceof five.EventMutation.MoveStartBy) {
+      var interval = mutation1.getInterval().clone();
+      interval.add(mutation2.getInterval());
+      return new five.EventMutation.MoveStartBy(interval);
+    }
+  } else if (mutation1 instanceof five.EventMutation.MoveEndBy) {
+    if (mutation2 instanceof five.EventMutation.MoveEndBy) {
+      var interval = mutation1.getInterval().clone();
+      interval.add(mutation2.getInterval());
+      return new five.EventMutation.MoveEndBy(interval);
+    }
   }
+
   return null;
 }

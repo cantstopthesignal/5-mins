@@ -11,14 +11,14 @@ goog.require('goog.events.KeyCodes');
 goog.require('goog.style');
 
 /**
- * @param {five.Event} event
+ * @param {!five.Event} event
  * @constructor
  * @extends {five.Component}
  */
 five.EventCard = function(event) {
   goog.base(this);
 
-  /** @type {five.Event} */
+  /** @type {!five.Event} */
   this.event_ = event;
 
   this.event_.attachDisplay(this);
@@ -35,6 +35,14 @@ five.EventCard.toTimeString_ = function(date) {
 
 /** @type {five.TimeAxisPatch} */
 five.EventCard.prototype.timeAxisPatch_;
+
+/** @type {goog.math.Rect} */
+five.EventCard.prototype.rect_;
+
+/** @return {!five.Event} */
+five.EventCard.prototype.getEvent = function() {
+  return this.event_;
+};
 
 /** @return {goog.date.DateTime} */
 five.EventCard.prototype.getStartTime = function() {
@@ -71,7 +79,6 @@ five.EventCard.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
-      listen(this.el, goog.events.EventType.BLUR, this.handleBlur_).
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_);
 };
 
@@ -95,12 +102,18 @@ five.EventCard.prototype.setRect = function(rect) {
   if (!this.el) {
     this.createDom();
   }
+  this.rect_ = rect;
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.el, rect.getSize());
   goog.dom.classes.enable(this.el, 'micro-height', rect.height < 26);
   goog.dom.classes.enable(this.el, 'short-height', rect.height >= 26 &&
       rect.height < 30);
   goog.dom.classes.enable(this.el, 'large-height', rect.height >= 44);
+};
+
+/** @return {goog.math.Rect} */
+five.EventCard.prototype.getRect = function() {
+  return this.rect_;
 };
 
 /** @param {boolean} selected */
@@ -121,6 +134,8 @@ five.EventCard.prototype.timeAxisPatchUpdated = function() {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventCard.prototype.handleClick_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
   var event = new goog.events.Event(goog.dom.classes.has(this.el, 'selected') ?
       five.Event.EventType.DESELECT : five.Event.EventType.SELECT);
   event.shiftKey = e.shiftKey;
@@ -128,22 +143,13 @@ five.EventCard.prototype.handleClick_ = function(e) {
 };
 
 /** @param {goog.events.BrowserEvent} e */
-five.EventCard.prototype.handleBlur_ = function(e) {
-  window.setTimeout(goog.bind(function() {
-    if (!goog.dom.classes.has(document.activeElement, 'event-card')) {
-      this.dispatchEvent(five.Event.EventType.DESELECT);
-    }
-  }, this), 0);
-};
-
-/** @param {goog.events.BrowserEvent} e */
 five.EventCard.prototype.handleKeyDown_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.UP) {
-    if (this.dispatchEvent(five.Event.EventType.MOVE_UP)) {
+    if (this.dispatchEvent(five.EventMoveEvent.bothEarlier())) {
       e.preventDefault();
     }
   } else if (e.keyCode == goog.events.KeyCodes.DOWN) {
-    if (this.dispatchEvent(five.Event.EventType.MOVE_DOWN)) {
+    if (this.dispatchEvent(five.EventMoveEvent.bothLater())) {
       e.preventDefault();
     }
   }

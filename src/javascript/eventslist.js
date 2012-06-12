@@ -120,6 +120,12 @@ five.EventsList.prototype.createDom = function() {
   titleEl.appendChild(document.createTextNode(
       'Calendar ' + this.calendarManager_.getCalendarSummary()));
   this.headerEl_.appendChild(titleEl);
+
+  this.eventHandler.
+      listen(this.eventsScrollBox_, five.EventsScrollBox.EventType.DESELECT,
+          this.handleEventsScrollBoxDeselect_).
+      listen(this.eventsScrollBox_, five.EventsScrollBox.EventType.EVENTS_MOVE,
+          this.handleEventsScrollBoxEventsMove_);
 };
 
 five.EventsList.prototype.render = function(parentEl) {
@@ -170,13 +176,17 @@ five.EventsList.prototype.displayEvents_ = function() {
   this.eventsScrollBox_.setEvents(this.events_);
 };
 
+five.EventsList.prototype.selectedEventsChanged_ = function() {
+  this.eventsScrollBox_.setSelectedEvents(this.selectedEvents_);
+};
+
 /** @param {five.Event} event */
 five.EventsList.prototype.registerListenersForEvent_ = function(event) {
   var EventType = five.Event.EventType;
   this.eventHandler.
       listen(event, [EventType.SELECT, EventType.DESELECT],
           this.handleEventToggleSelect_).
-      listen(event, [EventType.MOVE_UP, EventType.MOVE_DOWN],
+      listen(event, [EventType.MOVE],
           this.handleMoveSelectedEventsCommand_).
       listen(event, [EventType.DATA_CHANGED],
           this.handleEventDataChanged_);
@@ -218,8 +228,24 @@ five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
       this.selectedEvents_ = [e.target];
     }
   }
+  this.selectedEventsChanged_();
   this.finishBatchRenderUpdate_();
 };
+
+five.EventsList.prototype.handleEventsScrollBoxDeselect_ = function() {
+  this.startBatchRenderUpdate_();
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    selectedEvent.setSelected(false);
+  });
+  this.selectedEvents_ = [];
+  this.selectedEventsChanged_();
+  this.finishBatchRenderUpdate_();
+};
+
+/** @param {five.EventMoveEvent} e */
+five.EventsList.prototype.handleEventsScrollBoxEventsMove_ = function(e) {
+  this.handleMoveSelectedEventsCommand_(e);
+}
 
 /** @param {goog.events.Event} e */
 five.EventsList.prototype.handleEventDataChanged_ = function(e) {
@@ -228,20 +254,46 @@ five.EventsList.prototype.handleEventDataChanged_ = function(e) {
   this.eventsScrollBox_.eventsChanged([e.target]);
 };
 
-/** @param {goog.events.Event} e */
+/** @param {five.EventMoveEvent} e */
 five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
-  goog.asserts.assertInstanceof(e.target, five.Event);
-  goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
+  goog.asserts.assertInstanceof(e, five.EventMoveEvent);
   goog.asserts.assert(this.selectedEvents_.length);
   var mutation;
-  if (e.type == five.Event.EventType.MOVE_DOWN) {
-    mutation = new five.EventMutation.MoveBy(
-        new goog.date.Interval(goog.date.Interval.MINUTES, 5));
-  } else if (e.type == five.Event.EventType.MOVE_UP) {
-    mutation = new five.EventMutation.MoveBy(
-        new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+  if (e.anchor == five.EventMoveEvent.Anchor.BOTH) {
+    goog.asserts.assert(e.dir);
+    if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
+      mutation = new five.EventMutation.MoveBy(
+          new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+    } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
+      mutation = new five.EventMutation.MoveBy(
+          new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+    } else {
+      goog.asserts.fail('Unexpected dir: ' + e.dir);
+    }
+  } else if (e.anchor == five.EventMoveEvent.Anchor.START) {
+    goog.asserts.assert(e.dir);
+    if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
+      mutation = new five.EventMutation.MoveStartBy(
+          new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+    } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
+      mutation = new five.EventMutation.MoveStartBy(
+          new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+    } else {
+      goog.asserts.fail('Unexpected dir: ' + e.dir);
+    }
+  } else if (e.anchor == five.EventMoveEvent.Anchor.END) {
+    goog.asserts.assert(e.dir);
+    if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
+      mutation = new five.EventMutation.MoveEndBy(
+          new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+    } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
+      mutation = new five.EventMutation.MoveEndBy(
+          new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+    } else {
+      goog.asserts.fail('Unexpected dir: ' + e.dir);
+    }
   } else {
-    goog.asserts.fail('Unexpected type: ' + e.type);
+    goog.asserts.fail('Unexpected anchor: ' + e.anchor);
   }
   goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
     selectedEvent.addMutation(mutation.clone());
@@ -256,6 +308,7 @@ five.EventsList.prototype.handleCalendarManagerEventsChange_ = function(e) {
   goog.array.forEach(this.events_, function(event) {
     this.registerListenersForEvent_(event);
   }, this);
+  this.selectedEventsChanged_();
   this.displayEvents_();
 };
 

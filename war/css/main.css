@@ -38,6 +38,7 @@ a:hover {
   display: inline-block;
   line-height: 16px;
   font-size: 14px;
+  margin: 0;
   padding: 5px 10px;
   text-align: center;
 }
@@ -116,6 +117,28 @@ a:hover {
 .time-marker {
   border-top: 2px solid rgba(255, 0, 0, 0.4);
   position: absolute;
+}
+.inline-events-editor {
+  pointer-events: none;
+  position: absolute;
+}
+.inline-events-editor > .button-bar {
+  position: absolute;
+  bottom: -18px;
+  height: 18px;
+  width: 100%;
+}
+.inline-events-editor > .button-bar:first-child {
+  bottom: inherit;
+  top: -18px;
+}
+.inline-events-editor > .button-bar > .button {
+  pointer-events: auto;
+  border-radius: 0px;
+  font-size: 7px;
+  padding: 0px 5px;
+  line-height: 16px;
+  vertical-align: top;
 }
 .event-card {
   cursor: default;
