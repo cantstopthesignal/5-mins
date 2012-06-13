@@ -8,6 +8,9 @@ goog.require('five.EventListLayout');
 goog.require('five.InlineEventsEditor');
 goog.require('five.TimeAxisPatch');
 goog.require('five.TimeAxisPatchCanvas');
+goog.require('five.TimeAxisPatchMarker');
+goog.require('five.TimeMarker');
+goog.require('five.TimeMarkerTheme');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
@@ -55,6 +58,9 @@ five.EventsScrollBox.TIME_AXIS_WIDTH = 40;
 five.EventsScrollBox.TIME_AXIS_PATCH_WIDTH = 15;
 
 /** @type {number} */
+five.EventsScrollBox.PATCH_MIN_YPOS_DIFF = 2;
+
+/** @type {number} */
 five.EventsScrollBox.SCROLL_ANIMATION_DURATION_MS = 500;
 
 /** @type {goog.date.DateTime} */
@@ -89,6 +95,9 @@ five.EventsScrollBox.prototype.cursorMarker_;
 
 /** @type {five.EventListLayout.TimeMap} */
 five.EventsScrollBox.prototype.timeMap_;
+
+/** @type {five.EventListLayout.TimeMap} */
+five.EventsScrollBox.prototype.linearTimeMap_;
 
 /** @type {number} */
 five.EventsScrollBox.prototype.scale_ = 1.0;
@@ -202,16 +211,41 @@ five.EventsScrollBox.prototype.addTimeMarker = function(timeMarker) {
   this.timeMarkers_.push(timeMarker);
 };
 
-five.EventsScrollBox.prototype.getTimeMarkerRect = function(time) {
+five.EventsScrollBox.prototype.layoutTimeMarker = function(timeMarker) {
+  var time = timeMarker.getTime();
   var yPos = this.timeMap_.timeToYPos(time);
-  return new goog.math.Rect(five.EventsScrollBox.TIME_AXIS_WIDTH, yPos,
-      this.eventAreaWidth_, 0);
-};
+  var linearTimeYPos = this.linearTimeMap_.timeToYPos(time);
 
-five.EventsScrollBox.prototype.getTimeMarkerLabelRect = function(time) {
-  var yPos = this.timeMap_.timeToYPos(time);
-  return new goog.math.Rect(0, yPos - 7,
-      five.EventsScrollBox.TIME_AXIS_WIDTH, 14);
+  var hasTimeAxisPatchMarker = Math.abs(yPos - linearTimeYPos) >=
+      five.EventsScrollBox.PATCH_MIN_YPOS_DIFF;
+  if (hasTimeAxisPatchMarker) {
+    var patchMarker = timeMarker.getTimeAxisPatchMarker();
+    if (!patchMarker) {
+      patchMarker = new five.TimeAxisPatchMarker();
+      timeMarker.setTimeAxisPatchMarker(patchMarker);
+    }
+    patchMarker.setParams(linearTimeYPos, yPos);
+    if (!patchMarker.getOwner()) {
+      this.timeAxisPatchCanvas_.addMarker(patchMarker);
+    }
+  } else {
+    timeMarker.setTimeAxisPatchMarker(null);
+  }
+
+  var rect = new goog.math.Rect(0, yPos, this.eventAreaWidth_, 0);
+  if (hasTimeAxisPatchMarker) {
+    rect.left += five.EventsScrollBox.TIME_AXIS_PATCH_WIDTH;
+    rect.width -= five.EventsScrollBox.TIME_AXIS_PATCH_WIDTH;
+  }
+  if (rect.left > 0) {
+    rect.left -= 1;
+    rect.width += 1;
+  }
+  rect.left += five.EventsScrollBox.TIME_AXIS_WIDTH;
+
+  timeMarker.setRect(rect);
+  timeMarker.setLabelRect(new goog.math.Rect(0, yPos - 7,
+      five.EventsScrollBox.TIME_AXIS_WIDTH, 14));
 };
 
 /**
@@ -362,6 +396,7 @@ five.EventsScrollBox.prototype.layout_ = function() {
       DEFAULT_HOUR_PIXEL_HEIGHT;
   params.layoutWidth = this.eventAreaWidth_;
   params.timeAxisPatchWidth = five.EventsScrollBox.TIME_AXIS_PATCH_WIDTH;
+  params.patchMinYPosDiff = five.EventsScrollBox.PATCH_MIN_YPOS_DIFF;
   if (this.startDate_) {
     params.minTime = this.startDate_;
   }
@@ -369,15 +404,18 @@ five.EventsScrollBox.prototype.layout_ = function() {
   layout.setEvents(layoutEvents);
   layout.calc();
   this.timeMap_ = layout.getTimeMap();
+  this.linearTimeMap_ = layout.getLinearTimeMap();
+
+  this.timeAxisPatchCanvas_.startBatchUpdate();
+
   this.layoutEvents_(layoutEvents);
   this.layoutTimeAxisPatches_(layoutEvents);
   goog.dispose(layout);
 
   this.renderTimeAxis_();
-  goog.array.forEach(this.timeMarkers_, function(timeMarker) {
-    timeMarker.layout();
-  });
+  this.layoutTimeMarkers_();
   this.inlineEventsEditor_.layout();
+  this.timeAxisPatchCanvas_.finishBatchUpdate();
 };
 
 five.EventsScrollBox.prototype.layoutEvents_ = function(layoutEvents) {
@@ -396,7 +434,6 @@ five.EventsScrollBox.prototype.layoutEvents_ = function(layoutEvents) {
 
 five.EventsScrollBox.prototype.layoutTimeAxisPatches_ = function(
     layoutEvents) {
-  this.timeAxisPatchCanvas_.startBatchUpdate();
   goog.array.forEach(layoutEvents, function(layoutEvent) {
     var eventCard = layoutEvent.eventCard;
     if (layoutEvent.hasTimeAxisPatch) {
@@ -420,7 +457,12 @@ five.EventsScrollBox.prototype.layoutTimeAxisPatches_ = function(
   }, this);
   this.timeAxisPatchCanvas_.setPosition(new goog.math.Coordinate(
       five.EventsScrollBox.TIME_AXIS_WIDTH, 0));
-  this.timeAxisPatchCanvas_.finishBatchUpdate();
+};
+
+five.EventsScrollBox.prototype.layoutTimeMarkers_ = function() {
+  goog.array.forEach(this.timeMarkers_, function(timeMarker) {
+    this.layoutTimeMarker(timeMarker);
+  }, this);
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -445,7 +487,7 @@ five.EventsScrollBox.prototype.handleMouseMove_ = function(e) {
   time = five.util.roundToFiveMinutes(time);
   if (!this.cursorMarker_) {
     this.cursorMarker_ = new five.TimeMarker(time,
-        five.TimeMarker.Color.CURSOR);
+        five.TimeMarkerTheme.CURSOR);
     this.addTimeMarker(this.cursorMarker_);
   } else {
     this.cursorMarker_.setTime(time);

@@ -8,6 +8,7 @@ goog.require('five.EventMutation');
 goog.require('five.EventsScrollBox');
 goog.require('five.Spinner');
 goog.require('five.TimeMarker');
+goog.require('five.TimeMarkerTheme');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
@@ -138,7 +139,7 @@ five.EventsList.prototype.render = function(parentEl) {
   this.eventsScrollBox_.render(this.el);
 
   this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime(),
-      five.TimeMarker.Color.NOW);
+      five.TimeMarkerTheme.NOW);
   this.eventsScrollBox_.addTimeMarker(this.nowMarker_);
 
   if (!this.events_) {

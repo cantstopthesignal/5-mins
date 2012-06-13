@@ -55,6 +55,9 @@ five.EventListLayout.Params = function() {
   /** @type {number} */
   this.timeAxisPatchWidth = 10;
 
+  /** @type {number} */
+  this.patchMinYPosDiff = 2;
+
   /** @type {goog.date.DateTime} */
   this.minTime = null;
 
@@ -396,7 +399,7 @@ five.EventListLayout.prototype.calcLinearTimes_ = function() {
     var hourHeight = this.timeMap_.timeToYPos(nextHour) - hourIterYPos;
     var linearTimeYPos = hourHeight * five.util.msToHourFloat(
         timePoint.time.getTime() - hourIter.getTime()) + hourIterYPos;
-    if (Math.abs(timePoint.yPos - linearTimeYPos) > 1.0) {
+    if (Math.abs(timePoint.yPos - linearTimeYPos) >= this.patchMinYPosDiff) {
       timePoint.linearTimeYPos = five.util.round(linearTimeYPos);
     } else {
       timePoint.linearTimeYPos = timePoint.yPos;

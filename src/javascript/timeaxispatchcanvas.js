@@ -21,6 +21,9 @@ five.TimeAxisPatchCanvas = function(width) {
   /** @type {Object.<five.TimeAxisPatch>} */
   this.patchMap_ = {};
 
+  /** @type {Object.<five.TimeAxisPatchMarker>} */
+  this.markerMap_ = {};
+
   /** @type {goog.math.Coordinate} */
   this.pos_ = new goog.math.Coordinate(0, 0);
 };
@@ -60,6 +63,20 @@ five.TimeAxisPatchCanvas.prototype.addPatch = function(patch) {
 five.TimeAxisPatchCanvas.prototype.removePatch = function(patch) {
   patch.setOwner(null);
   delete this.patchMap_[goog.getUid(patch)];
+  this.paint();
+};
+
+five.TimeAxisPatchCanvas.prototype.addMarker = function(marker) {
+  marker.setOwner(this);
+  var markerUid = goog.getUid(marker);
+  goog.asserts.assert(!goog.object.containsKey(this.markerMap_, markerUid));
+  this.markerMap_[markerUid] = marker;
+  this.paint();
+};
+
+five.TimeAxisPatchCanvas.prototype.removeMarker = function(marker) {
+  marker.setOwner(null);
+  delete this.markerMap_[goog.getUid(marker)];
   this.paint();
 };
 
@@ -104,6 +121,9 @@ five.TimeAxisPatchCanvas.prototype.doPaint_ = function() {
   goog.object.forEach(this.patchMap_, function(patch) {
     this.strokePatch_(patch);
   }, this);
+  goog.object.forEach(this.markerMap_, function(marker) {
+    this.strokeMarker_(marker);
+  }, this);
 
   this.paintNeeded_ = false;
 };
@@ -129,6 +149,7 @@ five.TimeAxisPatchCanvas.prototype.strokePatch_ = function(patch) {
   var theme = patch.eventTheme;
   this.ctx_.strokeStyle = patch.selected ? theme.selectedBorderColor :
       theme.borderColor;
+  this.ctx_.lineWidth = 1;
   this.strokePatchLine_(patch.axisTop, patch.eventTop);
   this.strokePatchLine_(patch.axisBottom, patch.eventBottom);
   if (patch.getAttachedToEvent()) {
@@ -137,6 +158,12 @@ five.TimeAxisPatchCanvas.prototype.strokePatch_ = function(patch) {
     this.ctx_.lineTo(0, this.yPosToCanvas_(patch.axisBottom) + 0.5);
     this.ctx_.stroke();
   }
+};
+
+five.TimeAxisPatchCanvas.prototype.strokeMarker_ = function(marker) {
+  this.ctx_.strokeStyle = marker.theme.color;
+  this.ctx_.lineWidth = 2;
+  this.strokePatchLine_(marker.axisYPos + 0.5, marker.eventYPos + 0.5);
 };
 
 five.TimeAxisPatchCanvas.prototype.strokePatchLine_ = function(
@@ -157,6 +184,16 @@ five.TimeAxisPatchCanvas.prototype.doPaintUpdateRect_ = function() {
       minYPos = min;
     }
     var max = Math.max(patch.axisBottom, patch.eventBottom);
+    if (maxYPos === null || max > maxYPos) {
+      maxYPos = max;
+    }
+  }, this);
+  goog.object.forEach(this.markerMap_, function(marker) {
+    var min = Math.min(marker.axisYPos, marker.eventYPos);
+    if (minYPos === null || min < minYPos) {
+      minYPos = min;
+    }
+    var max = Math.max(marker.axisYPos, marker.eventYPos);
     if (maxYPos === null || max > maxYPos) {
       maxYPos = max;
     }
