@@ -172,8 +172,8 @@ five.Event.prototype.endMutationPatch = function(eventData) {
   this.parseEventData_();
 
   // Remove all locked mutations, they should now be saved.
-  goog.array.removeIf(this.mutations_, function(mutation) {
-    return mutation.isLocked();
+  this.mutations_ = goog.array.filter(this.mutations_, function(mutation) {
+    return !mutation.isLocked();
   });
   // TODO: Verify that response data matches expectations for in progress patch.
 
