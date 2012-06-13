@@ -172,16 +172,13 @@ a:hover {
   cursor: default;
   padding: 3px;
   position: absolute;
-  border: 1px solid #88f;
-  background-color: rgba(200, 200, 255, 0.8);
+  border: 1px solid;
   font-size: 12px;
   outline: 0;
   overflow: hidden;
   white-space: nowrap;
 }
 .event-card.selected {
-  border: 1px solid #66d;
-  background-color: rgba(150, 150, 220, 0.8);
 }
 .event-card.micro-height,
 .event-card.short-height {

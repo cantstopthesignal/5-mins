@@ -21,6 +21,9 @@ five.TimeAxisPatch.prototype.owner_;
 /** @type {boolean} */
 five.TimeAxisPatch.prototype.attachedToEvent_ = false;
 
+/** @type {five.EventTheme} */
+five.TimeAxisPatch.prototype.eventTheme;
+
 /** @type {boolean} */
 five.TimeAxisPatch.prototype.selected = false;
 
@@ -36,18 +39,6 @@ five.TimeAxisPatch.prototype.eventTop;
 /** @type {number} */
 five.TimeAxisPatch.prototype.eventBottom;
 
-/** @type {string} */
-five.TimeAxisPatch.prototype.eventBgColor = 'rgba(200, 200, 255, 0.8)';
-
-/** @type {string} */
-five.TimeAxisPatch.prototype.eventBorderColor = '#88f';
-
-/** @type {string} */
-five.TimeAxisPatch.prototype.selectedEventBgColor = 'rgba(150, 150, 220, 0.8)';
-
-/** @type {string} */
-five.TimeAxisPatch.prototype.selectedEventBorderColor = '#66d';
-
 /** @return {five.TimeAxisPatchCanvas} */
 five.TimeAxisPatch.prototype.getOwner = function() {
   return this.owner_;
@@ -61,6 +52,11 @@ five.TimeAxisPatch.prototype.setOwner = function(owner) {
 /** @return {boolean} */
 five.TimeAxisPatch.prototype.getAttachedToEvent = function() {
   return this.attachedToEvent_;
+};
+
+/** @param {five.EventTheme} eventTheme */
+five.TimeAxisPatch.prototype.setEventTheme = function(eventTheme) {
+  this.eventTheme = eventTheme;
 };
 
 /**

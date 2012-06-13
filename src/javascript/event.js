@@ -5,6 +5,7 @@ goog.provide('five.Event.EventType');
 
 goog.require('five.EventMoveEvent');
 goog.require('five.EventMutation');
+goog.require('five.EventTheme');
 goog.require('goog.array');
 goog.require('goog.date.DateTime');
 goog.require('goog.events.EventHandler');
@@ -58,6 +59,9 @@ five.Event.parseEventDataDate_ = function(dateData) {
   return null;
 };
 
+/** @type {!five.EventTheme} */
+five.Event.prototype.theme_ = five.EventTheme.DEFAULT;
+
 /** @type {boolean} */
 five.Event.prototype.selected_ = false;
 
@@ -92,6 +96,7 @@ five.Event.prototype.getSummary = function() {
 five.Event.prototype.attachDisplay = function(display) {
   this.displays_.push(display);
   display.setSelected(this.selected_);
+  display.setTheme(this.theme_);
   var Event = five.Event.EventType;
   this.eventHandler_.
       listen(display, [Event.MOVE, Event.SELECT, Event.DESELECT],

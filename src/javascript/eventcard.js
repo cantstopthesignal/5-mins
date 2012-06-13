@@ -36,6 +36,12 @@ five.EventCard.toTimeString_ = function(date) {
 /** @type {five.TimeAxisPatch} */
 five.EventCard.prototype.timeAxisPatch_;
 
+/** @type {five.EventTheme} */
+five.EventCard.prototype.theme_;
+
+/** @type {boolean} */
+five.EventCard.prototype.selected_ = false;
+
 /** @type {goog.math.Rect} */
 five.EventCard.prototype.rect_;
 
@@ -58,12 +64,26 @@ five.EventCard.prototype.getEndTime = function() {
 five.EventCard.prototype.setTimeAxisPatch = function(patch) {
   goog.dispose(this.timeAxisPatch_);
   this.timeAxisPatch_ = patch;
+  if (this.timeAxisPatch_) {
+    this.timeAxisPatch_.setEventTheme(this.theme_);
+  }
   this.timeAxisPatchUpdated();
 };
 
 /** @return {five.TimeAxisPatch} */
 five.EventCard.prototype.getTimeAxisPatch = function() {
   return this.timeAxisPatch_;
+};
+
+/** @param {five.EventTheme} theme */
+five.EventCard.prototype.setTheme = function(theme) {
+  this.theme_ = theme;
+  if (this.timeAxisPatch_) {
+    this.timeAxisPatch_.setEventTheme(this.theme_);
+  }
+  if (this.el) {
+    this.updateThemeDisplay_();
+  }
 };
 
 five.EventCard.prototype.createDom = function() {
@@ -76,6 +96,7 @@ five.EventCard.prototype.createDom = function() {
   this.el.appendChild(document.createTextNode(this.event_.getSummary()));
 
   this.updateDisplay();
+  this.updateThemeDisplay_();
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
@@ -95,6 +116,16 @@ five.EventCard.prototype.updateDisplay = function() {
   dateRangeEl.appendChild(document.createTextNode(
       five.EventCard.toTimeString_(this.getStartTime()) + ' - ' +
       five.EventCard.toTimeString_(this.getEndTime())));
+};
+
+five.EventCard.prototype.updateThemeDisplay_ = function() {
+  if (!this.theme_) {
+    return;
+  }
+  this.el.style.borderColor = this.selected_ ? this.theme_.selectedBorderColor :
+      this.theme_.borderColor;
+  this.el.style.backgroundColor = this.selected_ ? this.theme_.selectedBgColor :
+      this.theme_.bgColor;
 };
 
 /** @param {goog.math.Rect} rect */
@@ -121,9 +152,11 @@ five.EventCard.prototype.setSelected = function(selected) {
   if (!this.el) {
     this.createDom();
   }
-  goog.dom.classes.enable(this.el, 'selected', selected);
+  this.selected_ = selected;
+  goog.dom.classes.enable(this.el, 'selected', this.selected_);
+  this.updateThemeDisplay_();
   if (this.timeAxisPatch_) {
-    this.timeAxisPatch_.setSelected(selected);
+    this.timeAxisPatch_.setSelected(this.selected_);
   }
 };
 
