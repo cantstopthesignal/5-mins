@@ -84,6 +84,9 @@ five.EventsScrollBox.prototype.timeAxisPatchCanvas_;
 /** @type {five.InlineEventsEditor} */
 five.EventsScrollBox.prototype.inlineEventsEditor_;
 
+/** @type {five.TimeMarker} */
+five.EventsScrollBox.prototype.cursorMarker_;
+
 /** @type {five.EventListLayout.TimeMap} */
 five.EventsScrollBox.prototype.timeMap_;
 
@@ -124,6 +127,8 @@ five.EventsScrollBox.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.MOUSEMOVE, this.handleMouseMove_).
+      listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
       listen(this.inlineEventsEditor_, five.Event.EventType.MOVE,
           this.handleEventsEditorMove_);
 };
@@ -201,6 +206,12 @@ five.EventsScrollBox.prototype.getTimeMarkerRect = function(time) {
   var yPos = this.timeMap_.timeToYPos(time);
   return new goog.math.Rect(five.EventsScrollBox.TIME_AXIS_WIDTH, yPos,
       this.eventAreaWidth_, 0);
+};
+
+five.EventsScrollBox.prototype.getTimeMarkerLabelRect = function(time) {
+  var yPos = this.timeMap_.timeToYPos(time);
+  return new goog.math.Rect(0, yPos - 7,
+      five.EventsScrollBox.TIME_AXIS_WIDTH, 14);
 };
 
 /**
@@ -417,6 +428,36 @@ five.EventsScrollBox.prototype.handleClick_ = function(e) {
   var event = new goog.events.Event(five.EventsScrollBox.EventType.DESELECT);
   event.shiftKey = e.shiftKey;
   this.dispatchEvent(event);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsScrollBox.prototype.handleMouseMove_ = function(e) {
+  if (!this.timeMap_) {
+    return;
+  }
+  var el = e.target;
+  var yPos = e.offsetY;
+  while (el && el != this.el) {
+    yPos += el.offsetTop;
+    el = el.parentNode;
+  }
+  var time = this.timeMap_.yPosToTime(yPos);
+  time = five.util.roundToFiveMinutes(time);
+  if (!this.cursorMarker_) {
+    this.cursorMarker_ = new five.TimeMarker(time,
+        five.TimeMarker.Color.CURSOR);
+    this.addTimeMarker(this.cursorMarker_);
+  } else {
+    this.cursorMarker_.setTime(time);
+    this.cursorMarker_.setVisible(true);
+  }
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsScrollBox.prototype.handleMouseOut_ = function(e) {
+  if (this.cursorMarker_) {
+    this.cursorMarker_.setVisible(false);
+  }
 };
 
 /** @param {five.EventMoveEvent} e */

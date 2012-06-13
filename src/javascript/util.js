@@ -30,21 +30,42 @@ five.util.msToMin = function(ms) {
   return five.util.round(ms / 1000 / 60);
 };
 
+/**
+ * @param {!goog.date.DateTime} date
+ * @return {!goog.date.DateTime}
+ */
 five.util.hourFloor = function(date) {
   var hourFloor = date.clone();
   hourFloor.setMinutes(0);
   hourFloor.setSeconds(0);
   hourFloor.setMilliseconds(0);
   return hourFloor;
-}
+};
 
+/**
+ * @param {!goog.date.DateTime} date
+ * @return {!goog.date.DateTime}
+ */
 five.util.hourCeil = function(date) {
   var hourCeil = five.util.hourFloor(date);
   if (goog.date.Date.compare(date, hourCeil) > 0) {
     hourCeil.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
   }
   return hourCeil;
-}
+};
+
+/**
+ * @param {!goog.date.DateTime} date
+ * @return {!goog.date.DateTime}
+ */
+five.util.roundToFiveMinutes = function(date) {
+  var hourBase = five.util.hourFloor(date);
+  hourBase.add(new goog.date.Interval(goog.date.Interval.HOURS, -1));
+  var factor = 1000 * 60 * 5;
+  var newTime = five.util.round((date.getTime() - hourBase.getTime()) /
+      factor) * factor + hourBase.getTime();
+  return new goog.date.DateTime(new Date(newTime));
+};
 
 /**
  * Call fn for each hour range surrounding startTime and endTime.

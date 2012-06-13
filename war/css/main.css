@@ -115,8 +115,36 @@ a:hover {
   position: absolute;
 }
 .time-marker {
-  border-top: 2px solid rgba(255, 0, 0, 0.4);
+  border-top: 2px solid;
+  pointer-events: none;
   position: absolute;
+}
+.time-marker.default-color {
+  border-color: rgba(0, 255, 0, 0.4);
+}
+.time-marker.now-color {
+  border-color: rgba(255, 0, 0, 0.4);
+}
+.time-marker.cursor-color {
+  border-color: rgba(0, 0, 255, 0.4);
+}
+.time-marker-label {
+  font-size: 12px;
+  text-align: right;
+  line-height: 16px;
+  padding-right: 2px;
+  position: absolute;
+  pointer-events: none;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+.time-marker-label.default-color {
+  color: rgba(0, 255, 0, 0.8);
+}
+.time-marker-label.now-color {
+  color: rgba(255, 0, 0, 0.8);
+}
+.time-marker-label.cursor-color {
+  color: rgba(0, 0, 255, 0.8);
 }
 .inline-events-editor {
   pointer-events: none;

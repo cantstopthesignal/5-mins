@@ -129,6 +129,24 @@ function testForEachHourRangeWrap_aFewHours() {
       endDate));
 }
 
+function testRoundToFiveMinutes() {
+  function doTest(expected, input) {
+    assertEquals(goog.date.fromIsoString(expected).toIsoString(),
+        five.util.roundToFiveMinutes(goog.date.fromIsoString(input)).
+        toIsoString());
+  }
+  doTest('20120526T110000', '20120526T110000');
+  doTest('20120526T110000', '20120526T110001');
+  doTest('20120526T110000', '20120526T110045');
+  doTest('20120526T110000', '20120526T110229');
+  doTest('20120526T110500', '20120526T110230');
+  doTest('20120526T111000', '20120526T110900');
+  doTest('20120526T114500', '20120526T114455');
+  doTest('20120526T115500', '20120526T115729');
+  doTest('20120526T120000', '20120526T115730');
+  doTest('20120526T120000', '20120526T115930');
+}
+
 function doForEachHourRangeWrap(startDate, endDate) {
   var output = [];
   five.util.forEachHourRangeWrap(startDate, endDate, function(

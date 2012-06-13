@@ -137,7 +137,8 @@ five.EventsList.prototype.render = function(parentEl) {
   this.eventsScrollBox_.setDateRange(this.startDate_, this.endDate_);
   this.eventsScrollBox_.render(this.el);
 
-  this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime());
+  this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime(),
+      five.TimeMarker.Color.NOW);
   this.eventsScrollBox_.addTimeMarker(this.nowMarker_);
 
   if (!this.events_) {
