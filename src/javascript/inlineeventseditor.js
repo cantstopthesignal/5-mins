@@ -40,7 +40,7 @@ five.InlineEventsEditor.prototype.getEvents = function() {
 
 /** @param {Array.<!five.EventCard>} events */
 five.InlineEventsEditor.prototype.setEvents = function(events) {
-  this.events_ = events;
+  this.events_ = goog.array.clone(events);
   if (this.el && this.owner_) {
     this.layout();
   }

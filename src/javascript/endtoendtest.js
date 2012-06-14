@@ -241,6 +241,16 @@ five.EndToEndTest.prototype.addMoveOneEventDown = function() {
   }, this);
 };
 
+five.EndToEndTest.prototype.addDuplicateEvent = function() {
+  this.addWaitForAsync('Duplicating one event');
+  this.testDeferred.addCallback(function() {
+    var eventCard = goog.asserts.assertObject(this.appDom.getElementsByClass(
+        'event-card')[0]);
+    this.fireAppClickSequence_(eventCard);
+    this.fireAppKeySequence_(eventCard, goog.events.KeyCodes.D);
+  }, this);
+};
+
 /** Forward errors from a window to this test harness */
 five.EndToEndTest.prototype.forwardWindowErrors_ = function(win) {
   var oldOnError = this.appDom.getWindow().onerror;
@@ -317,6 +327,41 @@ function testSave() {
   test.addVerifyFakeAuth();
   test.addCheckSaveButtonVisible(false);
   test.addMoveOneEventDown();
+  test.addClickSaveButton();
+  test.addCheckSaveButtonVisible(false);
+  test.addVerifyMocks();
+  test.waitForDeferred();
+}
+
+function testDuplicate() {
+  test.fakeCalendarApi.expectLoadCalendars();
+  test.fakeCalendarApi.expectLoadCalendar1Events();
+
+  var event = test.fakeCalendarApi.event1;
+  var start = new goog.date.DateTime(new Date(event['start']['dateTime']));
+  var end = new goog.date.DateTime(new Date(event['end']['dateTime']));
+  var expectedBody = {
+    'summary': goog.asserts.assertString(event['summary']),
+    'start': {
+      'dateTime': new Date(start.valueOf()).toISOString()
+    },
+    'end': {
+      'dateTime': new Date(end.valueOf()).toISOString()
+    }
+  };
+  var resultEvent = goog.object.unsafeClone(event);
+  resultEvent['start'] = expectedBody['start'];
+  resultEvent['end'] = expectedBody['end'];
+  test.fakeCalendarApi.expectCreateEvent(event, expectedBody, resultEvent);
+
+  test.addReplayMocks();
+  test.addLoadApp();
+  test.addInstallFakeAuth();
+  test.addStartApp();
+  test.addWaitForAppContent();
+  test.addVerifyFakeAuth();
+  test.addCheckSaveButtonVisible(false);
+  test.addDuplicateEvent();
   test.addClickSaveButton();
   test.addCheckSaveButtonVisible(false);
   test.addVerifyMocks();

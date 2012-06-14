@@ -91,9 +91,12 @@ a:hover {
 .events-scroll-box {
   border: 1px solid #dddddd;
   max-width: 500px;
+  outline: 0;
   overflow-x: auto;
   overflow-y: scroll;
   margin: 0px 5px 5px 5px;
+  -moz-user-select: none;
+  -webkit-user-select: none;
   position: relative;
 }
 .time-axis {
@@ -159,6 +162,8 @@ a:hover {
   outline: 0;
   overflow: hidden;
   white-space: nowrap;
+  -moz-user-select: text;
+  -webkit-user-select: text;
 }
 .event-card.selected {
 }

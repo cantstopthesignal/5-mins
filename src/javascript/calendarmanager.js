@@ -91,15 +91,37 @@ five.CalendarManager.prototype.loadEvents = function(startDate, endDate) {
       }, this);
 };
 
+/** @param {!five.Event} newEvent */
+five.CalendarManager.prototype.addEvent = function(newEvent) {
+  goog.asserts.assert(newEvent.isNew());
+  this.events_.push(newEvent);
+  this.registerListenersForEvent_(newEvent);
+  this.updateHasMutations_();
+};
+
 five.CalendarManager.prototype.saveMutations = function() {
   if (!this.hasMutations()) {
     return;
   }
   goog.array.forEach(this.events_, function(event) {
-    if (event.hasMutations()) {
+    if (event.isNew()) {
+      this.createEvent_(event);
+    } else if (event.hasMutations()) {
       this.saveMutatedEvent_(event);
     }
   }, this);
+};
+
+/** @param {five.Event} event */
+five.CalendarManager.prototype.createEvent_ = function(event) {
+  goog.asserts.assert(event.isNew());
+  this.requestStarted_();
+  this.calendarApi_.createEvent(this.calendarData_['id'], event.startCreate()).
+      addCallback(function(resp) {
+        goog.asserts.assert(resp['kind'] == 'calendar#event');
+        event.endCreate(resp);
+        this.requestEnded_();
+      }, this);
 };
 
 /** @param {five.Event} event */

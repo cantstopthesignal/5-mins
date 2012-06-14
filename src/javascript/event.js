@@ -15,13 +15,17 @@ goog.require('goog.events.EventTarget');
 /**
  * @constructor
  * @param {Object} eventData
+ * @param {boolean=} opt_isNew
  * @extends {goog.events.EventTarget}
  */
-five.Event = function(eventData) {
+five.Event = function(eventData, opt_isNew) {
   goog.base(this);
 
   /** @type {Object} */
   this.eventData_ = eventData;
+
+  /** @type {boolean} */
+  this.isNew_ = opt_isNew || false;
 
   /** @type {Array.<five.EventCard>} */
   this.displays_ = [];
@@ -99,7 +103,7 @@ five.Event.prototype.attachDisplay = function(display) {
   display.setTheme(this.theme_);
   var Event = five.Event.EventType;
   this.eventHandler_.
-      listen(display, [Event.MOVE, Event.SELECT, Event.DESELECT],
+      listen(display, [Event.SELECT, Event.DESELECT],
           this.dispatchDisplayEvent_);
 };
 
@@ -111,6 +115,20 @@ five.Event.prototype.detachDisplay = function(display) {
   goog.array.removeIf(this.displays_, function(existingDisplay) {
     return existingDisplay === display;
   });
+};
+
+/** @return {!five.Event} */
+five.Event.prototype.duplicate = function() {
+  var eventData = {
+    'summary': this.getSummary(),
+    'start': {
+      'dateTime': new Date(this.getStartTime().valueOf()).toISOString()
+    },
+    'end': {
+      'dateTime': new Date(this.getEndTime().valueOf()).toISOString()
+    }
+  };
+  return new five.Event(eventData, true);
 };
 
 /** @param {five.EventMutation} mutation */
@@ -129,7 +147,12 @@ five.Event.prototype.updateMutations_ = function() {
 
 /** @return {boolean} */
 five.Event.prototype.hasMutations = function() {
-  return this.mutations_.length > 0;
+  return this.mutations_.length > 0 || this.isNew_;
+};
+
+/** @return {boolean} */
+five.Event.prototype.isNew = function() {
+  return this.isNew_;
 };
 
 /** @return {Object} */
@@ -140,23 +163,13 @@ five.Event.prototype.getEventData = function() {
 /** @return {Object} */
 five.Event.prototype.startMutationPatch = function() {
   goog.asserts.assert(this.hasMutations());
+  goog.asserts.assert(!this.isNew());
   goog.asserts.assert(!goog.array.some(this.mutations_, function(mutation) {
     return mutation.isLocked();
   }));
   var patchData = {};
   patchData['etag'] = goog.asserts.assertString(this.eventData_['etag']);
-  if (this.mutatedStartTime_ && goog.date.Date.compare(this.mutatedStartTime_,
-      goog.asserts.assertObject(this.startTime_)) != 0) {
-    patchData['start'] = {
-      'dateTime': new Date(this.mutatedStartTime_.valueOf()).toISOString()
-    };
-  }
-  if (this.mutatedEndTime_ && goog.date.Date.compare(this.mutatedEndTime_,
-      goog.asserts.assertObject(this.endTime_)) != 0) {
-    patchData['end'] = {
-      'dateTime': new Date(this.mutatedEndTime_.valueOf()).toISOString()
-    };
-  }
+  this.mergeMutationsIntoData_(patchData);
   goog.array.forEach(this.mutations_, function(mutation) {
     mutation.setLocked(true);
   });
@@ -168,6 +181,35 @@ five.Event.prototype.endMutationPatch = function(eventData) {
   goog.asserts.assert(eventData['kind'] == 'calendar#event');
   goog.asserts.assert(this.eventData_['id'] == goog.asserts.assertString(
       eventData['id']));
+  this.endMutationOrCreate_(eventData);
+};
+
+/** @return {Object} */
+five.Event.prototype.startCreate = function() {
+  goog.asserts.assert(this.hasMutations());
+  goog.asserts.assert(this.isNew());
+  goog.asserts.assert(!goog.array.some(this.mutations_, function(mutation) {
+    return mutation.isLocked();
+  }));
+  var eventData = goog.json.parse(goog.json.serialize(this.eventData_));
+  this.mergeMutationsIntoData_(eventData);
+  goog.array.forEach(this.mutations_, function(mutation) {
+    mutation.setLocked(true);
+  });
+  return eventData;
+};
+
+/** @param {Object} eventData */
+five.Event.prototype.endCreate = function(eventData) {
+  goog.asserts.assert(eventData['kind'] == 'calendar#event');
+  goog.asserts.assert(this.isNew());
+  this.isNew_ = false;
+  this.endMutationOrCreate_(eventData);
+};
+
+/** @param {Object} eventData */
+five.Event.prototype.endMutationOrCreate_ = function(eventData) {
+  goog.asserts.assert(eventData['kind'] == 'calendar#event');
   this.eventData_ = eventData;
   this.parseEventData_();
 
@@ -179,6 +221,22 @@ five.Event.prototype.endMutationPatch = function(eventData) {
 
   this.updateMutations_();
   this.dispatchEvent(five.Event.EventType.DATA_CHANGED);
+};
+
+/** @param {Object} eventData */
+five.Event.prototype.mergeMutationsIntoData_ = function(eventData) {
+  if (this.mutatedStartTime_ && goog.date.Date.compare(this.mutatedStartTime_,
+      goog.asserts.assertObject(this.startTime_)) != 0) {
+    eventData['start'] = {
+      'dateTime': new Date(this.mutatedStartTime_.valueOf()).toISOString()
+    };
+  }
+  if (this.mutatedEndTime_ && goog.date.Date.compare(this.mutatedEndTime_,
+      goog.asserts.assertObject(this.endTime_)) != 0) {
+    eventData['end'] = {
+      'dateTime': new Date(this.mutatedEndTime_.valueOf()).toISOString()
+    };
+  }
 };
 
 five.Event.prototype.parseEventData_ = function() {

@@ -7,7 +7,6 @@ goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('goog.events.EventType');
-goog.require('goog.events.KeyCodes');
 goog.require('goog.style');
 
 /**
@@ -89,7 +88,6 @@ five.EventCard.prototype.setTheme = function(theme) {
 five.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'event-card');
-  this.el.tabIndex = 0;
   var dateRangeEl = document.createElement('div');
   goog.dom.classes.add(dateRangeEl, 'date-range');
   this.el.appendChild(dateRangeEl);
@@ -100,7 +98,7 @@ five.EventCard.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
-      listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_);
+      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_);
 };
 
 /** @override */
@@ -176,14 +174,8 @@ five.EventCard.prototype.handleClick_ = function(e) {
 };
 
 /** @param {goog.events.BrowserEvent} e */
-five.EventCard.prototype.handleKeyDown_ = function(e) {
-  if (e.keyCode == goog.events.KeyCodes.UP) {
-    if (this.dispatchEvent(five.EventMoveEvent.bothEarlier())) {
-      e.preventDefault();
-    }
-  } else if (e.keyCode == goog.events.KeyCodes.DOWN) {
-    if (this.dispatchEvent(five.EventMoveEvent.bothLater())) {
-      e.preventDefault();
-    }
+five.EventCard.prototype.handleMouseDown_ = function(e) {
+  if (e.shiftKey) {
+    e.preventDefault();
   }
 };

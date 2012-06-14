@@ -61,6 +61,28 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
 /**
  * @param {string} calendarId
  * @param {Object} eventData
+ * @return {goog.async.Deferred}
+ */
+five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
+  goog.asserts.assert(!eventData['id']);
+  goog.asserts.assert(!eventData['etag']);
+  var requestParams = {
+    'path': '/calendar/v3/calendars/' + calendarId + '/events',
+    'method': 'POST',
+    'params': {},
+    'body': goog.json.serialize(eventData)
+  };
+  return this.callApiWithAuthRetry_(requestParams).addCallback(function(resp) {
+    goog.asserts.assert(resp['kind'] == 'calendar#event');
+    this.logger_.info('Event created');
+  }, this).addErrback(function(error) {
+    this.logger_.severe('Error creating event: ' + error, error);
+  }, this);
+};
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventData
  * @param {Object} eventPatchData
  * @return {goog.async.Deferred}
  */

@@ -76,6 +76,22 @@ five.testing.FakeCalendarApi.prototype.expectLoadCalendar1Events = function() {
       $returns(this.calendar1EventsResult_);
 };
 
+five.testing.FakeCalendarApi.prototype.expectCreateEvent = function(event,
+    expectedBody, resultEvent) {
+  var bodyMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
+      function(body) {
+    var body = goog.json.parse(body);
+    if (expectedBody instanceof goog.testing.mockmatchers.ArgumentMatcher) {
+      return expectedBody.matches(body);
+    }
+    assertObjectEquals(expectedBody, body);
+    return true;
+  });
+  this.requestHandler_.handleRequest('/calendar/v3/calendars/' +
+      this.calendar1Id_ + '/events', 'POST', {}, bodyMatcher).
+      $returns(resultEvent);
+};
+
 five.testing.FakeCalendarApi.prototype.expectEventPatch = function(event,
     expectedBody, resultEvent) {
   var bodyMatcher = new goog.testing.mockmatchers.ArgumentMatcher(

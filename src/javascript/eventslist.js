@@ -36,21 +36,12 @@ five.EventsList = function(calendarManager) {
   this.spinner_ = new five.Spinner();
   this.registerDisposable(this.spinner_);
 
-  /** @type {Array.<five.Event>} */
+  /** @type {!Array.<!five.Event>} */
   this.selectedEvents_ = [];
 
   this.initDefaultDateRange_();
 
-  this.eventHandler.
-      listen(this.calendarManager_,
-          five.CalendarManager.EventType.MUTATIONS_STATE_CHANGED,
-          this.handleCalendarManagerMutationsStateChange_).
-      listen(this.calendarManager_,
-          five.CalendarManager.EventType.REQUESTS_STATE_CHANGED,
-          this.handleCalendarManagerRequestsStateChange_).
-      listen(this.calendarManager_,
-          five.CalendarManager.EventType.EVENTS_CHANGED,
-          this.handleCalendarManagerEventsChange_);
+  this.registerListenersForCalendarManager_();
 };
 goog.inherits(five.EventsList, five.Component);
 
@@ -63,14 +54,14 @@ five.EventsList.prototype.startDate_;
 /** @type {goog.date.DateTime} */
 five.EventsList.prototype.endDate_;
 
+/** @type {Array.<!five.Event>} */
+five.EventsList.prototype.events_;
+
 /** @type {Element} */
 five.EventsList.prototype.headerEl_;
 
 /** @type {Element} */
 five.EventsList.prototype.saveEl_;
-
-/** @type {Array.<five.Event>} */
-five.EventsList.prototype.events_;
 
 /** @type {five.TimeMarker} */
 five.EventsList.prototype.nowMarker_;
@@ -122,11 +113,7 @@ five.EventsList.prototype.createDom = function() {
       'Calendar ' + this.calendarManager_.getCalendarSummary()));
   this.headerEl_.appendChild(titleEl);
 
-  this.eventHandler.
-      listen(this.eventsScrollBox_, five.EventsScrollBox.EventType.DESELECT,
-          this.handleEventsScrollBoxDeselect_).
-      listen(this.eventsScrollBox_, five.EventsScrollBox.EventType.EVENTS_MOVE,
-          this.handleEventsScrollBoxEventsMove_);
+  this.registerListenersForScrollBox_();
 };
 
 five.EventsList.prototype.render = function(parentEl) {
@@ -175,7 +162,7 @@ five.EventsList.prototype.loadEvents_ = function() {
 };
 
 five.EventsList.prototype.displayEvents_ = function() {
-  this.eventsScrollBox_.setEvents(this.events_);
+  this.eventsScrollBox_.setEvents(goog.asserts.assertArray(this.events_));
 };
 
 five.EventsList.prototype.selectedEventsChanged_ = function() {
@@ -234,6 +221,17 @@ five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
   this.finishBatchRenderUpdate_();
 };
 
+five.EventsList.prototype.registerListenersForScrollBox_ = function() {
+  var EventType = five.EventsScrollBox.EventType;
+  this.eventHandler.
+      listen(this.eventsScrollBox_, EventType.DESELECT,
+          this.handleEventsScrollBoxDeselect_).
+      listen(this.eventsScrollBox_, EventType.EVENTS_MOVE,
+          this.handleEventsScrollBoxEventsMove_).
+      listen(this.eventsScrollBox_, EventType.EVENTS_DUPLICATE,
+          this.handleEventsScrollBoxEventsDuplicate_);
+};
+
 five.EventsList.prototype.handleEventsScrollBoxDeselect_ = function() {
   this.startBatchRenderUpdate_();
   goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
@@ -247,7 +245,28 @@ five.EventsList.prototype.handleEventsScrollBoxDeselect_ = function() {
 /** @param {five.EventMoveEvent} e */
 five.EventsList.prototype.handleEventsScrollBoxEventsMove_ = function(e) {
   this.handleMoveSelectedEventsCommand_(e);
-}
+};
+
+five.EventsList.prototype.handleEventsScrollBoxEventsDuplicate_ = function() {
+  if (!this.selectedEvents_.length) {
+    return;
+  }
+  this.startBatchRenderUpdate_();
+  goog.array.forEach(this.selectedEvents_, function(event) {
+    var newEvent = event.duplicate();
+    this.addEvent_(newEvent);
+  }, this);
+  this.finishBatchRenderUpdate_();
+};
+
+/** @param {!five.Event} newEvent */
+five.EventsList.prototype.addEvent_ = function(newEvent) {
+  this.calendarManager_.addEvent(newEvent);
+  this.events_.push(newEvent);
+  this.registerListenersForEvent_(newEvent);
+  this.eventsScrollBox_.addEvent(newEvent);
+};
+
 
 /** @param {goog.events.Event} e */
 five.EventsList.prototype.handleEventDataChanged_ = function(e) {
@@ -259,7 +278,9 @@ five.EventsList.prototype.handleEventDataChanged_ = function(e) {
 /** @param {five.EventMoveEvent} e */
 five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   goog.asserts.assertInstanceof(e, five.EventMoveEvent);
-  goog.asserts.assert(this.selectedEvents_.length);
+  if (!this.selectedEvents_.length) {
+    return;
+  }
   var mutation;
   if (e.anchor == five.EventMoveEvent.Anchor.BOTH) {
     goog.asserts.assert(e.dir);
@@ -303,9 +324,22 @@ five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   this.eventsScrollBox_.eventsChanged(this.selectedEvents_);
 };
 
+five.EventsList.prototype.registerListenersForCalendarManager_ = function() {
+  this.eventHandler.
+      listen(this.calendarManager_,
+          five.CalendarManager.EventType.MUTATIONS_STATE_CHANGED,
+          this.handleCalendarManagerMutationsStateChange_).
+      listen(this.calendarManager_,
+          five.CalendarManager.EventType.REQUESTS_STATE_CHANGED,
+          this.handleCalendarManagerRequestsStateChange_).
+      listen(this.calendarManager_,
+          five.CalendarManager.EventType.EVENTS_CHANGED,
+          this.handleCalendarManagerEventsChange_);
+};
+
 /** @param {goog.events.Event} e */
 five.EventsList.prototype.handleCalendarManagerEventsChange_ = function(e) {
-  this.events_ = this.calendarManager_.getEvents();
+  this.events_ = goog.array.clone(this.calendarManager_.getEvents());
   this.selectedEvents_ = [];
   goog.array.forEach(this.events_, function(event) {
     this.registerListenersForEvent_(event);
