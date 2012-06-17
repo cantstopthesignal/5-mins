@@ -1,6 +1,6 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('five.EventListLayoutDemo');
+goog.provide('five.demos.EventListLayoutDemo');
 
 goog.require('five.Component');
 goog.require('five.EventListLayout');
@@ -21,7 +21,7 @@ goog.require('goog.style');
  * @constructor
  * @extends {goog.events.EventTarget}
  */
-five.EventListLayoutDemo = function() {
+five.demos.EventListLayoutDemo = function() {
   goog.base(this);
 
   this.events_ = [];
@@ -43,7 +43,7 @@ five.EventListLayoutDemo = function() {
   this.eventsLayer_ = document.createElement('div');
   this.eventContainerEl_.appendChild(this.eventsLayer_);
 
-  this.cursorPopup_ = new five.EventListLayoutDemo.CursorPopup_();
+  this.cursorPopup_ = new five.demos.EventListLayoutDemo.CursorPopup_();
   this.registerDisposable(this.cursorPopup_);
 
   this.now_ = new goog.date.DateTime(new goog.date.Date());
@@ -52,21 +52,21 @@ five.EventListLayoutDemo = function() {
   this.eventHandler_ = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler_);
 };
-goog.inherits(five.EventListLayoutDemo, goog.events.EventTarget);
+goog.inherits(five.demos.EventListLayoutDemo, goog.events.EventTarget);
 
 /** @type {number} */
-five.EventListLayoutDemo.TIME_AXIS_WIDTH = 40;
+five.demos.EventListLayoutDemo.TIME_AXIS_WIDTH = 40;
 
 /** @type {number} */
-five.EventListLayoutDemo.TIME_AXIS_PATCH_WIDTH = 20;
+five.demos.EventListLayoutDemo.TIME_AXIS_PATCH_WIDTH = 20;
 
 /** @type {five.EventListLayout.TimeMap} */
-five.EventListLayoutDemo.prototype.timeMap_;
+five.demos.EventListLayoutDemo.prototype.timeMap_;
 
 /** @type {five.EventListLayout.TimeMap} */
-five.EventListLayoutDemo.prototype.linearTimeMap_;
+five.demos.EventListLayoutDemo.prototype.linearTimeMap_;
 
-five.EventListLayoutDemo.prototype.start = function() {
+five.demos.EventListLayoutDemo.prototype.start = function() {
   this.createSomeEvents_();
   this.eventHandler_.listen(this.el, goog.events.EventType.MOUSEMOVE,
       this.handleMouseMoveEventArea_);
@@ -74,7 +74,7 @@ five.EventListLayoutDemo.prototype.start = function() {
       this.handleMouseOutEventArea_);
 };
 
-five.EventListLayoutDemo.prototype.createSomeEvents_ = function() {
+five.demos.EventListLayoutDemo.prototype.createSomeEvents_ = function() {
   this.events_.push(this.createEvent_('Event 1', 0, 60));
   this.events_.push(this.createEvent_('Event 2', 3 * 60 + 15, 60));
   this.events_.push(this.createEvent_('Event 3', 60 + 10, 2 * 60));
@@ -96,7 +96,7 @@ five.EventListLayoutDemo.prototype.createSomeEvents_ = function() {
   this.layout_();
 };
 
-five.EventListLayoutDemo.prototype.layout_ = function() {
+five.demos.EventListLayoutDemo.prototype.layout_ = function() {
   var layoutEvents = goog.array.map(this.events_, function(event) {
     var layoutEvent = new five.EventListLayout.Event(
         event.startTime, event.endTime);
@@ -120,8 +120,8 @@ five.EventListLayoutDemo.prototype.layout_ = function() {
   params.minEventHeight = 25;
   params.distancePerHour = 50;
   params.minDistancePerHour = 50;
-  params.layoutWidth = 500 - five.EventListLayoutDemo.TIME_AXIS_WIDTH;
-  params.timeAxisPatchWidth = five.EventListLayoutDemo.
+  params.layoutWidth = 500 - five.demos.EventListLayoutDemo.TIME_AXIS_WIDTH;
+  params.timeAxisPatchWidth = five.demos.EventListLayoutDemo.
       TIME_AXIS_PATCH_WIDTH;
   params.minTime = minTime;
   params.maxTime = maxTime;
@@ -151,7 +151,7 @@ five.EventListLayoutDemo.prototype.layout_ = function() {
       rect.width += 1;
     }
     rect.height += 1;
-    rect.left += five.EventListLayoutDemo.TIME_AXIS_WIDTH;
+    rect.left += five.demos.EventListLayoutDemo.TIME_AXIS_WIDTH;
     event.setRect(rect);
     event.setAttachedToTimeAxisPatch(layoutEvent.attachedToTimeAxisPatch);
   }, this);
@@ -171,7 +171,7 @@ five.EventListLayoutDemo.prototype.layout_ = function() {
   goog.style.setHeight(this.eventContainerEl_, eventContainerHeight);
 };
 
-five.EventListLayoutDemo.prototype.renderTimeAxis_ = function(minTime,
+five.demos.EventListLayoutDemo.prototype.renderTimeAxis_ = function(minTime,
     maxTime) {
   five.util.forEachHourRangeWrap(minTime, maxTime, function(hour,
       nextHour) {
@@ -190,11 +190,11 @@ five.EventListLayoutDemo.prototype.renderTimeAxis_ = function(minTime,
   }, this);
 };
 
-five.EventListLayoutDemo.prototype.renderTimeAxisPatch_ = function(
+five.demos.EventListLayoutDemo.prototype.renderTimeAxisPatch_ = function(
     layoutEvents) {
   var canvasEl = document.createElement('canvas');
-  canvasEl.style.left = five.EventListLayoutDemo.TIME_AXIS_WIDTH + "px";
-  canvasEl.setAttribute('width', five.EventListLayoutDemo.
+  canvasEl.style.left = five.demos.EventListLayoutDemo.TIME_AXIS_WIDTH + "px";
+  canvasEl.setAttribute('width', five.demos.EventListLayoutDemo.
       TIME_AXIS_PATCH_WIDTH - 1);
   canvasEl.setAttribute('height', 700);
   goog.dom.classes.add(canvasEl, 'time-axis-patch-canvas');
@@ -210,7 +210,7 @@ five.EventListLayoutDemo.prototype.renderTimeAxisPatch_ = function(
   }
 
   function endPoint(timePoint) {
-    return new goog.math.Coordinate(five.EventListLayoutDemo.
+    return new goog.math.Coordinate(five.demos.EventListLayoutDemo.
         TIME_AXIS_PATCH_WIDTH, timePoint.yPos);
   }
 
@@ -250,7 +250,7 @@ five.EventListLayoutDemo.prototype.renderTimeAxisPatch_ = function(
   });
 };
 
-five.EventListLayoutDemo.prototype.createEvent_ = function(
+five.demos.EventListLayoutDemo.prototype.createEvent_ = function(
     name, startOffsetMins, durationMins) {
   var startTime = this.now_.clone();
   var startOffsetSeconds = five.util.round(startOffsetMins * 60);
@@ -260,10 +260,11 @@ five.EventListLayoutDemo.prototype.createEvent_ = function(
   var durationSeconds = five.util.round(durationMins * 60);
   endTime.add(new goog.date.Interval(goog.date.Interval.SECONDS,
       durationSeconds));
-  return new five.EventListLayoutDemo.Event(name, startTime, endTime);
+  return new five.demos.EventListLayoutDemo.Event(name, startTime, endTime);
 };
 
-five.EventListLayoutDemo.prototype.handleMouseMoveEventArea_ = function(e) {
+five.demos.EventListLayoutDemo.prototype.handleMouseMoveEventArea_ =
+    function(e) {
   if (!this.timeMap_) {
     return;
   }
@@ -287,7 +288,8 @@ five.EventListLayoutDemo.prototype.handleMouseMoveEventArea_ = function(e) {
   this.cursorPopup_.showAt(cursorPopupPos);
 };
 
-five.EventListLayoutDemo.prototype.handleMouseOutEventArea_ = function(e) {
+five.demos.EventListLayoutDemo.prototype.handleMouseOutEventArea_ =
+    function(e) {
   if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
     return;
   }
@@ -298,15 +300,15 @@ five.EventListLayoutDemo.prototype.handleMouseOutEventArea_ = function(e) {
  * @constructor
  * @extends {five.Component}
  */
-five.EventListLayoutDemo.Event = function(name, startTime, endTime) {
+five.demos.EventListLayoutDemo.Event = function(name, startTime, endTime) {
   goog.base(this);
   this.name = name;
   this.startTime = startTime;
   this.endTime = endTime;
 };
-goog.inherits(five.EventListLayoutDemo.Event, five.Component);
+goog.inherits(five.demos.EventListLayoutDemo.Event, five.Component);
 
-five.EventListLayoutDemo.Event.prototype.createDom = function() {
+five.demos.EventListLayoutDemo.Event.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'event');
 
@@ -321,7 +323,7 @@ five.EventListLayoutDemo.Event.prototype.createDom = function() {
 };
 
 /** @param {goog.math.Rect} rect */
-five.EventListLayoutDemo.Event.prototype.setRect = function(rect) {
+five.demos.EventListLayoutDemo.Event.prototype.setRect = function(rect) {
   if (!this.el) {
     this.createDom();
   }
@@ -329,7 +331,7 @@ five.EventListLayoutDemo.Event.prototype.setRect = function(rect) {
   goog.style.setBorderBoxSize(this.el, rect.getSize());
 };
 
-five.EventListLayoutDemo.Event.prototype.setAttachedToTimeAxisPatch =
+five.demos.EventListLayoutDemo.Event.prototype.setAttachedToTimeAxisPatch =
     function(attached) {
   this.el.style.borderLeftWidth = attached ? 0 : '';
 };
@@ -338,19 +340,19 @@ five.EventListLayoutDemo.Event.prototype.setAttachedToTimeAxisPatch =
  * @constructor
  * @extends {five.Component}
  */
-five.EventListLayoutDemo.CursorPopup_ = function() {
+five.demos.EventListLayoutDemo.CursorPopup_ = function() {
   goog.base(this);
 };
-goog.inherits(five.EventListLayoutDemo.CursorPopup_, five.Component);
+goog.inherits(five.demos.EventListLayoutDemo.CursorPopup_, five.Component);
 
-five.EventListLayoutDemo.CursorPopup_.prototype.createDom = function() {
+five.demos.EventListLayoutDemo.CursorPopup_.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'cursor-popup');
   goog.style.showElement(this.el, false);
 };
 
 /** @param {string} text */
-five.EventListLayoutDemo.CursorPopup_.prototype.setMessageText = function(
+five.demos.EventListLayoutDemo.CursorPopup_.prototype.setMessageText = function(
     text) {
   if (!this.el) {
     this.createDom();
@@ -360,7 +362,7 @@ five.EventListLayoutDemo.CursorPopup_.prototype.setMessageText = function(
 };
 
 /** @param {goog.math.Coordinate} pos */
-five.EventListLayoutDemo.CursorPopup_.prototype.showAt = function(pos) {
+five.demos.EventListLayoutDemo.CursorPopup_.prototype.showAt = function(pos) {
   if (!this.el) {
     this.createDom();
   }
@@ -372,7 +374,7 @@ five.EventListLayoutDemo.CursorPopup_.prototype.showAt = function(pos) {
   goog.style.showElement(this.el, true);
 };
 
-five.EventListLayoutDemo.CursorPopup_.prototype.hide = function() {
+five.demos.EventListLayoutDemo.CursorPopup_.prototype.hide = function() {
   if (!this.el) {
     return;
   }
