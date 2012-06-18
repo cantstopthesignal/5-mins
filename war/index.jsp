@@ -32,11 +32,10 @@
         <%
       } else {
         %>
-        <script type="text/javascript" src="js/main_<%= jsMode.getName() %>.js"></script>
+        <script type="text/javascript" src="js/main<%= jsMode.getName() %>.js"></script>
         <%
       }
     %>
-    <link rel="stylesheet" href="css/main.css" type="text/css" />
     <script type="text/javascript">
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-31450279-1']);

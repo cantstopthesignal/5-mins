@@ -30,14 +30,14 @@
     <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
         namespace="five.main"
         warningLevel="VERBOSE"
-        destfile="${js-output.dir}/main_debug.js" />
+        destfile="${js-output.dir}/maindebug.js" />
   </target>
 
   <target name="compile-optimized">
     <closure-builder-compile compilationLevel="ADVANCED_OPTIMIZATIONS"
         namespace="five.main"
         warningLevel="VERBOSE"
-        destfile="${js-output.dir}/main_optimized.js" />
+        destfile="${js-output.dir}/mainoptimized.js" />
   </target>
 
   <target name="compile" depends="compile-debug,compile-optimized" />

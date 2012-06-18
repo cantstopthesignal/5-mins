@@ -12,7 +12,7 @@ five.device.getDensity = function() {
     var densityParam = uri.getParameterValue('density');
     if (densityParam && goog.object.contains(five.device.Density,
         densityParam)) {
-      five.device.density_ = /* @type {five.device.Density} */ (densityParam);
+      five.device.density_ = /** @type {five.device.Density} */ (densityParam);
     } else if (window['devicePixelRatio'] >= 1.5) {
       five.device.density_ = five.device.Density.HIGH;
     } else {
@@ -30,4 +30,3 @@ five.device.Density = {
   HIGH: 'high',
   NORMAL: 'normal'
 };
-

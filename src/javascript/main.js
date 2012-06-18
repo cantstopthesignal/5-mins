@@ -3,13 +3,15 @@
 goog.provide('five.main');
 
 goog.require('five.App');
+goog.require('five.mainCssLoader');
 goog.require('five.mainTestMode');
 goog.require('goog.debug.Console');
 goog.require('goog.Uri');
+goog.require('goog.events');
+goog.require('goog.events.EventType');
 
 // To appease closure missing types warnings.
 goog.require('goog.debug.ErrorHandler');
-goog.require('goog.events.EventHandler');
 
 
 five.main.maybeTestMode = function() {
@@ -25,6 +27,10 @@ five.main.start = function() {
   new five.App().start();
 };
 
+five.main.loadInline = function() {
+  five.mainCssLoader.load();
+}
+
 five.main.handleWindowLoad = function() {
   goog.debug.Console.autoInstall();
 
@@ -33,4 +39,6 @@ five.main.handleWindowLoad = function() {
   }
 };
 
-window.onload = five.main.handleWindowLoad;
+goog.events.listen(window, goog.events.EventType.LOAD,
+    five.main.handleWindowLoad);
+five.main.loadInline();
