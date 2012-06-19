@@ -6,6 +6,7 @@ goog.require('five.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
+goog.require('goog.dom.Range');
 goog.require('goog.events.EventType');
 goog.require('goog.style');
 
@@ -43,6 +44,12 @@ five.EventCard.prototype.selected_ = false;
 
 /** @type {goog.math.Rect} */
 five.EventCard.prototype.rect_;
+
+/** @type {Element} */
+five.EventCard.prototype.dateRangeEl_;
+
+/** @type {Element} */
+five.EventCard.prototype.summaryEl_;
 
 /** @return {!five.Event} */
 five.EventCard.prototype.getEvent = function() {
@@ -88,16 +95,18 @@ five.EventCard.prototype.setTheme = function(theme) {
 five.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'event-card');
-  var dateRangeEl = document.createElement('div');
-  goog.dom.classes.add(dateRangeEl, 'date-range');
-  this.el.appendChild(dateRangeEl);
-  this.el.appendChild(document.createTextNode(this.event_.getSummary()));
+  this.dateRangeEl_ = document.createElement('div');
+  goog.dom.classes.add(this.dateRangeEl_, 'date-range');
+  this.el.appendChild(this.dateRangeEl_);
+  this.summaryEl_ = document.createElement('span');
+  this.el.appendChild(this.summaryEl_);
 
   this.updateDisplay();
   this.updateThemeDisplay_();
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.DBLCLICK, this.handleDblClick_).
       listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_);
 };
 
@@ -109,11 +118,10 @@ five.EventCard.prototype.disposeInternal = function() {
 };
 
 five.EventCard.prototype.updateDisplay = function() {
-  var dateRangeEl = this.getElementByClass('date-range');
-  goog.dom.removeChildren(dateRangeEl);
-  dateRangeEl.appendChild(document.createTextNode(
+  goog.dom.setTextContent(this.dateRangeEl_,
       five.EventCard.toTimeString_(this.getStartTime()) + ' - ' +
-      five.EventCard.toTimeString_(this.getEndTime())));
+      five.EventCard.toTimeString_(this.getEndTime()));
+  goog.dom.setTextContent(this.summaryEl_, this.event_.getSummary());
 };
 
 five.EventCard.prototype.updateThemeDisplay_ = function() {
@@ -171,6 +179,14 @@ five.EventCard.prototype.handleClick_ = function(e) {
       five.Event.EventType.DESELECT : five.Event.EventType.SELECT);
   event.shiftKey = e.shiftKey;
   this.dispatchEvent(event);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventCard.prototype.handleDblClick_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  goog.dom.Range.clearSelection(window);
+  this.dispatchEvent(five.Event.EventType.EDIT_SUMMARY);
 };
 
 /** @param {goog.events.BrowserEvent} e */

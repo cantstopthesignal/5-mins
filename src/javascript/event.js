@@ -45,6 +45,7 @@ goog.inherits(five.Event, goog.events.EventTarget);
 five.Event.EventType = {
   SELECT: goog.events.getUniqueId('select'),
   DESELECT: goog.events.getUniqueId('deselect'),
+  EDIT_SUMMARY: goog.events.getUniqueId('edit_summary'),
   MOVE: five.EventMoveEvent.EventType.MOVE,
   MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),
   DATA_CHANGED: goog.events.getUniqueId('data_changed')
@@ -81,6 +82,9 @@ five.Event.prototype.mutatedStartTime_;
 /** @type {goog.date.DateTime} */
 five.Event.prototype.mutatedEndTime_;
 
+/** @type {string} */
+five.Event.prototype.mutatedSummary_;
+
 /** @return {goog.date.DateTime} */
 five.Event.prototype.getStartTime = function() {
   return this.mutatedStartTime_ || this.startTime_;
@@ -93,6 +97,9 @@ five.Event.prototype.getEndTime = function() {
 
 /** @return {string} */
 five.Event.prototype.getSummary = function() {
+  if (goog.isString(this.mutatedSummary_)) {
+    return this.mutatedSummary_;
+  }
   return this.eventData_['summary'] || '';
 };
 
@@ -103,7 +110,7 @@ five.Event.prototype.attachDisplay = function(display) {
   display.setTheme(this.theme_);
   var Event = five.Event.EventType;
   this.eventHandler_.
-      listen(display, [Event.SELECT, Event.DESELECT],
+      listen(display, [Event.SELECT, Event.DESELECT, Event.EDIT_SUMMARY],
           this.dispatchDisplayEvent_);
 };
 
@@ -237,6 +244,10 @@ five.Event.prototype.mergeMutationsIntoData_ = function(eventData) {
       'dateTime': new Date(this.mutatedEndTime_.valueOf()).toISOString()
     };
   }
+  if (goog.isString(this.mutatedSummary_) && this.mutatedSummary_ !=
+      this.eventData_['summary']) {
+    eventData['summary'] = this.mutatedSummary_;
+  }
 };
 
 five.Event.prototype.parseEventData_ = function() {
@@ -284,6 +295,8 @@ five.Event.prototype.calcMutations_ = function() {
       this.mutatedStartTime_.add(mutation.getInterval());
     } else if (mutation instanceof five.EventMutation.MoveEndBy) {
       this.mutatedEndTime_.add(mutation.getInterval());
+    } else if (mutation instanceof five.EventMutation.ChangeSummary) {
+      this.mutatedSummary_ = mutation.getText();
     } else {
       goog.asserts.fail('Unexpected mutation: ' + mutation);
     }
@@ -314,7 +327,8 @@ five.Event.prototype.collapseMutations_ = function() {
 
 /**
  * @return {five.EventMutation} A merged mutation or null if no merge is
- *     possible.
+ *     possible.  mutation1 or mutation2 can also be returned to ignore
+ *     the other.
  */
 five.Event.prototype.maybeGetMergedMutation_ = function(mutation1, mutation2) {
   if (mutation1.isLocked() || mutation2.isLocked()) {
@@ -337,6 +351,10 @@ five.Event.prototype.maybeGetMergedMutation_ = function(mutation1, mutation2) {
       var interval = mutation1.getInterval().clone();
       interval.add(mutation2.getInterval());
       return new five.EventMutation.MoveEndBy(interval);
+    }
+  } else if (mutation1 instanceof five.EventMutation.ChangeSummary) {
+    if (mutation2 instanceof five.EventMutation.ChangeSummary) {
+      return mutation2;
     }
   }
 

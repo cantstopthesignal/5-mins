@@ -16,9 +16,10 @@ goog.require('goog.dom.classes');
 goog.require('goog.events.EventType');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.style');
-goog.require('goog.testing.jsunit');
 goog.require('goog.testing.DeferredTestCase');
 goog.require('goog.testing.MockControl');
+goog.require('goog.testing.jsunit');
+goog.require('goog.testing.mockmatchers');
 
 
 var test;
@@ -108,6 +109,19 @@ five.EndToEndTest.prototype.tearDown = function() {
       goog.dom.removeNode(this.appFrame);
     }
   }, this));
+};
+
+five.EndToEndTest.prototype.expectCalendarApiLoads = function() {
+  this.fakeCalendarApi.expectLoadCalendars();
+  this.fakeCalendarApi.expectLoadCalendar1Events();
+};
+
+five.EndToEndTest.prototype.addAppStartupSequence = function() {
+  this.addLoadApp();
+  this.addInstallFakeAuth();
+  this.addStartApp();
+  this.addWaitForAppContent();
+  this.addVerifyFakeAuth();
 };
 
 five.EndToEndTest.prototype.addLoadApp = function() {
@@ -222,6 +236,11 @@ five.EndToEndTest.prototype.addCheckSaveButtonVisible = function(visible) {
   }, this);
 };
 
+five.EndToEndTest.prototype.addSaveSequence = function() {
+  this.addClickSaveButton();
+  this.addCheckSaveButtonVisible(false);
+};
+
 five.EndToEndTest.prototype.addClickSaveButton = function() {
   this.addWaitForAsync('Click save button');
   this.testDeferred.addCallback(function() {
@@ -251,6 +270,15 @@ five.EndToEndTest.prototype.addDuplicateEvent = function() {
   }, this);
 };
 
+five.EndToEndTest.prototype.addChangeEventSummary = function() {
+  this.addWaitForAsync('Changing the summary of one event');
+  this.testDeferred.addCallback(function() {
+    var eventCard = goog.asserts.assertObject(this.appDom.getElementsByClass(
+        'event-card')[0]);
+    this.fireAppDoubleClickSequence_(eventCard);
+  }, this);
+};
+
 /** Forward errors from a window to this test harness */
 five.EndToEndTest.prototype.forwardWindowErrors_ = function(win) {
   var oldOnError = this.appDom.getWindow().onerror;
@@ -272,33 +300,33 @@ five.EndToEndTest.prototype.getButton_ = function(buttonName) {
 };
 
 five.EndToEndTest.prototype.fireAppClickSequence_ = function(var_args) {
-  var fireClickSequenceFunction = goog.getObjectByName(
-      'five.mainTestMode.fireClickSequence', this.appDom.getWindow());
-  fireClickSequenceFunction.apply(null, arguments);
+  var fn = goog.getObjectByName('five.mainTestMode.fireClickSequence',
+      this.appDom.getWindow());
+  fn.apply(null, arguments);
+};
+
+five.EndToEndTest.prototype.fireAppDoubleClickSequence_ = function(var_args) {
+  var fn = goog.getObjectByName('five.mainTestMode.fireDoubleClickSequence',
+      this.appDom.getWindow());
+  fn.apply(null, arguments);
 };
 
 five.EndToEndTest.prototype.fireAppKeySequence_ = function(var_args) {
-  var fireKeySequenceFunction = goog.getObjectByName(
-      'five.mainTestMode.fireKeySequence', this.appDom.getWindow());
-  fireKeySequenceFunction.apply(null, arguments);
+  var fn = goog.getObjectByName('five.mainTestMode.fireKeySequence',
+      this.appDom.getWindow());
+  fn.apply(null, arguments);
 };
 
 function testLoad() {
-  test.fakeCalendarApi.expectLoadCalendars();
-  test.fakeCalendarApi.expectLoadCalendar1Events();
+  test.expectCalendarApiLoads();
   test.addReplayMocks();
-  test.addLoadApp();
-  test.addInstallFakeAuth();
-  test.addStartApp();
-  test.addWaitForAppContent();
-  test.addVerifyFakeAuth();
+  test.addAppStartupSequence();
   test.addVerifyMocks();
   test.waitForDeferred();
 }
 
-function testSave() {
-  test.fakeCalendarApi.expectLoadCalendars();
-  test.fakeCalendarApi.expectLoadCalendar1Events();
+function testMove() {
+  test.expectCalendarApiLoads();
 
   var event = test.fakeCalendarApi.event1;
   var start = new goog.date.DateTime(new Date(event['start']['dateTime']));
@@ -320,22 +348,16 @@ function testSave() {
   test.fakeCalendarApi.expectEventPatch(event, expectedBody, resultEvent);
 
   test.addReplayMocks();
-  test.addLoadApp();
-  test.addInstallFakeAuth();
-  test.addStartApp();
-  test.addWaitForAppContent();
-  test.addVerifyFakeAuth();
+  test.addAppStartupSequence();
   test.addCheckSaveButtonVisible(false);
   test.addMoveOneEventDown();
-  test.addClickSaveButton();
-  test.addCheckSaveButtonVisible(false);
+  test.addSaveSequence();
   test.addVerifyMocks();
   test.waitForDeferred();
 }
 
 function testDuplicate() {
-  test.fakeCalendarApi.expectLoadCalendars();
-  test.fakeCalendarApi.expectLoadCalendar1Events();
+  test.expectCalendarApiLoads();
 
   var event = test.fakeCalendarApi.event1;
   var start = new goog.date.DateTime(new Date(event['start']['dateTime']));
@@ -355,15 +377,48 @@ function testDuplicate() {
   test.fakeCalendarApi.expectCreateEvent(event, expectedBody, resultEvent);
 
   test.addReplayMocks();
-  test.addLoadApp();
-  test.addInstallFakeAuth();
-  test.addStartApp();
-  test.addWaitForAppContent();
-  test.addVerifyFakeAuth();
+  test.addAppStartupSequence();
   test.addCheckSaveButtonVisible(false);
   test.addDuplicateEvent();
-  test.addClickSaveButton();
+  test.addSaveSequence();
+  test.addVerifyMocks();
+  test.waitForDeferred();
+}
+
+function testChangeSummary() {
+  test.expectCalendarApiLoads();
+
+  var promptMockControl = new goog.testing.MockControl();
+
+  var event = test.fakeCalendarApi.event1;
+  var expectedBody = {
+    'etag': goog.asserts.assertString(event['etag']),
+    'summary': event['summary'] + ' (edited)'
+  };
+  var resultEvent = goog.object.unsafeClone(event);
+  resultEvent['summary'] = expectedBody['summary'];
+  test.fakeCalendarApi.expectEventPatch(event, expectedBody, resultEvent);
+
+  test.addReplayMocks();
+  test.addAppStartupSequence();
   test.addCheckSaveButtonVisible(false);
+
+  test.addWaitForAsync('Setup mock prompt');
+  test.testDeferred.addCallback(function() {
+    promptMockControl.createMethodMock(test.appDom.getWindow(), 'prompt')(
+        goog.testing.mockmatchers.isString, event['summary']).$returns(
+            event['summary'] + ' (edited)');
+    promptMockControl.$replayAll();
+  }, this);
+
+  test.addChangeEventSummary();
+
+  test.addWaitForAsync('Verify mock prompt');
+  test.testDeferred.addCallback(function() {
+    promptMockControl.$verifyAll();
+  }, this);
+
+  test.addSaveSequence();
   test.addVerifyMocks();
   test.waitForDeferred();
 }

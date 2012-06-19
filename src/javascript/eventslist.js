@@ -175,6 +175,8 @@ five.EventsList.prototype.registerListenersForEvent_ = function(event) {
   this.eventHandler.
       listen(event, [EventType.SELECT, EventType.DESELECT],
           this.handleEventToggleSelect_).
+      listen(event, [EventType.EDIT_SUMMARY],
+          this.handleEventEditSummary_).
       listen(event, [EventType.MOVE],
           this.handleMoveSelectedEventsCommand_).
       listen(event, [EventType.DATA_CHANGED],
@@ -323,6 +325,21 @@ five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   });
   this.eventsScrollBox_.eventsChanged(this.selectedEvents_);
 };
+
+/** @param {goog.events.Event} e */
+five.EventsList.prototype.handleEventEditSummary_ = function(e) {
+  goog.asserts.assertInstanceof(e.target, five.Event);
+  goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
+  var event = /** @type {!five.Event} */ (e.target);
+  var newSummary = window.prompt("Choose a new title for event '" +
+      event.getSummary() + "'", event.getSummary());
+  newSummary ? newSummary.trim() : null;
+  if (!newSummary) {
+    return;
+  }
+  event.addMutation(new five.EventMutation.ChangeSummary(newSummary));
+  this.eventsScrollBox_.eventsChanged([event]);
+}
 
 five.EventsList.prototype.registerListenersForCalendarManager_ = function() {
   this.eventHandler.

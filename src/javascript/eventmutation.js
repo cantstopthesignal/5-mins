@@ -53,6 +53,25 @@ five.EventMutation.IntervalMutation_.prototype.getInterval = function() {
 };
 
 /**
+ * @param {string} text
+ * @param {boolean=} opt_locked
+ * @constructor
+ * @extends {five.EventMutation}
+ */
+five.EventMutation.ReplaceTextMutation_ = function(text, opt_locked) {
+  goog.base(this, opt_locked);
+
+  /** @type {string} */
+  this.text_ = text;
+};
+goog.inherits(five.EventMutation.ReplaceTextMutation_, five.EventMutation);
+
+/** @return {string} */
+five.EventMutation.ReplaceTextMutation_.prototype.getText = function() {
+  return this.text_;
+};
+
+/**
  * @param {goog.date.Interval} interval
  * @param {boolean=} opt_locked
  * @constructor
@@ -102,5 +121,23 @@ goog.inherits(five.EventMutation.MoveEndBy,
 /** @override */
 five.EventMutation.MoveEndBy.prototype.clone = function() {
   return new five.EventMutation.MoveEndBy(this.getInterval().clone(),
+      this.isLocked());
+};
+
+/**
+ * @param {string} text
+ * @param {boolean=} opt_locked
+ * @constructor
+ * @extends {five.EventMutation.ReplaceTextMutation_}
+ */
+five.EventMutation.ChangeSummary = function(text, opt_locked) {
+  goog.base(this, text, opt_locked);
+};
+goog.inherits(five.EventMutation.ChangeSummary,
+    five.EventMutation.ReplaceTextMutation_);
+
+/** @override */
+five.EventMutation.ChangeSummary.prototype.clone = function() {
+  return new five.EventMutation.ChangeSummary(this.getText(),
       this.isLocked());
 };

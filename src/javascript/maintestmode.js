@@ -11,6 +11,8 @@ five.mainTestMode.init = function(mainStartFn) {
 
   goog.exportSymbol('five.mainTestMode.fireClickSequence',
       goog.testing.events.fireClickSequence);
+  goog.exportSymbol('five.mainTestMode.fireDoubleClickSequence',
+      goog.testing.events.fireDoubleClickSequence);
   goog.exportSymbol('five.mainTestMode.fireKeySequence',
       goog.testing.events.fireKeySequence);
 };
