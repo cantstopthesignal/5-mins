@@ -30,4 +30,4 @@ five.EventTheme.ORANGE = new five.EventTheme('#FFAD46', '#CB7403', '#dF8D26',
     '#aB5400');
 
 /** @type {!five.EventTheme} */
-five.EventTheme.DEFAULT = five.EventTheme.ORANGE;
+five.EventTheme.DEFAULT = five.EventTheme.BLUE;

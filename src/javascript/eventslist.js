@@ -2,11 +2,11 @@
 
 goog.provide('five.EventsList');
 
+goog.require('five.Button');
 goog.require('five.Component');
 goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('five.EventsScrollBox');
-goog.require('five.Spinner');
 goog.require('five.TimeMarker');
 goog.require('five.TimeMarkerTheme');
 goog.require('goog.asserts');
@@ -22,19 +22,18 @@ goog.require('goog.events.EventType');
  * @constructor
  * @extends {five.Component}
  */
-five.EventsList = function(calendarManager) {
+five.EventsList = function(calendarManager, appBar) {
   goog.base(this);
 
   /** @type {five.CalendarManager} */
   this.calendarManager_ = calendarManager;
 
+  /** @type {five.AppBar} */
+  this.appBar_ = appBar;
+
   /** @type {five.EventsScrollBox} */
   this.eventsScrollBox_ = new five.EventsScrollBox();
   this.registerDisposable(this.eventsScrollBox_);
-
-  /** @type {five.Spinner} */
-  this.spinner_ = new five.Spinner();
-  this.registerDisposable(this.spinner_);
 
   /** @type {!Array.<!five.Event>} */
   this.selectedEvents_ = [];
@@ -57,11 +56,8 @@ five.EventsList.prototype.endDate_;
 /** @type {Array.<!five.Event>} */
 five.EventsList.prototype.events_;
 
-/** @type {Element} */
-five.EventsList.prototype.headerEl_;
-
-/** @type {Element} */
-five.EventsList.prototype.saveEl_;
+/** @type {five.Button} */
+five.EventsList.prototype.saveButton_;
 
 /** @type {five.TimeMarker} */
 five.EventsList.prototype.nowMarker_;
@@ -79,39 +75,21 @@ five.EventsList.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-list');
 
-  this.headerEl_ = document.createElement('div');
-  this.headerEl_.className = 'header';
-  this.el.appendChild(this.headerEl_);
-
-  var refreshEl = document.createElement('div');
-  refreshEl.className = 'button';
-  refreshEl.appendChild(document.createTextNode('Refresh'));
-  this.eventHandler.listen(refreshEl, goog.events.EventType.CLICK,
+  var refreshButton = new five.Button('Refresh');
+  this.appBar_.getButtonBar().addButton(refreshButton);
+  this.eventHandler.listen(refreshButton.el, goog.events.EventType.CLICK,
       this.handleRefreshClick_);
-  this.headerEl_.appendChild(refreshEl);
 
-  var nowEl = document.createElement('div');
-  nowEl.className = 'button';
-  nowEl.appendChild(document.createTextNode('Now'));
-  this.eventHandler.listen(nowEl, goog.events.EventType.CLICK,
+  var nowButton = new five.Button('Now');
+  this.appBar_.getButtonBar().addButton(nowButton);
+  this.eventHandler.listen(nowButton.el, goog.events.EventType.CLICK,
       this.handleNowClick_);
-  this.headerEl_.appendChild(nowEl);
 
-  this.saveEl_ = document.createElement('div');
-  this.saveEl_.className = 'button';
-  goog.style.showElement(this.saveEl_, false);
-  this.saveEl_.appendChild(document.createTextNode('Save'));
-  this.eventHandler.listen(this.saveEl_, goog.events.EventType.CLICK,
+  this.saveButton_ = new five.Button('Save');
+  this.appBar_.getButtonBar().addButton(this.saveButton_);
+  this.eventHandler.listen(this.saveButton_.el, goog.events.EventType.CLICK,
       this.handleSaveClick_);
-  this.headerEl_.appendChild(this.saveEl_);
-
-  this.spinner_.render(this.headerEl_);
-
-  var titleEl = document.createElement('div');
-  titleEl.className = 'title';
-  titleEl.appendChild(document.createTextNode(
-      'Calendar ' + this.calendarManager_.getCalendarSummary()));
-  this.headerEl_.appendChild(titleEl);
+  goog.style.showElement(this.saveButton_.el, false);
 
   this.registerListenersForScrollBox_();
 };
@@ -142,9 +120,8 @@ five.EventsList.prototype.render = function(parentEl) {
 
 five.EventsList.prototype.resize = function(opt_width, opt_height) {
   var height = opt_height || this.el.parentNode.offsetHeight;
-  var headerHeight = this.headerEl_.offsetHeight;
 
-  this.eventsScrollBox_.resize(undefined, Math.max(50, height - headerHeight));
+  this.eventsScrollBox_.resize(undefined, Math.max(50, height));
 };
 
 /** @override */
@@ -368,7 +345,8 @@ five.EventsList.prototype.handleCalendarManagerEventsChange_ = function(e) {
 /** @param {goog.events.Event} e */
 five.EventsList.prototype.handleCalendarManagerMutationsStateChange_ =
     function(e) {
-  goog.style.showElement(this.saveEl_, this.calendarManager_.hasMutations());
+  goog.style.showElement(this.saveButton_.el,
+      this.calendarManager_.hasMutations());
 };
 
 /** @param {goog.events.Event} e */
@@ -376,7 +354,7 @@ five.EventsList.prototype.handleCalendarManagerRequestsStateChange_ =
     function(e) {
   if (this.calendarManager_.hasRequestsInProgress()) {
     goog.asserts.assert(!this.calendarManagerSpinEntry_);
-    this.calendarManagerSpinEntry_ = this.spinner_.spin(150);
+    this.calendarManagerSpinEntry_ = this.appBar_.getSpinner().spin(150);
   } else {
     if (this.calendarManagerSpinEntry_) {
       this.calendarManagerSpinEntry_.release();

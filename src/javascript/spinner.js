@@ -5,25 +5,51 @@ goog.provide('five.Spinner');
 goog.require('five.Component');
 goog.require('goog.array');
 goog.require('goog.asserts');
+goog.require('goog.color');
 goog.require('goog.dom');
 goog.require('goog.style');
 
 /**
  * @constructor
+ * @param {boolean=} opt_darkBackground
+ * @param {number=} opt_size
  * @extends {five.Component}
  */
-five.Spinner = function() {
+five.Spinner = function(opt_darkBackground, opt_size) {
   /** @type {Array.<five.Spinner.Entry>} */
   this.entries_ = [];
+
+  /** @type {boolean} */
+  this.darkBackground_ = opt_darkBackground || false;
+
+  /** @type {?number} */
+  this.size_ = opt_size || null;
 };
 goog.inherits(five.Spinner, five.Component);
 
 /** @type {number} */
+five.Spinner.ANIMATION_INTERVAL_MS_ = 50;
+
+/** @type {number} */
 five.Spinner.prototype.checkTimeoutId_;
 
+/** @type {number} */
+five.Spinner.prototype.animationIntervalId_;
+
+/** @type {Object} */
+five.Spinner.prototype.ctx_;
+
+/** @type {number} */
+five.Spinner.prototype.numBlips_;
+
+/** @type {Array.<number>} */
+five.Spinner.prototype.blipOpacity_;
+
 five.Spinner.prototype.createDom = function() {
-  goog.base(this, 'createDom');
+  goog.asserts.assert(!this.el);
+  this.el = document.createElement('canvas');
   goog.dom.classes.add(this.el, 'spinner');
+
   this.checkVisibility_();
 };
 
@@ -48,6 +74,7 @@ five.Spinner.prototype.releaseEntry = function(entry) {
 /** @override */
 five.Spinner.prototype.disposeInternal = function() {
   this.clearCheckTimer_();
+  this.clearAnimationInterval_();
   goog.base(this, 'disposeInternal');
 };
 
@@ -67,6 +94,83 @@ five.Spinner.prototype.checkVisibility_ = function() {
         goog.bind(this.handleCheckTimeout_, this), minTimestamp - now);
   }
   goog.style.showElement(this.el, triggered);
+
+  if (triggered) {
+    this.maybeStartAnimation_();
+  } else {
+    this.clearAnimationInterval_();
+  }
+};
+
+five.Spinner.prototype.maybeStartAnimation_ = function() {
+  if (this.animationIntervalId_) {
+    return;
+  }
+
+  if (!this.size_ || this.size_ < 16) {
+    this.size_ = Math.max(16, Math.min(this.el.offsetWidth,
+        this.el.offsetHeight));
+  }
+
+  this.el.setAttribute('width', this.size_ + 'px');
+  this.el.setAttribute('height', this.size_ + 'px');
+  this.ctx_ = this.el.getContext('2d');
+
+  if (this.size_ >= 128) {
+    this.numBlips_ = 15;
+  } else if (this.size_ >= 64) {
+    this.numBlips_ = 13;
+  } else {
+    this.numBlips_ = 11;
+  }
+
+  this.blipOpacity_ = [];
+  for (var i = 0; i < this.numBlips_; i++) {
+    this.blipOpacity_.push(Math.min(1, i / (this.numBlips_ - 1)));
+  }
+  var hotBlip = this.numBlips_ - 1;
+  var iteration = 0;
+  this.animationIntervalId_ = window.setInterval(goog.bind(function() {
+    iteration += 1;
+    if (iteration % 2 == 1) {
+      hotBlip = (hotBlip + 1) % this.numBlips_;
+    }
+    for (var i = 0; i < this.numBlips_; i++) {
+      this.blipOpacity_[i] = Math.max(0, this.blipOpacity_[i] - 1 /
+          this.numBlips_ / 2);
+    }
+    this.blipOpacity_[hotBlip] = 1;
+    this.paint_();
+  }, this), five.Spinner.ANIMATION_INTERVAL_MS_);
+};
+
+five.Spinner.prototype.paint_ = function() {
+  var blipWidth = Math.ceil(this.size_ * 0.3);
+  var blipHeight = Math.ceil(this.size_ / 20);
+  var blipReach = this.size_ / 2 - blipWidth;
+
+  this.ctx_.clearRect(0, 0, this.size_, this.size_);
+  this.ctx_.save();
+  this.ctx_.translate(this.size_ / 2, this.size_ / 2);
+
+  for (var i = 0; i < this.numBlips_; i++) {
+    if (this.darkBackground_) {
+      this.ctx_.fillStyle = 'rgba(255,255,255,' + this.blipOpacity_[i] + ')';
+    } else {
+      this.ctx_.fillStyle = 'rgba(0,0,0,' + this.blipOpacity_[i] + ')';
+    }
+
+    this.ctx_.beginPath();
+    this.ctx_.moveTo(blipReach, -blipHeight/2);
+    this.ctx_.lineTo(blipReach + blipWidth, -blipHeight/2);
+    this.ctx_.lineTo(blipReach + blipWidth, blipHeight/2);
+    this.ctx_.lineTo(blipReach, blipHeight/2);
+    this.ctx_.closePath();
+    this.ctx_.fill();
+
+    this.ctx_.rotate(Math.PI*2 / this.numBlips_);
+  }
+  this.ctx_.restore();
 };
 
 five.Spinner.prototype.handleCheckTimeout_ = function() {
@@ -77,6 +181,13 @@ five.Spinner.prototype.clearCheckTimer_ = function() {
   if (this.checkTimeoutId_) {
     window.clearTimeout(this.checkTimeoutId_);
     delete this.checkTimeoutId_;
+  }
+};
+
+five.Spinner.prototype.clearAnimationInterval_ = function() {
+  if (this.animationIntervalId_) {
+    window.clearInterval(this.animationIntervalId_);
+    delete this.animationIntervalId_;
   }
 };
 

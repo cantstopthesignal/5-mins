@@ -18,6 +18,8 @@
   <head>
     <title>5 minutes</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,
+        user-scalable=yes, target-densitydpi=device-dpi">
     <script type="text/javascript">
       var userEmail = "<%= user != null ? user.getEmail() : "" %>";
     </script>
@@ -51,8 +53,8 @@
       })();
     </script>
   </head>
-  <body>
-    <div class="app-content"></div>
+  <body class="main">
+    <div class="app"></div>
     <div class="footer">
       Contact by
       <a href="mailto:cantstopthesignals@gmail.com">Email</a> or

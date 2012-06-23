@@ -1,2 +1,83 @@
 /* Copyright cantstopthesignals@gmail.com */
-
+body {
+  font-size: 22px;
+}
+.app-bar {
+  height: 96px;
+  padding: 12px;
+}
+.app-icon {
+  width: 72px;
+  height: 72px;
+}
+.app-bar-icon {
+  margin-right: 20px;
+}
+.app-icon > .inner {
+  transform-origin: top left;
+  -moz-transform-origin: top left;
+  -webkit-transform-origin: top left;
+  transform: scale(0.5625, 0.5625);
+  -moz-transform: scale(0.5625, 0.5625);
+  -webkit-transform: scale(0.5625, 0.5625);
+}
+.app-bar-main-menu {
+  font-size: 36px;
+  height: 72px;
+  line-height: 72px;
+}
+.app-bar-main-menu > .title {
+  max-width: 350px;
+  margin-right: 44px;
+}
+.app-bar-main-menu > .arrow {
+  border-top: 24px solid transparent;
+  border-right: 24px solid #878787;
+}
+.app-bar > .spinner {
+  margin: 8px 10px 8px 0;
+}
+.app-bar-button-bar {
+  padding: 4px 0px;
+}
+.footer {
+  font-size: 20px;
+  padding: 15px;
+}
+.button {
+  line-height: 42px;
+  font-size: 24px;
+  padding: 10px 10px;
+}
+.time-axis > .time-box {
+  font-size: 22px;
+  padding: 4px 6px;
+  width: 41px;
+}
+.time-marker-label {
+  font-size: 22px;
+  line-height: 28px;
+  padding-right: 4px;
+}
+.event-card {
+  padding: 3px;
+  font-size: 20px;
+}
+.event-card.micro-height,
+.event-card.short-height {
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+.event-card > .date-range {
+  font-size: 18px;
+}
+.event-card.short-height > .date-range {
+  margin-bottom: -2px;
+}
+.event-card.micro-height > .date-range {
+  margin-right: 5px;
+}
+.spinner {
+  width: 56px;
+  height: 56px;
+}

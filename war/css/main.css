@@ -1,13 +1,19 @@
 /* Copyright cantstopthesignals@gmail.com */
 html {
+  background: white;
   height: 100%;
 }
-body {
+body.main {
+  background-color: #333;
   font-family: Arial;
-  font-size: 16px;
-  margin: 0px;
-  padding: 0px;
+  margin: 0;
+  padding: 0;
+  position: relative;
   height: 100%;
+  width: 100%;
+}
+body > iframe {
+  top: -100px;
 }
 a {
   color: #0000cc;
@@ -16,19 +22,65 @@ a {
 a:hover {
   text-decoration: underline;
 }
+.app {
+  height: 100%;
+}
+.app-bar {
+  background-color: #222222;
+  position: relative;
+  box-sizing: border-box;
+}
+.app-bar-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+.app-icon {
+  display: inline-block;
+  overflow: hidden;
+}
+.app-icon > .inner {
+  width: 128px;
+  height: 128px;
+  background: url(/images/logo128.png) no-repeat;
+}
+.app-bar-main-menu {
+  color: white;
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+}
+.app-bar-main-menu > .title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-bar-main-menu > .arrow {
+  width: 0;
+  height: 0;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+.app-bar > .spinner {
+  float: right;
+}
+.app-bar-button-bar {
+  float: right;
+}
+.app-bar-button-bar > .button {
+  float: right;
+  margin-left: 5px;
+}
 .footer {
-  font-size: 13px;
+  color: #ddd;
   text-align: center;
-  padding: 10px;
   position: fixed;
   bottom: 0px;
   right: 0px;
   left: 0px;
 }
-.footer a {
-  color: blue;
-  text-decoration: none;
-  cursor: pointer;
+.footer > a {
+  color: #99f;
 }
 .button {
   background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
@@ -37,10 +89,7 @@ a:hover {
   border: 1px solid #999;
   border-radius: 2px;
   display: inline-block;
-  line-height: 16px;
-  font-size: 14px;
   margin: 0;
-  padding: 5px 10px;
   text-align: center;
 }
 .button:active {
@@ -68,34 +117,14 @@ a:hover {
   display: block;
   margin-top: 5px;
 }
-.app-content {
-  height: 100%;
-}
 .events-list {
 }
-.events-list > .header {
-  padding: 5px;
-  line-height: 28px;
-  max-width: 500px;
-}
-.events-list > .header > .button {
-  float: right;
-  margin-left: 5px;
-}
-.events-list > .header > .spinner {
-  float: right;
-  margin-right: 5px;
-}
-.events-list > .header > .title {
-  font-weight: bold;
-}
 .events-scroll-box {
+  background: #fff;
   border: 1px solid #dddddd;
-  max-width: 500px;
   outline: 0;
   overflow-x: auto;
   overflow-y: scroll;
-  margin: 0px 5px 5px 5px;
   -moz-user-select: none;
   -webkit-user-select: none;
   position: relative;
@@ -108,10 +137,7 @@ a:hover {
 .time-axis > .time-box {
   border-right: 1px solid #dddddd;
   color: #444444;
-  font-size: 12px;
   text-align: right;
-  padding: 2px;
-  width: 41px;
   height: 100%;
   box-sizing: border-box;
 }
@@ -124,10 +150,7 @@ a:hover {
   position: absolute;
 }
 .time-marker-label {
-  font-size: 12px;
   text-align: right;
-  line-height: 16px;
-  padding-right: 2px;
   position: absolute;
   pointer-events: none;
   background-color: rgba(255, 255, 255, 0.9);
@@ -156,10 +179,8 @@ a:hover {
 }
 .event-card {
   cursor: default;
-  padding: 3px;
   position: absolute;
   border: 1px solid;
-  font-size: 12px;
   outline: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -170,8 +191,6 @@ a:hover {
 }
 .event-card.micro-height,
 .event-card.short-height {
-  padding-top: 1px;
-  padding-bottom: 1px;
   text-overflow: ellipsis;
 }
 .event-card.large-height {
@@ -181,25 +200,15 @@ a:hover {
   border-left-width: 0;
 }
 .event-card > .date-range {
-  font-size: 10px;
   font-weight: bold;
 }
 .event-card.short-height > .date-range {
-  margin-bottom: -2px;
 }
 .event-card.micro-height > .date-range {
   display: inline;
-  margin-right: 5px;
 }
 .calendar-chooser {
 }
 .spinner {
-  background: url(/images/spinner.gif);
-  width: 32px;
-  height: 32px;
-  transform: scale(0.93, 0.93);
-  -moz-transform: scale(0.93, 0.93);
-  -webkit-transform: scale(0.93, 0.93);
-  -ms-transform: scale(0.93, 0.93);
-  -o-transform: scale(0.93, 0.93);
+  display: inline-block;
 }

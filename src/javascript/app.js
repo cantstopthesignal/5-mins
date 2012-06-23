@@ -2,6 +2,7 @@
 
 goog.provide('five.App');
 
+goog.require('five.AppBar');
 goog.require('five.Auth');
 goog.require('five.CalendarApi');
 goog.require('five.CalendarChooser');
@@ -33,6 +34,9 @@ goog.inherits(five.App, goog.events.EventTarget);
 /** @type {goog.debug.Logger} */
 five.App.prototype.logger_ = goog.debug.Logger.getLogger('five.App');
 
+/** @type {five.AppBar} */
+five.App.prototype.appBar_;
+
 /** @type {five.CalendarChooser} */
 five.App.prototype.calendarChooser_;
 
@@ -43,7 +47,7 @@ five.App.prototype.eventsList_;
 five.App.prototype.footerEl_;
 
 /** @type {Element} */
-five.App.prototype.appContentEl_;
+five.App.prototype.appEl_;
 
 /** @type {Object} */
 five.App.prototype.calendarData_;
@@ -53,10 +57,14 @@ five.App.prototype.start = function() {
       addCallback(this.chooseCalendar_, this).
       addCallback(this.showEventsList_, this);
   this.auth_.start();
-  this.appContentEl_ = goog.dom.getElementByClass('app-content');
-  goog.asserts.assert(this.appContentEl_);
+  this.appEl_ = goog.dom.getElementByClass('app');
+  goog.asserts.assert(this.appEl_);
   this.footerEl_ = goog.dom.getElementByClass('footer');
   goog.asserts.assert(this.footerEl_);
+
+  this.appBar_ = new five.AppBar();
+  this.appBar_.render(this.appEl_);
+
   this.eventHandler_.listen(window, goog.events.EventType.RESIZE,
       this.handleWindowResize_);
 };
@@ -87,9 +95,10 @@ five.App.prototype.showEventsList_ = function() {
   var calendarManager = new five.CalendarManager(
       this.calendarApi_, this.calendarData_);
   this.registerDisposable(calendarManager);
-  this.eventsList_ = new five.EventsList(calendarManager);
+  this.eventsList_ = new five.EventsList(calendarManager, this.appBar_);
   this.registerDisposable(this.eventsList_);
-  this.eventsList_.render(this.appContentEl_);
+  this.eventsList_.render(this.appEl_);
+  this.appBar_.getMainMenu().setTitle(this.calendarData_['summary']);
   this.resize();
 };
 
@@ -98,10 +107,11 @@ five.App.prototype.handleWindowResize_ = function(e) {
 };
 
 five.App.prototype.resize = function() {
+  var appBarHeight = this.appBar_.el.offsetHeight;
   var footerHeight = this.footerEl_.offsetHeight;
-  var parentHeight = this.appContentEl_.parentNode.offsetHeight;
-  var appHeight = Math.max(0, parentHeight - footerHeight);
+  var parentHeight = this.appEl_.parentNode.offsetHeight;
+  var innerHeight = Math.max(0, parentHeight - footerHeight - appBarHeight);
   if (this.eventsList_) {
-    this.eventsList_.resize(undefined, appHeight);
+    this.eventsList_.resize(undefined, innerHeight);
   }
 };
