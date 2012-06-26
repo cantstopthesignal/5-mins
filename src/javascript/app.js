@@ -7,7 +7,7 @@ goog.require('five.Auth');
 goog.require('five.CalendarApi');
 goog.require('five.CalendarChooser');
 goog.require('five.CalendarManager');
-goog.require('five.EventsList');
+goog.require('five.EventsView');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.debug.Logger');
@@ -40,8 +40,8 @@ five.App.prototype.appBar_;
 /** @type {five.CalendarChooser} */
 five.App.prototype.calendarChooser_;
 
-/** @type {five.EventsList} */
-five.App.prototype.eventsList_;
+/** @type {five.EventsView} */
+five.App.prototype.eventsView_;
 
 /** @type {Element} */
 five.App.prototype.footerEl_;
@@ -55,7 +55,7 @@ five.App.prototype.calendarData_;
 five.App.prototype.start = function() {
   this.auth_.getAuthDeferred().branch().
       addCallback(this.chooseCalendar_, this).
-      addCallback(this.showEventsList_, this);
+      addCallback(this.showEventsView_, this);
   this.auth_.start();
   this.appEl_ = goog.dom.getElementByClass('app');
   goog.asserts.assert(this.appEl_);
@@ -89,15 +89,15 @@ five.App.prototype.chooseCalendar_ = function() {
       }, this);
 };
 
-five.App.prototype.showEventsList_ = function() {
+five.App.prototype.showEventsView_ = function() {
   goog.asserts.assert(this.calendarData_);
-  goog.asserts.assert(!this.eventsList_);
+  goog.asserts.assert(!this.eventsView_);
   var calendarManager = new five.CalendarManager(
       this.calendarApi_, this.calendarData_);
   this.registerDisposable(calendarManager);
-  this.eventsList_ = new five.EventsList(calendarManager, this.appBar_);
-  this.registerDisposable(this.eventsList_);
-  this.eventsList_.render(this.appEl_);
+  this.eventsView_ = new five.EventsView(calendarManager, this.appBar_);
+  this.registerDisposable(this.eventsView_);
+  this.eventsView_.render(this.appEl_);
   this.appBar_.getMainMenu().setTitle(this.calendarData_['summary']);
   this.resize();
 };
@@ -114,8 +114,8 @@ five.App.prototype.resize = function() {
   var appHeight = parentHeight - footerHeight;
   goog.style.setHeight(this.appEl_, appHeight);
 
-  var eventsListHeight = Math.max(0, appHeight - appBarHeight);
-  if (this.eventsList_) {
-    this.eventsList_.resize(undefined, eventsListHeight);
+  var eventsViewHeight = Math.max(0, appHeight - appBarHeight);
+  if (this.eventsView_) {
+    this.eventsView_.resize(undefined, eventsViewHeight);
   }
 };

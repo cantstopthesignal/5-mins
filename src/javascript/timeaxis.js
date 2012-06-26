@@ -34,7 +34,7 @@ five.TimeAxis.prototype.startDate_;
 /** @type {goog.date.DateTime} */
 five.TimeAxis.prototype.endDate_;
 
-/** @type {five.EventsScrollBox} */
+/** @type {five.EventsTimeline} */
 five.TimeAxis.prototype.owner_;
 
 /** @type {goog.math.Rect} */
@@ -43,7 +43,7 @@ five.TimeAxis.prototype.visibleRect_;
 /** @type {boolean} */
 five.TimeAxis.prototype.layoutOccurred_;
 
-/** @param {five.EventsScrollBox} owner */
+/** @param {five.EventsTimeline} owner */
 five.TimeAxis.prototype.setOwner = function(owner) {
   this.owner_ = owner;
   if (!this.owner_) {

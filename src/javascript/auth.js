@@ -4,7 +4,6 @@ goog.provide('five.Auth');
 
 goog.require('five.CalendarApi');
 goog.require('five.CalendarChooser');
-goog.require('five.EventsList');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.debug.Logger');

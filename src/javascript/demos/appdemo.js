@@ -3,7 +3,6 @@
 goog.provide('five.demos.AppDemo');
 
 goog.require('five.Component');
-goog.require('five.EventListLayout');
 goog.require('five.device');
 goog.require('five.util');
 goog.require('goog.Uri');
@@ -18,6 +17,8 @@ goog.require('goog.events.EventType');
 goog.require('goog.events.EventHandler');
 goog.require('goog.math.Coordinate');
 goog.require('goog.style');
+goog.require('goog.testing.jsunit');
+
 
 /**
  * @constructor
@@ -126,3 +127,7 @@ five.demos.AppDemo.prototype.calcEventAreaWidths_ = function() {
   }
   return widths;
 };
+
+function testLoad() {
+  // Ensure the demo loads without javascript errors.
+}

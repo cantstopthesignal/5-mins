@@ -1,8 +1,8 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('five.EventListLayout');
-goog.provide('five.EventListLayout.Event');
-goog.provide('five.EventListLayout.TimeMap');
+goog.provide('five.EventsLayout');
+goog.provide('five.EventsLayout.Event');
+goog.provide('five.EventsLayout.TimeMap');
 
 goog.require('five.util');
 goog.require('goog.array');
@@ -15,28 +15,28 @@ goog.require('goog.object');
 
 
 /**
- * @param {five.EventListLayout.Params} params
+ * @param {five.EventsLayout.Params} params
  * @constructor
  * @extends {goog.Disposable}
  */
-five.EventListLayout = function(params) {
-  /** @type {Array.<five.EventListLayout.Event>} */
+five.EventsLayout = function(params) {
+  /** @type {Array.<five.EventsLayout.Event>} */
   this.events_ = [];
 
-  /** @type {Array.<five.EventListLayout.Event>} */
+  /** @type {Array.<five.EventsLayout.Event>} */
   this.eventsByDuration_ = [];
 
-  /** @type {five.EventListLayout.Params} */
+  /** @type {five.EventsLayout.Params} */
   this.params_ = params;
   this.params_.copyTo(this);
 };
-goog.inherits(five.EventListLayout, goog.Disposable);
+goog.inherits(five.EventsLayout, goog.Disposable);
 
 /**
  * Layout parameters object.
  * @constructor
  */
-five.EventListLayout.Params = function() {
+five.EventsLayout.Params = function() {
   /** @type {number} */
   this.distancePerHour = 50;
 
@@ -67,7 +67,7 @@ five.EventListLayout.Params = function() {
   this.lockFields_();
 };
 
-five.EventListLayout.Params.prototype.copyTo = function(dest) {
+five.EventsLayout.Params.prototype.copyTo = function(dest) {
   for (var f in this) {
     if (this.hasOwnProperty(f)) {
       goog.asserts.assert(this.fields_[f], 'Unexpected param ' + f);
@@ -76,7 +76,7 @@ five.EventListLayout.Params.prototype.copyTo = function(dest) {
   }
 };
 
-five.EventListLayout.Params.prototype.lockFields_ = function() {
+five.EventsLayout.Params.prototype.lockFields_ = function() {
   this.fields_ = {};
   for (var f in this) {
     if (this.hasOwnProperty(f)) {
@@ -86,29 +86,29 @@ five.EventListLayout.Params.prototype.lockFields_ = function() {
 };
 
 /** @type {goog.debug.Logger} */
-five.EventListLayout.prototype.logger_ = goog.debug.Logger.getLogger(
-    'five.EventListLayout');
+five.EventsLayout.prototype.logger_ = goog.debug.Logger.getLogger(
+    'five.EventsLayout');
 
-/** @type {Array.<five.EventListLayout.TimePoint_>} */
-five.EventListLayout.prototype.timePoints_;
+/** @type {Array.<five.EventsLayout.TimePoint_>} */
+five.EventsLayout.prototype.timePoints_;
 
-/** @type {five.EventListLayout.TimeMap} */
-five.EventListLayout.prototype.timeMap_;
+/** @type {five.EventsLayout.TimeMap} */
+five.EventsLayout.prototype.timeMap_;
 
-/** @type {five.EventListLayout.TimeMap} */
-five.EventListLayout.prototype.linearTimeMap_;
-
-/** @type {goog.date.DateTime} */
-five.EventListLayout.prototype.minEventTime_;
+/** @type {five.EventsLayout.TimeMap} */
+five.EventsLayout.prototype.linearTimeMap_;
 
 /** @type {goog.date.DateTime} */
-five.EventListLayout.prototype.maxEventTime_;
+five.EventsLayout.prototype.minEventTime_;
+
+/** @type {goog.date.DateTime} */
+five.EventsLayout.prototype.maxEventTime_;
 
 /** @type {number} (see Params) */
-five.EventListLayout.prototype.distancePerHour;
+five.EventsLayout.prototype.distancePerHour;
 
-/** @param {Array.<five.EventListLayout.Event>} events */
-five.EventListLayout.prototype.setEvents = function(events) {
+/** @param {Array.<five.EventsLayout.Event>} events */
+five.EventsLayout.prototype.setEvents = function(events) {
   this.events_ = events;
   goog.array.forEach(this.events_, function(event) {
     this.registerDisposable(event);
@@ -124,7 +124,7 @@ five.EventListLayout.prototype.setEvents = function(events) {
   });
 };
 
-five.EventListLayout.prototype.calc = function() {
+five.EventsLayout.prototype.calc = function() {
   goog.asserts.assert(this.events_);
   var startTime = +new Date();
   this.calcTimeRange_();
@@ -146,24 +146,24 @@ five.EventListLayout.prototype.calc = function() {
   }
 };
 
-/** @return {five.EventListLayout.TimeMap} */
-five.EventListLayout.prototype.getTimeMap = function() {
+/** @return {five.EventsLayout.TimeMap} */
+five.EventsLayout.prototype.getTimeMap = function() {
   return this.timeMap_;
 };
 
-/** @return {five.EventListLayout.TimeMap} */
-five.EventListLayout.prototype.getLinearTimeMap = function() {
+/** @return {five.EventsLayout.TimeMap} */
+five.EventsLayout.prototype.getLinearTimeMap = function() {
   return this.linearTimeMap_;
 };
 
 /** @override */
-five.EventListLayout.prototype.disposeInternal = function() {
+five.EventsLayout.prototype.disposeInternal = function() {
   delete this.events_;
   delete this.timePoints_;
   goog.base(this, 'disposeInternal');
 };
 
-five.EventListLayout.prototype.calcTimeRange_ = function() {
+five.EventsLayout.prototype.calcTimeRange_ = function() {
   goog.array.forEach(this.events_, function(event) {
     if (!this.minEventTime_ || goog.date.Date.compare(
         this.minEventTime_, event.startTime) > 0) {
@@ -186,16 +186,16 @@ five.EventListLayout.prototype.calcTimeRange_ = function() {
   }
 };
 
-five.EventListLayout.prototype.calcTimePoints_ = function() {
+five.EventsLayout.prototype.calcTimePoints_ = function() {
   var timePointMap = {};
 
   if (this.minTime) {
-    var minTimePoint = new five.EventListLayout.TimePoint_(this.minTime);
+    var minTimePoint = new five.EventsLayout.TimePoint_(this.minTime);
     this.registerDisposable(minTimePoint);
     timePointMap[minTimePoint] = minTimePoint;
   }
   if (this.maxTime) {
-    var maxTimePoint = new five.EventListLayout.TimePoint_(this.maxTime);
+    var maxTimePoint = new five.EventsLayout.TimePoint_(this.maxTime);
     this.registerDisposable(maxTimePoint);
     timePointMap[maxTimePoint] = maxTimePoint;
   }
@@ -204,7 +204,7 @@ five.EventListLayout.prototype.calcTimePoints_ = function() {
   goog.array.forEach(this.events_, function(event) {
     var startPoint = timePointMap[event.startTime];
     if (!startPoint) {
-      startPoint = new five.EventListLayout.TimePoint_(
+      startPoint = new five.EventsLayout.TimePoint_(
           event.startTime);
       this.registerDisposable(startPoint);
       timePointMap[startPoint] = startPoint;
@@ -212,7 +212,7 @@ five.EventListLayout.prototype.calcTimePoints_ = function() {
     event.startTimePoint = startPoint;
     var endPoint = timePointMap[event.endTime];
     if (!endPoint) {
-      endPoint = new five.EventListLayout.TimePoint_(
+      endPoint = new five.EventsLayout.TimePoint_(
           event.endTime);
       this.registerDisposable(endPoint);
       timePointMap[endPoint] = endPoint;
@@ -264,7 +264,7 @@ five.EventListLayout.prototype.calcTimePoints_ = function() {
   }
 };
 
-five.EventListLayout.prototype.assignEventsToColumns_ = function() {
+five.EventsLayout.prototype.assignEventsToColumns_ = function() {
   goog.array.forEach(this.eventsByDuration_, function(event) {
     var usedColumns = {};
     goog.array.forEach(event.timePoints, function(timePoint) {
@@ -284,7 +284,7 @@ five.EventListLayout.prototype.assignEventsToColumns_ = function() {
   });
 };
 
-five.EventListLayout.prototype.calcColumnCounts_ = function() {
+five.EventsLayout.prototype.calcColumnCounts_ = function() {
   goog.array.forEach(this.events_, function(event) {
     event.columnCount = event.column + 1;
   });
@@ -309,14 +309,14 @@ five.EventListLayout.prototype.calcColumnCounts_ = function() {
   }
 };
 
-five.EventListLayout.prototype.positionTimePoints_ = function() {
+five.EventsLayout.prototype.positionTimePoints_ = function() {
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timePoint.yPos = five.util.round(five.util.msToHourFloat(
         timePoint.getTime() - this.minTime.getTime()) * this.distancePerHour);
   }, this);
 };
 
-five.EventListLayout.prototype.calcInitialTimePointConstraints_ =
+five.EventsLayout.prototype.calcInitialTimePointConstraints_ =
     function() {
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timePoint.minHeight = this.minTimePointSpacing;
@@ -329,7 +329,7 @@ five.EventListLayout.prototype.calcInitialTimePointConstraints_ =
   }, this);
 };
 
-five.EventListLayout.prototype.enforceMinEventHeight_ = function() {
+five.EventsLayout.prototype.enforceMinEventHeight_ = function() {
   // Apply minimum height constraints to time points such that once resolved
   // each event will have minimum sizing obeyed.
   goog.array.forEach(this.events_, function(event) {
@@ -354,7 +354,7 @@ five.EventListLayout.prototype.enforceMinEventHeight_ = function() {
   }, this);
 };
 
-five.EventListLayout.prototype.resolveTimePointConstraints_ = function() {
+five.EventsLayout.prototype.resolveTimePointConstraints_ = function() {
   goog.array.forEach(this.timePoints_, function(timePoint) {
     var nextTimePoint = timePoint.next;
     if (!timePoint.next || !timePoint.minHeight) {
@@ -365,18 +365,18 @@ five.EventListLayout.prototype.resolveTimePointConstraints_ = function() {
   }, this);
 };
 
-five.EventListLayout.prototype.calcTimeMap_ = function() {
+five.EventsLayout.prototype.calcTimeMap_ = function() {
   var timeList = [];
   var yPosList = [];
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timeList.push(timePoint.time);
     yPosList.push(timePoint.yPos);
   }, this);
-  this.timeMap_ = new five.EventListLayout.TimeMap(timeList, yPosList,
+  this.timeMap_ = new five.EventsLayout.TimeMap(timeList, yPosList,
       this.distancePerHour);
 };
 
-five.EventListLayout.prototype.calcLinearTimes_ = function() {
+five.EventsLayout.prototype.calcLinearTimes_ = function() {
   if (!this.timePoints_.length) {
     return;
   }
@@ -408,7 +408,7 @@ five.EventListLayout.prototype.calcLinearTimes_ = function() {
   }
 };
 
-five.EventListLayout.prototype.calcLinearTimeMap_ = function() {
+five.EventsLayout.prototype.calcLinearTimeMap_ = function() {
   // Add all relevant hours with direct maps to non-linear yPos to enforce
   // matching at each hour.
   var timeAndYPosList = [];
@@ -439,12 +439,12 @@ five.EventListLayout.prototype.calcLinearTimeMap_ = function() {
     timeList.push(entry[0]);
     yPosList.push(entry[1]);
   }, this);
-  this.linearTimeMap_ = new five.EventListLayout.TimeMap(timeList, yPosList,
+  this.linearTimeMap_ = new five.EventsLayout.TimeMap(timeList, yPosList,
       this.distancePerHour);
 };
 
 /** Calculate whether time axis patches are needed for any events */
-five.EventListLayout.prototype.calcTimeAxisPatches_ = function() {
+five.EventsLayout.prototype.calcTimeAxisPatches_ = function() {
   goog.array.forEach(this.events_, function(event) {
     // An event needs a patch if its start or end time point needs a patch
     // line.
@@ -479,7 +479,7 @@ five.EventListLayout.prototype.calcTimeAxisPatches_ = function() {
   }
 };
 
-five.EventListLayout.prototype.positionEvents_ = function() {
+five.EventsLayout.prototype.positionEvents_ = function() {
   goog.array.forEach(this.events_, function(event) {
     var layoutWidth = this.layoutWidth;
     var shiftForTimeAxisPatch = event.hasTimeAxisPatch ||
@@ -507,7 +507,7 @@ five.EventListLayout.prototype.positionEvents_ = function() {
  * @constructor
  * @extends {goog.Disposable}
  */
-five.EventListLayout.Event = function(startTime, endTime) {
+five.EventsLayout.Event = function(startTime, endTime) {
   this.startTime = startTime;
   this.endTime = endTime;
 
@@ -525,10 +525,10 @@ five.EventListLayout.Event = function(startTime, endTime) {
 
   this.rect = null;
 };
-goog.inherits(five.EventListLayout.Event, goog.Disposable);
+goog.inherits(five.EventsLayout.Event, goog.Disposable);
 
 /** @override */
-five.EventListLayout.Event.prototype.disposeInternal = function() {
+five.EventsLayout.Event.prototype.disposeInternal = function() {
   delete this.timePoints;
   delete this.startTimePoint;
   delete this.endTimePoint;
@@ -540,17 +540,17 @@ five.EventListLayout.Event.prototype.disposeInternal = function() {
  * @constructor
  * @extends {goog.Disposable}
  */
-five.EventListLayout.TimeMap = function(timeList, yPosList,
+five.EventsLayout.TimeMap = function(timeList, yPosList,
     defaultDistancePerHour) {
   this.timeList_ = timeList;
   this.yPosList_ = yPosList;
   this.msPerDist_ = 60 * 60 * 1000 / defaultDistancePerHour;
   this.checkLists_();
 };
-goog.inherits(five.EventListLayout.TimeMap, goog.Disposable);
+goog.inherits(five.EventsLayout.TimeMap, goog.Disposable);
 
 /** @param {goog.date.DateTime} time */
-five.EventListLayout.TimeMap.prototype.timeToYPos = function(time) {
+five.EventsLayout.TimeMap.prototype.timeToYPos = function(time) {
   var timestamp = time.getTime();
   var beforeIndex = -goog.array.binarySelect(this.timeList_,
       function(candidateTime) {
@@ -585,7 +585,7 @@ five.EventListLayout.TimeMap.prototype.timeToYPos = function(time) {
 };
 
 /** @param {number} yPos */
-five.EventListLayout.TimeMap.prototype.yPosToTime = function(yPos) {
+five.EventsLayout.TimeMap.prototype.yPosToTime = function(yPos) {
   var beforeIndex = -goog.array.binarySelect(this.yPosList_,
       function(candidateYPos) {
     return (yPos - candidateYPos) || 1;
@@ -617,7 +617,7 @@ five.EventListLayout.TimeMap.prototype.yPosToTime = function(yPos) {
   return new goog.date.DateTime(new Date(timestamp));
 };
 
-five.EventListLayout.TimeMap.prototype.checkLists_ = function() {
+five.EventsLayout.TimeMap.prototype.checkLists_ = function() {
   goog.asserts.assert(this.timeList_.length == this.yPosList_.length);
   for (var i = 0; i < this.timeList_.length; i++) {
     goog.asserts.assert(this.timeList_[i] instanceof goog.date.DateTime);
@@ -629,7 +629,7 @@ five.EventListLayout.TimeMap.prototype.checkLists_ = function() {
  * @constructor
  * @extends {goog.Disposable}
  */
-five.EventListLayout.TimePoint_ = function(time) {
+five.EventsLayout.TimePoint_ = function(time) {
   this.time = time;
   this.next = null;
   this.yPos = null;
@@ -638,20 +638,20 @@ five.EventListLayout.TimePoint_ = function(time) {
   this.openEvents = [];
   this.columnCount = null;
 };
-goog.inherits(five.EventListLayout.TimePoint_, goog.Disposable);
+goog.inherits(five.EventsLayout.TimePoint_, goog.Disposable);
 
 /** @override */
-five.EventListLayout.TimePoint_.prototype.disposeInternal =
+five.EventsLayout.TimePoint_.prototype.disposeInternal =
     function() {
   delete this.openEvents;
   delete this.next;
   goog.base(this, 'disposeInternal');
 };
 
-five.EventListLayout.TimePoint_.prototype.toString = function() {
+five.EventsLayout.TimePoint_.prototype.toString = function() {
   return this.time.toString();
 };
 
-five.EventListLayout.TimePoint_.prototype.getTime = function() {
+five.EventsLayout.TimePoint_.prototype.getTime = function() {
   return this.time.getTime();
 };

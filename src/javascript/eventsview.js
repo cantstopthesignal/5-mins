@@ -1,12 +1,12 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('five.EventsList');
+goog.provide('five.EventsView');
 
 goog.require('five.Button');
 goog.require('five.Component');
 goog.require('five.Event');
 goog.require('five.EventMutation');
-goog.require('five.EventsScrollBox');
+goog.require('five.EventsTimeline');
 goog.require('five.TimeMarker');
 goog.require('five.TimeMarkerTheme');
 goog.require('goog.asserts');
@@ -22,7 +22,7 @@ goog.require('goog.events.EventType');
  * @constructor
  * @extends {five.Component}
  */
-five.EventsList = function(calendarManager, appBar) {
+five.EventsView = function(calendarManager, appBar) {
   goog.base(this);
 
   /** @type {five.CalendarManager} */
@@ -31,9 +31,9 @@ five.EventsList = function(calendarManager, appBar) {
   /** @type {five.AppBar} */
   this.appBar_ = appBar;
 
-  /** @type {five.EventsScrollBox} */
-  this.eventsScrollBox_ = new five.EventsScrollBox();
-  this.registerDisposable(this.eventsScrollBox_);
+  /** @type {five.EventsTimeline} */
+  this.eventsTimeline_ = new five.EventsTimeline();
+  this.registerDisposable(this.eventsTimeline_);
 
   /** @type {!Array.<!five.Event>} */
   this.selectedEvents_ = [];
@@ -42,38 +42,38 @@ five.EventsList = function(calendarManager, appBar) {
 
   this.registerListenersForCalendarManager_();
 };
-goog.inherits(five.EventsList, five.Component);
+goog.inherits(five.EventsView, five.Component);
 
 /** @type {number} */
-five.EventsList.NOW_TRACKER_INTERVAL_ = 15 * 1000;
+five.EventsView.NOW_TRACKER_INTERVAL_ = 15 * 1000;
 
 /** @type {goog.date.DateTime} */
-five.EventsList.prototype.startDate_;
+five.EventsView.prototype.startDate_;
 
 /** @type {goog.date.DateTime} */
-five.EventsList.prototype.endDate_;
+five.EventsView.prototype.endDate_;
 
 /** @type {Array.<!five.Event>} */
-five.EventsList.prototype.events_;
+five.EventsView.prototype.events_;
 
 /** @type {five.Button} */
-five.EventsList.prototype.saveButton_;
+five.EventsView.prototype.saveButton_;
 
 /** @type {five.TimeMarker} */
-five.EventsList.prototype.nowMarker_;
+five.EventsView.prototype.nowMarker_;
 
 /** @type {goog.date.DateTime} */
-five.EventsList.prototype.nowTrackerLastTickTime_;
+five.EventsView.prototype.nowTrackerLastTickTime_;
 
 /** @type {number} */
-five.EventsList.prototype.nowTrackerIntervalId_;
+five.EventsView.prototype.nowTrackerIntervalId_;
 
 /** @type {five.Spinner.Entry} */
-five.EventsList.prototype.calendarManagerSpinEntry_;
+five.EventsView.prototype.calendarManagerSpinEntry_;
 
-five.EventsList.prototype.createDom = function() {
+five.EventsView.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'events-list');
+  goog.dom.classes.add(this.el, 'events-view');
 
   var refreshButton = new five.Button('Refresh');
   this.appBar_.getButtonBar().addButton(refreshButton);
@@ -91,21 +91,21 @@ five.EventsList.prototype.createDom = function() {
       this.handleSaveClick_);
   goog.style.showElement(this.saveButton_.el, false);
 
-  this.registerListenersForScrollBox_();
+  this.registerListenersForTimeline_();
 };
 
-five.EventsList.prototype.render = function(parentEl) {
+five.EventsView.prototype.render = function(parentEl) {
   goog.asserts.assert(!this.el);
   this.createDom();
 
   parentEl.appendChild(this.el);
 
-  this.eventsScrollBox_.setDateRange(this.startDate_, this.endDate_);
-  this.eventsScrollBox_.render(this.el);
+  this.eventsTimeline_.setDateRange(this.startDate_, this.endDate_);
+  this.eventsTimeline_.render(this.el);
 
   this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime(),
       five.TimeMarkerTheme.NOW);
-  this.eventsScrollBox_.addTimeMarker(this.nowMarker_);
+  this.eventsTimeline_.addTimeMarker(this.nowMarker_);
 
   if (!this.events_) {
     this.loadEvents_().addCallback(function() {this.scrollToNow_(); }, this);
@@ -114,17 +114,17 @@ five.EventsList.prototype.render = function(parentEl) {
   if (!this.nowTrackerIntervalId_) {
     this.nowTrackerIntervalId_ = window.setInterval(goog.bind(
         this.handleNowTrackerTick_, this),
-        five.EventsList.NOW_TRACKER_INTERVAL_);
+        five.EventsView.NOW_TRACKER_INTERVAL_);
   }
 };
 
-five.EventsList.prototype.resize = function(opt_width, opt_height) {
+five.EventsView.prototype.resize = function(opt_width, opt_height) {
   var height = opt_height || this.el.parentNode.offsetHeight;
-  this.eventsScrollBox_.resize(undefined, Math.max(50, height));
+  this.eventsTimeline_.resize(undefined, Math.max(50, height));
 };
 
 /** @override */
-five.EventsList.prototype.disposeInternal = function() {
+five.EventsView.prototype.disposeInternal = function() {
   if (this.nowTrackerIntervalId_) {
     window.clearInterval(this.nowTrackerIntervalId_);
     delete this.nowTrackerIntervalId_;
@@ -133,20 +133,20 @@ five.EventsList.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
-five.EventsList.prototype.loadEvents_ = function() {
+five.EventsView.prototype.loadEvents_ = function() {
   return this.calendarManager_.loadEvents(this.startDate_, this.endDate_);
 };
 
-five.EventsList.prototype.displayEvents_ = function() {
-  this.eventsScrollBox_.setEvents(goog.asserts.assertArray(this.events_));
+five.EventsView.prototype.displayEvents_ = function() {
+  this.eventsTimeline_.setEvents(goog.asserts.assertArray(this.events_));
 };
 
-five.EventsList.prototype.selectedEventsChanged_ = function() {
-  this.eventsScrollBox_.setSelectedEvents(this.selectedEvents_);
+five.EventsView.prototype.selectedEventsChanged_ = function() {
+  this.eventsTimeline_.setSelectedEvents(this.selectedEvents_);
 };
 
 /** @param {five.Event} event */
-five.EventsList.prototype.registerListenersForEvent_ = function(event) {
+five.EventsView.prototype.registerListenersForEvent_ = function(event) {
   var EventType = five.Event.EventType;
   this.eventHandler.
       listen(event, [EventType.SELECT, EventType.DESELECT],
@@ -159,16 +159,16 @@ five.EventsList.prototype.registerListenersForEvent_ = function(event) {
           this.handleEventDataChanged_);
 };
 
-five.EventsList.prototype.startBatchRenderUpdate_ = function() {
-  this.eventsScrollBox_.startBatchUpdate();
+five.EventsView.prototype.startBatchRenderUpdate_ = function() {
+  this.eventsTimeline_.startBatchUpdate();
 };
 
-five.EventsList.prototype.finishBatchRenderUpdate_ = function() {
-  this.eventsScrollBox_.finishBatchUpdate();
+five.EventsView.prototype.finishBatchRenderUpdate_ = function() {
+  this.eventsTimeline_.finishBatchUpdate();
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
+five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
   goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
   this.startBatchRenderUpdate_();
@@ -199,18 +199,18 @@ five.EventsList.prototype.handleEventToggleSelect_ = function(e) {
   this.finishBatchRenderUpdate_();
 };
 
-five.EventsList.prototype.registerListenersForScrollBox_ = function() {
-  var EventType = five.EventsScrollBox.EventType;
+five.EventsView.prototype.registerListenersForTimeline_ = function() {
+  var EventType = five.EventsTimeline.EventType;
   this.eventHandler.
-      listen(this.eventsScrollBox_, EventType.DESELECT,
-          this.handleEventsScrollBoxDeselect_).
-      listen(this.eventsScrollBox_, EventType.EVENTS_MOVE,
-          this.handleEventsScrollBoxEventsMove_).
-      listen(this.eventsScrollBox_, EventType.EVENTS_DUPLICATE,
-          this.handleEventsScrollBoxEventsDuplicate_);
+      listen(this.eventsTimeline_, EventType.DESELECT,
+          this.handleEventsTimelineDeselect_).
+      listen(this.eventsTimeline_, EventType.EVENTS_MOVE,
+          this.handleEventsTimelineEventsMove_).
+      listen(this.eventsTimeline_, EventType.EVENTS_DUPLICATE,
+          this.handleEventsTimelineEventsDuplicate_);
 };
 
-five.EventsList.prototype.handleEventsScrollBoxDeselect_ = function() {
+five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
   this.startBatchRenderUpdate_();
   goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
     selectedEvent.setSelected(false);
@@ -221,11 +221,11 @@ five.EventsList.prototype.handleEventsScrollBoxDeselect_ = function() {
 };
 
 /** @param {five.EventMoveEvent} e */
-five.EventsList.prototype.handleEventsScrollBoxEventsMove_ = function(e) {
+five.EventsView.prototype.handleEventsTimelineEventsMove_ = function(e) {
   this.handleMoveSelectedEventsCommand_(e);
 };
 
-five.EventsList.prototype.handleEventsScrollBoxEventsDuplicate_ = function() {
+five.EventsView.prototype.handleEventsTimelineEventsDuplicate_ = function() {
   if (!this.selectedEvents_.length) {
     return;
   }
@@ -238,23 +238,23 @@ five.EventsList.prototype.handleEventsScrollBoxEventsDuplicate_ = function() {
 };
 
 /** @param {!five.Event} newEvent */
-five.EventsList.prototype.addEvent_ = function(newEvent) {
+five.EventsView.prototype.addEvent_ = function(newEvent) {
   this.calendarManager_.addEvent(newEvent);
   this.events_.push(newEvent);
   this.registerListenersForEvent_(newEvent);
-  this.eventsScrollBox_.addEvent(newEvent);
+  this.eventsTimeline_.addEvent(newEvent);
 };
 
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleEventDataChanged_ = function(e) {
+five.EventsView.prototype.handleEventDataChanged_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
   goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
-  this.eventsScrollBox_.eventsChanged([e.target]);
+  this.eventsTimeline_.eventsChanged([e.target]);
 };
 
 /** @param {five.EventMoveEvent} e */
-five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
+five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   goog.asserts.assertInstanceof(e, five.EventMoveEvent);
   if (!this.selectedEvents_.length) {
     return;
@@ -299,11 +299,11 @@ five.EventsList.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
     selectedEvent.addMutation(mutation.clone());
   });
-  this.eventsScrollBox_.eventsChanged(this.selectedEvents_);
+  this.eventsTimeline_.eventsChanged(this.selectedEvents_);
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleEventEditSummary_ = function(e) {
+five.EventsView.prototype.handleEventEditSummary_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
   goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
   var event = /** @type {!five.Event} */ (e.target);
@@ -314,10 +314,10 @@ five.EventsList.prototype.handleEventEditSummary_ = function(e) {
     return;
   }
   event.addMutation(new five.EventMutation.ChangeSummary(newSummary));
-  this.eventsScrollBox_.eventsChanged([event]);
+  this.eventsTimeline_.eventsChanged([event]);
 }
 
-five.EventsList.prototype.registerListenersForCalendarManager_ = function() {
+five.EventsView.prototype.registerListenersForCalendarManager_ = function() {
   this.eventHandler.
       listen(this.calendarManager_,
           five.CalendarManager.EventType.MUTATIONS_STATE_CHANGED,
@@ -331,7 +331,7 @@ five.EventsList.prototype.registerListenersForCalendarManager_ = function() {
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleCalendarManagerEventsChange_ = function(e) {
+five.EventsView.prototype.handleCalendarManagerEventsChange_ = function(e) {
   this.events_ = goog.array.clone(this.calendarManager_.getEvents());
   this.selectedEvents_ = [];
   goog.array.forEach(this.events_, function(event) {
@@ -342,14 +342,14 @@ five.EventsList.prototype.handleCalendarManagerEventsChange_ = function(e) {
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleCalendarManagerMutationsStateChange_ =
+five.EventsView.prototype.handleCalendarManagerMutationsStateChange_ =
     function(e) {
   goog.style.showElement(this.saveButton_.el,
       this.calendarManager_.hasMutations());
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleCalendarManagerRequestsStateChange_ =
+five.EventsView.prototype.handleCalendarManagerRequestsStateChange_ =
     function(e) {
   if (this.calendarManager_.hasRequestsInProgress()) {
     goog.asserts.assert(!this.calendarManagerSpinEntry_);
@@ -362,20 +362,20 @@ five.EventsList.prototype.handleCalendarManagerRequestsStateChange_ =
   }
 };
 
-five.EventsList.prototype.scrollToNow_ = function(opt_animate) {
-  this.eventsScrollBox_.scrollToTime(new goog.date.DateTime(), true,
+five.EventsView.prototype.scrollToNow_ = function(opt_animate) {
+  this.eventsTimeline_.scrollToTime(new goog.date.DateTime(), true,
       opt_animate);
 };
 
-five.EventsList.prototype.handleNowTrackerTick_ = function() {
+five.EventsView.prototype.handleNowTrackerTick_ = function() {
   var now = new goog.date.DateTime();
   this.nowMarker_.setTime(now);
-  if (this.eventsScrollBox_.isTimeInView(now)) {
+  if (this.eventsTimeline_.isTimeInView(now)) {
     if (this.nowTrackerLastTickTime_) {
       var interval = new goog.date.Interval(goog.date.Interval.SECONDS,
           five.util.msToSec(now.getTime() -
               this.nowTrackerLastTickTime_.getTime()));
-      this.eventsScrollBox_.scrollByTime(
+      this.eventsTimeline_.scrollByTime(
           this.nowTrackerLastTickTime_, interval, true);
       this.nowTrackerLastTickTime_.add(interval);
     } else {
@@ -386,7 +386,7 @@ five.EventsList.prototype.handleNowTrackerTick_ = function() {
   }
 };
 
-five.EventsList.prototype.initDefaultDateRange_ = function() {
+five.EventsView.prototype.initDefaultDateRange_ = function() {
   var yesterday = new goog.date.Date();
   yesterday.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
   this.startDate_ = new goog.date.DateTime();
@@ -399,19 +399,19 @@ five.EventsList.prototype.initDefaultDateRange_ = function() {
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleRefreshClick_ = function(e) {
+five.EventsView.prototype.handleRefreshClick_ = function(e) {
   e.preventDefault();
   this.loadEvents_();
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleNowClick_ = function(e) {
+five.EventsView.prototype.handleNowClick_ = function(e) {
   e.preventDefault();
   this.scrollToNow_(true);
 };
 
 /** @param {goog.events.Event} e */
-five.EventsList.prototype.handleSaveClick_ = function(e) {
+five.EventsView.prototype.handleSaveClick_ = function(e) {
   e.preventDefault();
   this.calendarManager_.saveMutations();
 };

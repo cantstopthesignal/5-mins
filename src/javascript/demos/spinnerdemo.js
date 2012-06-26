@@ -6,6 +6,7 @@ goog.require('five.Spinner');
 goog.require('goog.array');
 goog.require('goog.dom');
 goog.require('goog.events.EventTarget');
+goog.require('goog.testing.jsunit');
 
 
 /**
@@ -29,3 +30,7 @@ five.demos.SpinnerDemo.prototype.start = function() {
     });
   });
 };
+
+function testLoad() {
+  // Ensure the demo loads without javascript errors.
+}

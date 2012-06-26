@@ -1,8 +1,8 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('five.EventListLayoutTest');
+goog.provide('five.EventsLayoutTest');
 
-goog.require('five.EventListLayout');
+goog.require('five.EventsLayout');
 goog.require('goog.array');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
@@ -17,10 +17,10 @@ var layout;
 var baseTime;
 
 function setUp() {
-  var params = new five.EventListLayout.Params();
+  var params = new five.EventsLayout.Params();
   params.timeAxisPatchWidth = 0;
   params.layoutWidth = 300;
-  layout = new five.EventListLayout(params);
+  layout = new five.EventsLayout(params);
   baseTime = new goog.date.DateTime(new goog.date.Date());
 }
 
@@ -225,7 +225,7 @@ function createEvent(startMinute, duration, name) {
   var endTime = startTime.clone();
   endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES,
       duration));
-  var event = new five.EventListLayout.Event(startTime, endTime);
+  var event = new five.EventsLayout.Event(startTime, endTime);
   event.toString = function() {
     return 'Event<' + startMinute + ' for ' + duration + ' "' + name + '">';
   };

@@ -22,10 +22,10 @@ five.InlineEventsEditor = function() {
 goog.inherits(five.InlineEventsEditor, five.Component);
 
 
-/** @type {five.EventsScrollBox} */
+/** @type {five.EventsTimeline} */
 five.InlineEventsEditor.prototype.owner_;
 
-/** @param {five.EventsScrollBox} owner */
+/** @param {five.EventsTimeline} owner */
 five.InlineEventsEditor.prototype.setOwner = function(owner) {
   this.owner_ = owner;
   if (!this.owner_) {

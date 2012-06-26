@@ -20,10 +20,13 @@ goog.inherits(five.AllTests, goog.events.EventTarget);
 
 /** @type {Array.<string>} */
 five.AllTests.TESTS = [
+    'demos/appdemo.html',
+    'demos/eventslayoutdemo.html',
+    'demos/spinnerdemo.html',
     'endtoenddebugtest.html',
     'endtoendoptimizedtest.html',
     'endtoenduncompiledtest.html',
-    'eventlistlayouttest.html',
+    'eventslayouttest.html',
     'utiltest.html'
     ];
 

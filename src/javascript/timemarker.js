@@ -28,7 +28,7 @@ five.TimeMarker.toTimeString_ = function(date) {
   return str;
 };
 
-/** @type {five.EventsScrollBox} */
+/** @type {five.EventsTimeline} */
 five.TimeMarker.prototype.owner_;
 
 /** @type {Element} */
@@ -37,7 +37,7 @@ five.TimeMarker.prototype.labelEl_;
 /** @type {five.TimeAxisPatchMarker} */
 five.TimeMarker.prototype.timeAxisPatchMarker_;
 
-/** @param {five.EventsScrollBox} owner */
+/** @param {five.EventsTimeline} owner */
 five.TimeMarker.prototype.setOwner = function(owner) {
   this.owner_ = owner;
   if (!this.owner_) {

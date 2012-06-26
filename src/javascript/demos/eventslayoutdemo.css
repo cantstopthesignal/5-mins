@@ -5,8 +5,8 @@ body {
   font-size: 13px;
 }
 .event-area {
-  float: left;
   border: 1px solid black;
+  display: inline-block;
   padding: 25px;
   margin-bottom: 50px;
 }
