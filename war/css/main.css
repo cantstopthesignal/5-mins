@@ -74,10 +74,6 @@ a:hover {
 .footer {
   color: #ddd;
   text-align: center;
-  position: fixed;
-  bottom: 0px;
-  right: 0px;
-  left: 0px;
 }
 .footer > a {
   color: #99f;
@@ -128,18 +124,22 @@ a:hover {
   -moz-user-select: none;
   -webkit-user-select: none;
   position: relative;
+  box-sizing: border-box;
 }
 .time-axis {
   position: absolute;
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid #cdcdcd;
   width: 100%;
 }
 .time-axis > .time-box {
-  border-right: 1px solid #dddddd;
-  color: #444444;
+  border-right: 1px solid #cdcdcd;
+  color: #666;
   text-align: right;
   height: 100%;
   box-sizing: border-box;
+}
+.time-axis > .time-box > .ampm {
+  color: #999;
 }
 .time-axis-patch-canvas {
   position: absolute;

@@ -48,8 +48,12 @@ body {
   padding: 2px;
   width: 41px;
 }
+.time-axis > .time-box > .ampm {
+  font-size: 13px;
+  margin-top: -1px;
+}
 .time-marker-label {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 16px;
   padding-right: 2px;
 }

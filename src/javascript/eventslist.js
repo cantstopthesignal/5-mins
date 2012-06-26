@@ -120,7 +120,6 @@ five.EventsList.prototype.render = function(parentEl) {
 
 five.EventsList.prototype.resize = function(opt_width, opt_height) {
   var height = opt_height || this.el.parentNode.offsetHeight;
-
   this.eventsScrollBox_.resize(undefined, Math.max(50, height));
 };
 

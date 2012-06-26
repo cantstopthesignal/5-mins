@@ -54,19 +54,26 @@ body {
   padding: 4px 6px;
   width: 41px;
 }
+.time-axis > .time-box > .ampm {
+  font-size: 20px;
+  margin-top: -2px;
+}
 .time-marker-label {
   font-size: 22px;
   line-height: 28px;
   padding-right: 4px;
 }
 .event-card {
-  padding: 3px;
+  padding: 4px;
   font-size: 20px;
 }
-.event-card.micro-height,
-.event-card.short-height {
+.event-card.micro-height {
   padding-top: 1px;
   padding-bottom: 1px;
+}
+.event-card.short-height {
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
 .event-card > .date-range {
   font-size: 18px;

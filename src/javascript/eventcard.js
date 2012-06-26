@@ -3,6 +3,8 @@
 goog.provide('five.EventCard');
 
 goog.require('five.Component');
+goog.require('five.deviceParams');
+goog.require('five.util');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
@@ -118,9 +120,13 @@ five.EventCard.prototype.disposeInternal = function() {
 };
 
 five.EventCard.prototype.updateDisplay = function() {
-  goog.dom.setTextContent(this.dateRangeEl_,
-      five.EventCard.toTimeString_(this.getStartTime()) + ' - ' +
-      five.EventCard.toTimeString_(this.getEndTime()));
+  var dateRangeText = five.EventCard.toTimeString_(this.getStartTime());
+  var minuteDiff = five.util.msToMin(this.getEndTime().getTime() -
+      this.getStartTime().getTime());
+  if (minuteDiff != 5) {
+    dateRangeText += ' - ' + five.EventCard.toTimeString_(this.getEndTime());
+  }
+  goog.dom.setTextContent(this.dateRangeEl_, dateRangeText);
   goog.dom.setTextContent(this.summaryEl_, this.event_.getSummary());
 };
 
@@ -142,10 +148,13 @@ five.EventCard.prototype.setRect = function(rect) {
   this.rect_ = rect;
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.el, rect.getSize());
-  goog.dom.classes.enable(this.el, 'micro-height', rect.height < 26);
-  goog.dom.classes.enable(this.el, 'short-height', rect.height >= 26 &&
-      rect.height < 30);
-  goog.dom.classes.enable(this.el, 'large-height', rect.height >= 44);
+  goog.dom.classes.enable(this.el, 'micro-height',
+      rect.height < five.deviceParams.getEventCardMinShortHeight());
+  goog.dom.classes.enable(this.el, 'short-height',
+      rect.height >= five.deviceParams.getEventCardMinShortHeight() &&
+      rect.height < five.deviceParams.getEventCardMinNormalHeight());
+  goog.dom.classes.enable(this.el, 'large-height',
+      rect.height >= five.deviceParams.getEventCardMinLargeHeight());
 };
 
 /** @return {goog.math.Rect} */

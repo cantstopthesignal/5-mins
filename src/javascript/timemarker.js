@@ -25,9 +25,6 @@ goog.inherits(five.TimeMarker, five.Component);
 
 five.TimeMarker.toTimeString_ = function(date) {
   var str = date.toUsTimeString(false, false, false);
-  if (date.getHours() >= 12) {
-    str += 'p';
-  }
   return str;
 };
 
@@ -69,12 +66,14 @@ five.TimeMarker.prototype.createDom = function() {
   goog.dom.classes.add(this.el, 'time-marker');
   this.el.style.borderColor = this.theme_.color;
 
-  this.labelEl_ = document.createElement('div');
-  goog.dom.classes.add(this.labelEl_, 'time-marker-label');
-  this.labelEl_.style.color = this.theme_.labelColor;
+  if (five.deviceParams.getShowTimeMarkerLabels()) {
+    this.labelEl_ = document.createElement('div');
+    goog.dom.classes.add(this.labelEl_, 'time-marker-label');
+    this.labelEl_.style.color = this.theme_.labelColor;
 
-  this.labelEl_.appendChild(document.createTextNode(
-      five.TimeMarker.toTimeString_(this.time_)));
+    this.labelEl_.appendChild(document.createTextNode(
+        five.TimeMarker.toTimeString_(this.time_)));
+  }
 };
 
 five.TimeMarker.prototype.render = function(parentEl) {
@@ -83,7 +82,9 @@ five.TimeMarker.prototype.render = function(parentEl) {
   }
   this.layout();
   parentEl.appendChild(this.el);
-  parentEl.appendChild(this.labelEl_);
+  if (this.labelEl_) {
+    parentEl.appendChild(this.labelEl_);
+  }
 };
 
 five.TimeMarker.prototype.setVisible = function(visible) {
@@ -91,7 +92,9 @@ five.TimeMarker.prototype.setVisible = function(visible) {
     this.createDom();
   }
   goog.style.showElement(this.el, visible);
-  goog.style.showElement(this.labelEl_, visible);
+  if (this.labelEl_) {
+    goog.style.showElement(this.labelEl_, visible);
+  }
 };
 
 five.TimeMarker.prototype.layout = function() {
@@ -106,6 +109,9 @@ five.TimeMarker.prototype.setRect = function(rect) {
 };
 
 five.TimeMarker.prototype.setLabelRect = function(rect) {
+  if (!this.labelEl_) {
+    return;
+  }
   goog.style.setPosition(this.labelEl_, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.labelEl_, rect.getSize());
 };

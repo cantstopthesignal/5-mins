@@ -37,8 +37,13 @@ five.EndToEndTest = function(jsMode) {
 
   /** @type {string} */
   this.jsMode = jsMode;
+
+  this.stepTimeout = five.EndToEndTest.STEP_TIMEOUT_;
 };
 goog.inherits(five.EndToEndTest, goog.testing.DeferredTestCase);
+
+/** @type {number} */
+five.EndToEndTest.STEP_TIMEOUT_ = 10000;
 
 /** @type {goog.async.Deferred} */
 five.EndToEndTest.prototype.testDeferred;
@@ -196,6 +201,9 @@ five.EndToEndTest.prototype.addWaitForAppContent = function() {
 
   var pollIntervalId;
   var poll = goog.bind(function() {
+    if (!this.running) {
+      return;
+    }
     var hasEventCard = this.appDom.getElementsByClass('event-card').length > 0;
     var hasTimeMarker = this.appDom.getElementsByClass('time-marker').length >
         0;

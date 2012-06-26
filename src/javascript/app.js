@@ -107,11 +107,15 @@ five.App.prototype.handleWindowResize_ = function(e) {
 };
 
 five.App.prototype.resize = function() {
+  var parentHeight = this.appEl_.parentNode.offsetHeight;
   var appBarHeight = this.appBar_.el.offsetHeight;
   var footerHeight = this.footerEl_.offsetHeight;
-  var parentHeight = this.appEl_.parentNode.offsetHeight;
-  var innerHeight = Math.max(0, parentHeight - footerHeight - appBarHeight);
+
+  var appHeight = parentHeight - footerHeight;
+  goog.style.setHeight(this.appEl_, appHeight);
+
+  var eventsListHeight = Math.max(0, appHeight - appBarHeight);
   if (this.eventsList_) {
-    this.eventsList_.resize(undefined, innerHeight);
+    this.eventsList_.resize(undefined, eventsListHeight);
   }
 };
