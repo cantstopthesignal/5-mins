@@ -15,6 +15,8 @@ goog.require('goog.date.DateRange');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('goog.events.EventType');
+goog.require('goog.fx.Animation');
+goog.require('goog.fx.easing');
 
 
 /**
@@ -47,6 +49,9 @@ goog.inherits(five.EventsView, five.Component);
 /** @type {number} */
 five.EventsView.NOW_TRACKER_INTERVAL_ = 15 * 1000;
 
+/** @type {number} */
+five.EventsView.SCROLL_ANIMATION_DURATION_MS = 500;
+
 /** @type {goog.date.DateTime} */
 five.EventsView.prototype.startDate_;
 
@@ -55,6 +60,9 @@ five.EventsView.prototype.endDate_;
 
 /** @type {Array.<!five.Event>} */
 five.EventsView.prototype.events_;
+
+/** @type {Element} */
+five.EventsView.prototype.scrollEl_;
 
 /** @type {five.Button} */
 five.EventsView.prototype.saveButton_;
@@ -75,6 +83,10 @@ five.EventsView.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-view');
 
+  this.scrollEl_ = document.createElement('div');
+  goog.dom.classes.add(this.scrollEl_, 'events-view-scroll');
+  this.el.appendChild(this.scrollEl_);
+
   var refreshButton = new five.Button('Refresh');
   this.appBar_.getButtonBar().addButton(refreshButton);
   this.eventHandler.listen(refreshButton.el, goog.events.EventType.CLICK,
@@ -92,6 +104,7 @@ five.EventsView.prototype.createDom = function() {
   goog.style.showElement(this.saveButton_.el, false);
 
   this.registerListenersForTimeline_();
+  this.registerListenersForScrollElement_();
 };
 
 five.EventsView.prototype.render = function(parentEl) {
@@ -101,7 +114,7 @@ five.EventsView.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 
   this.eventsTimeline_.setDateRange(this.startDate_, this.endDate_);
-  this.eventsTimeline_.render(this.el);
+  this.eventsTimeline_.render(this.scrollEl_);
 
   this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime(),
       five.TimeMarkerTheme.NOW);
@@ -119,8 +132,13 @@ five.EventsView.prototype.render = function(parentEl) {
 };
 
 five.EventsView.prototype.resize = function(opt_width, opt_height) {
+  var width = opt_width || this.el.parentNode.offsetWidth;
   var height = opt_height || this.el.parentNode.offsetHeight;
-  this.eventsTimeline_.resize(undefined, Math.max(50, height));
+  goog.style.setBorderBoxSize(this.scrollEl_,
+      new goog.math.Size(width, height));
+  var timelineWidth = Math.max(250, width - goog.style.getScrollbarWidth());
+  this.eventsTimeline_.resize(timelineWidth, Math.max(50, height));
+  this.updateVisibleRegion_();
 };
 
 /** @override */
@@ -237,6 +255,23 @@ five.EventsView.prototype.handleEventsTimelineEventsDuplicate_ = function() {
   this.finishBatchRenderUpdate_();
 };
 
+five.EventsView.prototype.registerListenersForScrollElement_ = function() {
+  this.eventHandler.
+      listen(this.scrollEl_, goog.events.EventType.SCROLL, this.handleScroll_);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsView.prototype.handleScroll_ = function(e) {
+  this.updateVisibleRegion_();
+};
+
+five.EventsView.prototype.updateVisibleRegion_ = function() {
+  var visibleRect = new goog.math.Rect(this.scrollEl_.scrollLeft,
+      this.scrollEl_.scrollTop, this.scrollEl_.offsetWidth,
+      this.scrollEl_.offsetHeight);
+  this.eventsTimeline_.updateVisibleRegion(visibleRect);
+};
+
 /** @param {!five.Event} newEvent */
 five.EventsView.prototype.addEvent_ = function(newEvent) {
   this.calendarManager_.addEvent(newEvent);
@@ -244,7 +279,6 @@ five.EventsView.prototype.addEvent_ = function(newEvent) {
   this.registerListenersForEvent_(newEvent);
   this.eventsTimeline_.addEvent(newEvent);
 };
-
 
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleEventDataChanged_ = function(e) {
@@ -363,20 +397,97 @@ five.EventsView.prototype.handleCalendarManagerRequestsStateChange_ =
 };
 
 five.EventsView.prototype.scrollToNow_ = function(opt_animate) {
-  this.eventsTimeline_.scrollToTime(new goog.date.DateTime(), true,
-      opt_animate);
+  this.scrollToTime(new goog.date.DateTime(), true, opt_animate);
+};
+
+/**
+ * Scroll to a specified time.  Optionally show context before the time
+ * instead of starting exactly at the specified time.
+ */
+five.EventsView.prototype.scrollToTime = function(date,
+    opt_showContext, opt_animate) {
+  var timeMap = this.eventsTimeline_.getTimeMap();
+  if (!timeMap) {
+    return;
+  }
+  var yPos = timeMap.timeToYPos(date);
+  if (opt_showContext) {
+    yPos -= Math.max(100, this.scrollEl_.offsetHeight / 4);
+  }
+
+  if (opt_animate) {
+    var lastScrollTop = this.scrollEl_.scrollTop || 0;
+    var animation = new goog.fx.Animation([lastScrollTop], [yPos],
+        five.EventsView.SCROLL_ANIMATION_DURATION_MS,
+        goog.fx.easing.easeOut);
+    var EventType = goog.fx.Animation.EventType;
+    animation.registerDisposable(new goog.events.EventHandler(this).
+        listen(animation, [EventType.END, EventType.ANIMATE], function(e) {
+      if (this.scrollEl_.scrollTop != lastScrollTop) {
+        // Detect user intervention.
+        goog.dispose(animation);
+        return;
+      }
+      this.scrollEl_.scrollTop = lastScrollTop = Math.round(e.coords[0]);
+      if (e.type == EventType.END) {
+        goog.dispose(animation);
+      }
+    }));
+    animation.play();
+  } else {
+    this.scrollEl_.scrollTop = yPos;
+  }
+};
+
+/**
+ * Scroll by a specified time interval, relative to a given time.
+ * @param {boolean} opt_hideScrollAction Make sure auto-show scroll
+ *     bars do not show during this scroll action.
+ */
+five.EventsView.prototype.scrollByTime = function(relativeToTime,
+    interval, opt_hideScrollAction) {
+  var timeMap = this.eventsTimeline_.getTimeMap();
+  var toTime = relativeToTime.clone();
+  toTime.add(interval);
+  var startYPos = timeMap.timeToYPos(relativeToTime);
+  var endYPos = timeMap.timeToYPos(toTime);
+
+  if (opt_hideScrollAction) {
+    // Disable overflow for the scroll event to avoid auto-show scroll bars
+    // on some platforms from activating.
+    this.scrollEl_.style.overflow = 'hidden';
+  }
+
+  this.scrollEl_.scrollTop = this.scrollEl_.scrollTop + (endYPos - startYPos);
+
+  if (opt_hideScrollAction) {
+    this.scrollEl_.style.overflow = '';
+  }
+};
+
+/**
+ * Return whether a specified time is within the visible area.
+ */
+five.EventsView.prototype.isTimeInView = function(date) {
+  var timeMap = this.eventsTimeline_.getTimeMap();
+  var yPos = timeMap.timeToYPos(date);
+  if (yPos < this.scrollEl_.scrollTop) {
+    return false;
+  } else if (yPos > this.scrollEl_.scrollTop + this.scrollEl_.offsetHeight) {
+    return false;
+  }
+  return true;
 };
 
 five.EventsView.prototype.handleNowTrackerTick_ = function() {
   var now = new goog.date.DateTime();
   this.nowMarker_.setTime(now);
-  if (this.eventsTimeline_.isTimeInView(now)) {
+  if (this.isTimeInView(now)) {
     if (this.nowTrackerLastTickTime_) {
       var interval = new goog.date.Interval(goog.date.Interval.SECONDS,
           five.util.msToSec(now.getTime() -
               this.nowTrackerLastTickTime_.getTime()));
-      this.eventsTimeline_.scrollByTime(
-          this.nowTrackerLastTickTime_, interval, true);
+      this.scrollByTime(this.nowTrackerLastTickTime_, interval, true);
       this.nowTrackerLastTickTime_.add(interval);
     } else {
       this.nowTrackerLastTickTime_ = now;

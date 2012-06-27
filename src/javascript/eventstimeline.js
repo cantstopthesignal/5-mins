@@ -22,8 +22,6 @@ goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.KeyCodes');
-goog.require('goog.fx.Animation');
-goog.require('goog.fx.easing');
 goog.require('goog.math.Coordinate');
 goog.require('goog.style');
 
@@ -51,9 +49,6 @@ five.EventsTimeline.EventType = {
 
 /** @type {number} */
 five.EventsTimeline.PATCH_MIN_YPOS_DIFF = 2;
-
-/** @type {number} */
-five.EventsTimeline.SCROLL_ANIMATION_DURATION_MS = 500;
 
 /** @type {goog.date.DateTime} */
 five.EventsTimeline.prototype.startDate_;
@@ -109,7 +104,7 @@ five.EventsTimeline.prototype.layoutNeeded_ = false;
 five.EventsTimeline.prototype.createDom = function() {
   goog.base(this, 'createDom');
   this.el.tabIndex = 0;
-  goog.dom.classes.add(this.el, 'events-scroll-box');
+  goog.dom.classes.add(this.el, 'events-timeline');
 
   this.timeAxisLayer_ = document.createElement('div');
   this.el.appendChild(this.timeAxisLayer_);
@@ -147,7 +142,6 @@ five.EventsTimeline.prototype.createDom = function() {
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
       listen(this.el, goog.events.EventType.BLUR, this.handleBlur_).
-      listen(this.el, goog.events.EventType.SCROLL, this.handleScroll_).
       listen(this.inlineEventsEditor_, five.Event.EventType.MOVE,
           this.handleEventsEditorMove_);
 
@@ -166,8 +160,7 @@ five.EventsTimeline.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 
   this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
-      five.deviceParams.getTimeAxisWidth() -
-      goog.style.getScrollbarWidth();
+      five.deviceParams.getTimeAxisWidth();
 
   this.layout_();
   this.renderEvents_();
@@ -181,7 +174,9 @@ five.EventsTimeline.prototype.resize = function(opt_width, opt_height) {
   var width = opt_width || this.el.parentNode.offsetWidth;
   var height = opt_height || this.el.parentNode.offsetHeight;
   goog.style.setBorderBoxSize(this.el, new goog.math.Size(width, height));
-  this.updateVisibleRegion_();
+  this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
+      five.deviceParams.getTimeAxisWidth();
+  this.layout_();
 };
 
 five.EventsTimeline.prototype.setDateRange = function(startDate, endDate) {
@@ -285,82 +280,6 @@ five.EventsTimeline.prototype.layoutTimeAxisEntry = function(timeAxisEntry) {
   timeAxisEntry.setTimeBoxRect(rect);
 };
 
-/**
- * Scroll to a specified time.  Optionally show context before the time
- * instead of starting exactly at the specified time.
- */
-five.EventsTimeline.prototype.scrollToTime = function(date,
-    opt_showContext, opt_animate) {
-  if (!this.timeMap_) {
-    return;
-  }
-  var yPos = this.timeMap_.timeToYPos(date);
-  if (opt_showContext) {
-    yPos -= Math.max(100, this.el.offsetHeight / 4);
-  }
-
-  if (opt_animate) {
-    var lastScrollTop = this.el.scrollTop || 0;
-    var animation = new goog.fx.Animation([lastScrollTop], [yPos],
-        five.EventsTimeline.SCROLL_ANIMATION_DURATION_MS,
-        goog.fx.easing.easeOut);
-    var EventType = goog.fx.Animation.EventType;
-    animation.registerDisposable(new goog.events.EventHandler(this).
-        listen(animation, [EventType.END, EventType.ANIMATE], function(e) {
-      if (this.el.scrollTop != lastScrollTop) {
-        // Detect user intervention.
-        goog.dispose(animation);
-        return;
-      }
-      this.el.scrollTop = lastScrollTop = Math.round(e.coords[0]);
-      if (e.type == EventType.END) {
-        goog.dispose(animation);
-      }
-    }));
-    animation.play();
-  } else {
-    this.el.scrollTop = yPos;
-  }
-};
-
-/**
- * Scroll by a specified time interval, relative to a given time.
- * @param {boolean} opt_hideScrollAction Make sure auto-show scroll
- *     bars do not show during this scroll action.
- */
-five.EventsTimeline.prototype.scrollByTime = function(relativeToTime,
-    interval, opt_hideScrollAction) {
-  var toTime = relativeToTime.clone();
-  toTime.add(interval);
-  var startYPos = this.timeMap_.timeToYPos(relativeToTime);
-  var endYPos = this.timeMap_.timeToYPos(toTime);
-
-  if (opt_hideScrollAction) {
-    // Disable overflow for the scroll event to avoid auto-show scroll bars
-    // on some platforms from activating.
-    this.el.style.overflow = 'hidden';
-  }
-
-  this.el.scrollTop = this.el.scrollTop + (endYPos - startYPos);
-
-  if (opt_hideScrollAction) {
-    this.el.style.overflow = '';
-  }
-};
-
-/**
- * Return whether a specified time is within the visible area.
- */
-five.EventsTimeline.prototype.isTimeInView = function(date) {
-  var yPos = this.timeMap_.timeToYPos(date);
-  if (yPos < this.el.scrollTop) {
-    return false;
-  } else if (yPos > this.el.scrollTop + this.el.offsetHeight) {
-    return false;
-  }
-  return true;
-};
-
 five.EventsTimeline.prototype.startBatchUpdate = function() {
   this.batchUpdateDepth_++;
   if (this.timeAxisPatchCanvas_) {
@@ -377,6 +296,10 @@ five.EventsTimeline.prototype.finishBatchUpdate = function() {
   if (this.timeAxisPatchCanvas_) {
     this.timeAxisPatchCanvas_.finishBatchUpdate();
   }
+};
+
+five.EventsTimeline.prototype.getTimeMap = function() {
+  return this.timeMap_;
 };
 
 five.EventsTimeline.prototype.getEventCardsForEvents_ = function(events) {
@@ -495,9 +418,7 @@ five.EventsTimeline.prototype.layoutTimeMarkers_ = function() {
   }, this);
 };
 
-five.EventsTimeline.prototype.updateVisibleRegion_ = function() {
-  var visibleRect = new goog.math.Rect(this.el.scrollLeft, this.el.scrollTop,
-      this.el.offsetWidth, this.el.offsetHeight);
+five.EventsTimeline.prototype.updateVisibleRegion = function(visibleRect) {
   this.timeAxis_.updateVisibleRegion(visibleRect);
 };
 
@@ -563,11 +484,6 @@ five.EventsTimeline.prototype.handleBlur_ = function(e) {
   var event = new goog.events.Event(five.EventsTimeline.EventType.DESELECT);
   event.shiftKey = e.shiftKey;
   this.dispatchEvent(event);
-};
-
-/** @param {goog.events.BrowserEvent} e */
-five.EventsTimeline.prototype.handleScroll_ = function(e) {
-  this.updateVisibleRegion_();
 };
 
 /** @param {five.EventMoveEvent} e */
