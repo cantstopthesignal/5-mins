@@ -49,6 +49,11 @@ body {
   font-size: 24px;
   padding: 10px 10px;
 }
+.notification {
+  border-radius: 8px;
+  padding: 5px 15px;
+  margin-top: 5px;
+}
 .time-axis > .time-box {
   font-size: 22px;
   padding: 4px 6px;

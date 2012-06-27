@@ -13,16 +13,21 @@ goog.require('goog.events.EventTarget');
 
 
 /**
- * @param calendarApi {five.CalendarApi}
+ * @param calendarApi {!five.CalendarApi}
+ * @param notificationManager {!five.NotificationManager}
  * @param calendarData {Object}
  * @constructor
  * @extends {goog.events.EventTarget}
  */
-five.CalendarManager = function(calendarApi, calendarData) {
+five.CalendarManager = function(calendarApi, notificationManager,
+    calendarData) {
   goog.base(this);
 
-  /** @type {five.CalendarApi} */
+  /** @type {!five.CalendarApi} */
   this.calendarApi_ = calendarApi;
+
+  /** @type {!five.NotificationManager} */
+  this.notificationManager_ = notificationManager;
 
   /** @type {Object} */
   this.calendarData_ = calendarData;
@@ -37,7 +42,16 @@ five.CalendarManager.EventType = {
   EVENTS_CHANGED: goog.events.getUniqueId('eventschanged'),
   REQUESTS_STATE_CHANGED: goog.events.getUniqueId('requestsstatechanged'),
   MUTATIONS_STATE_CHANGED: goog.events.getUniqueId('mutationsstatechanged')
-}
+};
+
+five.CalendarManager.EVENTS_LOAD_ERROR_ =
+    'Error loading events. Please try again.';
+
+five.CalendarManager.EVENTS_SAVE_ERROR_ =
+  'Error saving events. Please try again.';
+
+five.CalendarManager.EVENT_CREATE_ERROR_ =
+  'Error creating event. Please try again.';
 
 /** @type {Array.<five.Event>} */
 five.CalendarManager.prototype.events_;
@@ -88,6 +102,11 @@ five.CalendarManager.prototype.loadEvents = function(startDate, endDate) {
         this.updateEventsData_(resp['items'] || []);
         this.requestEnded_();
         return this.events_;
+      }, this).
+      addErrback(function() {
+        this.requestEnded_();
+        this.notificationManager_.show(
+            five.CalendarManager.EVENTS_LOAD_ERROR_);
       }, this);
 };
 
@@ -121,6 +140,12 @@ five.CalendarManager.prototype.createEvent_ = function(event) {
         goog.asserts.assert(resp['kind'] == 'calendar#event');
         event.endCreate(resp);
         this.requestEnded_();
+      }, this).
+      addErrback(function() {
+        event.abortCreate();
+        this.requestEnded_();
+        this.notificationManager_.show(
+            five.CalendarManager.EVENT_CREATE_ERROR_);
       }, this);
 };
 
@@ -134,6 +159,12 @@ five.CalendarManager.prototype.saveMutatedEvent_ = function(event) {
         goog.asserts.assert(resp['kind'] == 'calendar#event');
         event.endMutationPatch(resp);
         this.requestEnded_();
+      }, this).
+      addErrback(function() {
+        event.abortMutationPatch();
+        this.requestEnded_();
+        this.notificationManager_.show(
+            five.CalendarManager.EVENTS_SAVE_ERROR_);
       }, this);
 };
 

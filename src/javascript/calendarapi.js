@@ -112,16 +112,23 @@ five.CalendarApi.prototype.callApiWithAuthRetry_ = function(requestParams) {
         requestParams.path);
     var request = goog.getObjectByName('gapi.client.request')(requestParams);
     request['execute'](goog.bind(function(resp) {
-      if (resp['error'] && resp['error']['code'] == 401) {
-        // Authorization failure.
-        if (attempts > 0) {
-          d.errback('Auth failed twice');
-          return;
+      if (!resp || resp['error']) {
+        var error = resp ? resp['error'] : null;
+        if (error && error['code'] == 401) {
+          // Authorization failure.
+          if (attempts > 0) {
+            d.errback('Auth failed twice');
+            return;
+          }
+          attempts++;
+          this.auth_.restart();
+          this.auth_.getAuthDeferred().branch().addCallbacks(doRequest,
+              goog.bind(d.errback, d));
+        } else if (error) {
+          d.errback('Request error: ' + goog.json.serialize(error));
+        } else {
+          d.errback('Unknown request error');
         }
-        attempts++;
-        this.auth_.restart();
-        this.auth_.getAuthDeferred().branch().addCallbacks(doRequest,
-            goog.bind(d.errback, d));
       } else {
         d.callback(resp);
       }

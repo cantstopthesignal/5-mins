@@ -113,6 +113,13 @@ a:hover {
   display: block;
   margin-top: 5px;
 }
+.notification {
+  border: 1px solid #a00;
+  background-color: #a00;
+  color: white;
+  white-space: nowrap;
+  position: absolute;
+}
 .events-view {
 }
 .events-view-scroll {

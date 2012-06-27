@@ -188,7 +188,13 @@ five.Event.prototype.endMutationPatch = function(eventData) {
   goog.asserts.assert(eventData['kind'] == 'calendar#event');
   goog.asserts.assert(this.eventData_['id'] == goog.asserts.assertString(
       eventData['id']));
+  goog.asserts.assert(!this.isNew());
   this.endMutationOrCreate_(eventData);
+};
+
+five.Event.prototype.abortMutationPatch = function() {
+  goog.asserts.assert(!this.isNew());
+  this.abortMutationOrCreate_();
 };
 
 /** @return {Object} */
@@ -214,6 +220,11 @@ five.Event.prototype.endCreate = function(eventData) {
   this.endMutationOrCreate_(eventData);
 };
 
+five.Event.prototype.abortCreate = function() {
+  goog.asserts.assert(this.isNew());
+  this.abortMutationOrCreate_();
+};
+
 /** @param {Object} eventData */
 five.Event.prototype.endMutationOrCreate_ = function(eventData) {
   goog.asserts.assert(eventData['kind'] == 'calendar#event');
@@ -226,6 +237,15 @@ five.Event.prototype.endMutationOrCreate_ = function(eventData) {
   });
   // TODO: Verify that response data matches expectations for in progress patch.
 
+  this.updateMutations_();
+  this.dispatchEvent(five.Event.EventType.DATA_CHANGED);
+};
+
+five.Event.prototype.abortMutationOrCreate_ = function() {
+  // Unlock all mutations
+  goog.array.forEach(this.mutations_, function(mutation) {
+    mutation.setLocked(false);
+  });
   this.updateMutations_();
   this.dispatchEvent(five.Event.EventType.DATA_CHANGED);
 };

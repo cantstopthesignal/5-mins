@@ -8,6 +8,7 @@ goog.require('five.CalendarApi');
 goog.require('five.CalendarChooser');
 goog.require('five.CalendarManager');
 goog.require('five.EventsView');
+goog.require('five.NotificationManager');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.debug.Logger');
@@ -23,6 +24,7 @@ goog.require('goog.events.EventType');
 five.App = function() {
   this.auth_ = new five.Auth();
 
+  /** @type {!five.CalendarApi} */
   this.calendarApi_ = new five.CalendarApi(this.auth_);
 
   /** @type {goog.events.EventHandler} */
@@ -36,6 +38,9 @@ five.App.prototype.logger_ = goog.debug.Logger.getLogger('five.App');
 
 /** @type {five.AppBar} */
 five.App.prototype.appBar_;
+
+/** @type {five.NotificationManager} */
+five.App.prototype.notificationManager_;
 
 /** @type {five.CalendarChooser} */
 five.App.prototype.calendarChooser_;
@@ -53,10 +58,6 @@ five.App.prototype.appEl_;
 five.App.prototype.calendarData_;
 
 five.App.prototype.start = function() {
-  this.auth_.getAuthDeferred().branch().
-      addCallback(this.chooseCalendar_, this).
-      addCallback(this.showEventsView_, this);
-  this.auth_.start();
   this.appEl_ = goog.dom.getElementByClass('app');
   goog.asserts.assert(this.appEl_);
   this.footerEl_ = goog.dom.getElementByClass('footer');
@@ -64,6 +65,13 @@ five.App.prototype.start = function() {
 
   this.appBar_ = new five.AppBar();
   this.appBar_.render(this.appEl_);
+
+  this.notificationManager_ = new five.NotificationManager(this.appBar_);
+
+  this.auth_.getAuthDeferred().branch().
+      addCallback(this.chooseCalendar_, this).
+      addCallback(this.showEventsView_, this);
+  this.auth_.start();
 
   this.eventHandler_.listen(window, goog.events.EventType.RESIZE,
       this.handleWindowResize_);
@@ -93,7 +101,7 @@ five.App.prototype.showEventsView_ = function() {
   goog.asserts.assert(this.calendarData_);
   goog.asserts.assert(!this.eventsView_);
   var calendarManager = new five.CalendarManager(
-      this.calendarApi_, this.calendarData_);
+      this.calendarApi_, this.notificationManager_, this.calendarData_);
   this.registerDisposable(calendarManager);
   this.eventsView_ = new five.EventsView(calendarManager, this.appBar_);
   this.registerDisposable(this.eventsView_);
