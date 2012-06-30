@@ -22,10 +22,14 @@ five.mainCssLoader.load = function() {
   var fixedWidth = uri.getParameterValue('width');
   if (fixedWidth) {
     document.documentElement.style.width = fixedWidth + 'px';
+  } else if (zoom != 1) {
+    document.documentElement.style.width = Math.floor(100 / zoom) + '%';
   }
   var fixedHeight = uri.getParameterValue('height');
   if (fixedHeight) {
     document.documentElement.style.height = fixedHeight + 'px';
+  } else if (zoom != 1) {
+    document.documentElement.style.height = Math.floor(100 / zoom) + '%';
   }
   if (zoom != 1) {
     var transformOrigin = 'top left';
