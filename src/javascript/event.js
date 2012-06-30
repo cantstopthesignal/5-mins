@@ -138,14 +138,26 @@ five.Event.prototype.duplicate = function() {
   return new five.Event(eventData, true);
 };
 
-/** @param {five.EventMutation} mutation */
+/**
+ * @param {five.EventMutation} mutation
+ * @return {boolean} Whether the mutation was accepted.
+ */
 five.Event.prototype.addMutation = function(mutation) {
+  goog.asserts.assert(this.stateIsValid_());
   this.mutations_.push(mutation);
+  this.calcMutations_(false);
+  var mutationValid = this.stateIsValid_();
+  if (!mutationValid) {
+    // Rollback the mutation, it caused state to be invalid.
+    this.mutations_.pop();
+  }
   this.updateMutations_();
+  return mutationValid;
 };
 
 five.Event.prototype.updateMutations_ = function() {
-  this.calcMutations_();
+  this.calcMutations_(true);
+  goog.asserts.assert(this.stateIsValid_());
   goog.array.forEach(this.displays_, function(display) {
     display.updateDisplay();
   }, this);
@@ -250,6 +262,21 @@ five.Event.prototype.abortMutationOrCreate_ = function() {
   this.dispatchEvent(five.Event.EventType.DATA_CHANGED);
 };
 
+/** @return {boolean} Whether the current state of this event is valid. */
+five.Event.prototype.stateIsValid_ = function() {
+  var startTime = this.getStartTime();
+  goog.asserts.assertObject(startTime);
+  var endTime = this.getEndTime();
+  goog.asserts.assertObject(endTime);
+  if (goog.date.Date.compare(startTime, endTime) >= 0) {
+    return false;
+  }
+  if (this.getSummary().trim().length == 0) {
+    return false;
+  }
+  return true;
+};
+
 /** @param {Object} eventData */
 five.Event.prototype.mergeMutationsIntoData_ = function(eventData) {
   if (this.mutatedStartTime_ && goog.date.Date.compare(this.mutatedStartTime_,
@@ -273,6 +300,7 @@ five.Event.prototype.mergeMutationsIntoData_ = function(eventData) {
 five.Event.prototype.parseEventData_ = function() {
   this.startTime_ = five.Event.parseEventDataDate_(this.eventData_['start']);
   this.endTime_ = five.Event.parseEventDataDate_(this.eventData_['end']);
+  goog.asserts.assert(this.stateIsValid_());
 };
 
 /** @override */
@@ -303,8 +331,13 @@ five.Event.prototype.dispatchDisplayEvent_ = function(e) {
   }
 };
 
-five.Event.prototype.calcMutations_ = function() {
-  this.collapseMutations_();
+/**
+ * @param {boolean} collapse Whether to collapse mutations that can be merged.
+ */
+five.Event.prototype.calcMutations_ = function(collapse) {
+  if (collapse) {
+    this.collapseMutations_();
+  }
   this.mutatedStartTime_ = this.startTime_.clone();
   this.mutatedEndTime_ = this.endTime_.clone();
   goog.array.forEach(this.mutations_, function(mutation) {
