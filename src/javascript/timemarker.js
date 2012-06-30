@@ -1,6 +1,7 @@
 // Copyright cantstopthesignals@gmail.com
 
 goog.provide('five.TimeMarker');
+goog.provide('five.TimeMarker.Component');
 
 goog.require('five.Component');
 goog.require('five.TimeMarkerTheme');
@@ -12,7 +13,7 @@ goog.require('goog.style');
  * @param {!goog.date.DateTime} time
  * @param {five.TimeMarkerTheme=} opt_theme
  * @constructor
- * @extends {five.Component}
+ * @extends {goog.events.EventTarget}
  */
 five.TimeMarker = function(time, opt_theme) {
   /** @type {!goog.date.DateTime} */
@@ -20,30 +21,11 @@ five.TimeMarker = function(time, opt_theme) {
 
   /** @type {!five.TimeMarkerTheme} */
   this.theme_ = opt_theme || five.TimeMarkerTheme.DEFAULT;
+
+  /** @type {!Array.<!five.TimeMarker.Component>} */
+  this.components_ = [];
 };
-goog.inherits(five.TimeMarker, five.Component);
-
-five.TimeMarker.toTimeString_ = function(date) {
-  var str = date.toUsTimeString(false, false, false);
-  return str;
-};
-
-/** @type {five.EventsTimeline} */
-five.TimeMarker.prototype.owner_;
-
-/** @type {Element} */
-five.TimeMarker.prototype.labelEl_;
-
-/** @type {five.TimeAxisPatchMarker} */
-five.TimeMarker.prototype.timeAxisPatchMarker_;
-
-/** @param {five.EventsTimeline} owner */
-five.TimeMarker.prototype.setOwner = function(owner) {
-  this.owner_ = owner;
-  if (!this.owner_) {
-    goog.dom.removeNode(this.el);
-  }
-};
+goog.inherits(five.TimeMarker, goog.events.EventTarget);
 
 /** @return {goog.date.DateTime} */
 five.TimeMarker.prototype.getTime = function() {
@@ -53,15 +35,90 @@ five.TimeMarker.prototype.getTime = function() {
 /** @param {!goog.date.DateTime} time */
 five.TimeMarker.prototype.setTime = function(time) {
   this.time_ = time;
+  goog.array.forEach(this.components_, function(component) {
+    component.setTime(this.time_);
+  }, this);
+};
+
+five.TimeMarker.prototype.setVisible = function(visible) {
+  goog.array.forEach(this.components_, function(component) {
+    component.setVisible(visible);
+  }, this);
+};
+
+/** @return {!five.TimeMarker.Component} */
+five.TimeMarker.prototype.createComponent = function() {
+  var component = new five.TimeMarker.Component(this, this.time_, this.theme_);
+  this.components_.push(component);
+  return component;
+};
+
+/** @param {!five.TimeMarker.Component} component */
+five.TimeMarker.prototype.releaseComponent = function(component) {
+  var index = this.components_.indexOf(component);
+  goog.asserts.assert(index >= 0);
+  this.components_.splice(index, 1);
+};
+
+/**
+ * @param {!five.TimeMarker} timeMarker
+ * @param {!goog.date.DateTime} time
+ * @param {!five.TimeMarkerTheme} theme
+ * @constructor
+ * @extends {five.Component}
+ */
+five.TimeMarker.Component = function(timeMarker, time, theme) {
+  /** @type {!five.TimeMarker} */
+  this.timeMarker_ = timeMarker;
+
+  /** @type {!goog.date.DateTime} */
+  this.time_ = time;
+
+  /** @type {!five.TimeMarkerTheme} */
+  this.theme_ = theme;
+};
+goog.inherits(five.TimeMarker.Component, five.Component);
+
+five.TimeMarker.Component.toTimeString_ = function(date) {
+  var str = date.toUsTimeString(false, false, false);
+  return str;
+};
+
+/** @type {five.EventsTimeline} */
+five.TimeMarker.Component.prototype.owner_;
+
+/** @type {Element} */
+five.TimeMarker.Component.prototype.labelEl_;
+
+/** @type {five.TimeAxisPatchMarker} */
+five.TimeMarker.Component.prototype.timeAxisPatchMarker_;
+
+/** @param {five.EventsTimeline} owner */
+five.TimeMarker.Component.prototype.setOwner = function(owner) {
+  this.owner_ = owner;
+  if (!this.owner_) {
+    goog.dom.removeNode(this.el);
+  }
+};
+
+/** @return {goog.date.DateTime} */
+five.TimeMarker.Component.prototype.getTime = function() {
+  return this.time_;
+};
+
+/** @param {!goog.date.DateTime} time */
+five.TimeMarker.Component.prototype.setTime = function(time) {
+  this.time_ = time;
   if (this.el && this.owner_) {
     this.layout();
   }
   if (this.labelEl_) {
-    this.labelEl_.firstChild.data = five.TimeMarker.toTimeString_(this.time_);
+    this.labelEl_.firstChild.data = five.TimeMarker.Component.toTimeString_(
+        this.time_);
   }
 };
 
-five.TimeMarker.prototype.createDom = function() {
+five.TimeMarker.Component.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'time-marker');
   this.el.style.borderColor = this.theme_.color;
@@ -72,11 +129,11 @@ five.TimeMarker.prototype.createDom = function() {
     this.labelEl_.style.color = this.theme_.labelColor;
 
     this.labelEl_.appendChild(document.createTextNode(
-        five.TimeMarker.toTimeString_(this.time_)));
+        five.TimeMarker.Component.toTimeString_(this.time_)));
   }
 };
 
-five.TimeMarker.prototype.render = function(parentEl) {
+five.TimeMarker.Component.prototype.render = function(parentEl) {
   if (!this.el) {
     this.createDom();
   }
@@ -87,7 +144,7 @@ five.TimeMarker.prototype.render = function(parentEl) {
   }
 };
 
-five.TimeMarker.prototype.setVisible = function(visible) {
+five.TimeMarker.Component.prototype.setVisible = function(visible) {
   if (!this.el) {
     this.createDom();
   }
@@ -97,18 +154,18 @@ five.TimeMarker.prototype.setVisible = function(visible) {
   }
 };
 
-five.TimeMarker.prototype.layout = function() {
+five.TimeMarker.Component.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner_);
   this.owner_.layoutTimeMarker(this);
 };
 
-five.TimeMarker.prototype.setRect = function(rect) {
+five.TimeMarker.Component.prototype.setRect = function(rect) {
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.el, rect.getSize());
 };
 
-five.TimeMarker.prototype.setLabelRect = function(rect) {
+five.TimeMarker.Component.prototype.setLabelRect = function(rect) {
   if (!this.labelEl_) {
     return;
   }
@@ -117,7 +174,7 @@ five.TimeMarker.prototype.setLabelRect = function(rect) {
 };
 
 /** @param {five.TimeAxisPatchMarker} patchMarker */
-five.TimeMarker.prototype.setTimeAxisPatchMarker = function(patchMarker) {
+five.TimeMarker.Component.prototype.setTimeAxisPatchMarker = function(patchMarker) {
   goog.dispose(this.timeAxisPatchMarker_);
   this.timeAxisPatchMarker_ = patchMarker;
   if (this.timeAxisPatchMarker_) {
@@ -126,13 +183,14 @@ five.TimeMarker.prototype.setTimeAxisPatchMarker = function(patchMarker) {
 };
 
 /** @return {five.TimeAxisPatchMarker} */
-five.TimeMarker.prototype.getTimeAxisPatchMarker = function() {
+five.TimeMarker.Component.prototype.getTimeAxisPatchMarker = function() {
   return this.timeAxisPatchMarker_;
 };
 
 /** @override */
-five.TimeMarker.prototype.disposeInternal = function() {
+five.TimeMarker.Component.prototype.disposeInternal = function() {
   delete this.owner_;
+  this.timeMarker_.releaseComponent(this);
   goog.dispose(this.timeAxisPatchMarker_);
   goog.base(this, 'disposeInternal');
 };

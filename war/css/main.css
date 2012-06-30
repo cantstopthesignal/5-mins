@@ -134,7 +134,7 @@ a:hover {
   outline: 0;
   -moz-user-select: none;
   -webkit-user-select: none;
-  position: relative;
+  position: absolute;
   box-sizing: border-box;
 }
 .time-axis {

@@ -35,7 +35,7 @@ five.EventsTimeline = function() {
   /** @type {Array.<five.EventCard>} */
   this.eventCards_ = [];
 
-  /** @type {Array.<five.TimeMarker>} */
+  /** @type {Array.<five.TimeMarker.Component>} */
   this.timeMarkers_ = [];
 };
 goog.inherits(five.EventsTimeline, five.Component);
@@ -167,6 +167,17 @@ five.EventsTimeline.prototype.render = function(parentEl) {
 };
 
 /**
+ * @param {!goog.math.Rect} rect
+ */
+five.EventsTimeline.prototype.setRect = function(rect) {
+  goog.style.setPosition(this.el, rect.left, rect.top);
+  goog.style.setBorderBoxSize(this.el, rect.getSize());
+  this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
+      five.deviceParams.getTimeAxisWidth();
+  this.layout_();
+};
+
+/**
  * @param {number=} opt_width
  * @param {number=} opt_height
  */
@@ -227,11 +238,13 @@ five.EventsTimeline.prototype.setSelectedEvents = function(selectedEvents) {
   this.inlineEventsEditor_.setEvents(selectedEventCards);
 };
 
+/** @param {!five.TimeMarker} timeMarker */
 five.EventsTimeline.prototype.addTimeMarker = function(timeMarker) {
-  timeMarker.setOwner(this);
-  this.registerDisposable(timeMarker);
-  timeMarker.render(this.timeMarkersLayer_);
-  this.timeMarkers_.push(timeMarker);
+  var timeMarkerComponent = timeMarker.createComponent();
+  timeMarkerComponent.setOwner(this);
+  this.registerDisposable(timeMarkerComponent);
+  timeMarkerComponent.render(this.timeMarkersLayer_);
+  this.timeMarkers_.push(timeMarkerComponent);
 };
 
 five.EventsTimeline.prototype.layoutTimeMarker = function(timeMarker) {
@@ -464,6 +477,7 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
     if (!this.cursorMarker_) {
       this.cursorMarker_ = new five.TimeMarker(time,
           five.TimeMarkerTheme.CURSOR);
+      this.registerDisposable(this.cursorMarker_);
       this.addTimeMarker(this.cursorMarker_);
     } else {
       this.cursorMarker_.setTime(time);

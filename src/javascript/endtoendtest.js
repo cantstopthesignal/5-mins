@@ -116,6 +116,36 @@ five.EndToEndTest.prototype.tearDown = function() {
   }, this));
 };
 
+/**
+ * @param {Function():boolean} conditionFn
+ * @return {!goog.async.Deferred}
+ */
+five.EndToEndTest.prototype.pollUntil_ = function(conditionFn) {
+  var deferred = new goog.async.Deferred();
+
+  var pollIntervalId;
+  var poll = goog.bind(function() {
+    if (!this.running) {
+      return;
+    }
+    if (!conditionFn()) {
+      return;
+    }
+    deferred.callback();
+    window.clearInterval(pollIntervalId);
+  }, this);
+
+  pollIntervalId = window.setInterval(function() {
+    try {
+      poll();
+    } catch (ex) {
+      window.clearInterval(pollIntervalId);
+      throw ex;
+    }
+  }, 10);
+  return deferred;
+};
+
 five.EndToEndTest.prototype.expectCalendarApiLoads = function() {
   this.fakeCalendarApi.expectLoadCalendars();
   this.fakeCalendarApi.expectLoadCalendar1Events();
@@ -197,42 +227,24 @@ five.EndToEndTest.prototype.addStartApp = function() {
 };
 
 five.EndToEndTest.prototype.addWaitForAppContent = function() {
-  var appLoadDeferred = new goog.async.Deferred();
-
-  var pollIntervalId;
-  var poll = goog.bind(function() {
-    if (!this.running) {
-      return;
-    }
-    var hasEventCard = this.appDom.getElementsByClass('event-card').length > 0;
-    var hasTimeMarker = this.appDom.getElementsByClass('time-marker').length >
-        0;
-    var hasTimeAxis = this.appDom.getElementsByClass('time-axis').length > 0;
-    var hasTimeAxisPatchCanvas = this.appDom.getElementsByClass(
-        'time-axis-patch-canvas').length > 0;
-    var spinner = this.appDom.getElementByClass('spinner');
-    var spinnerVisible = spinner && goog.style.isElementShown(spinner);
-    if (!hasEventCard || !hasTimeMarker || !hasTimeAxis ||
-        !hasTimeAxisPatchCanvas || !spinner || spinnerVisible) {
-      window.console.log('Waiting for all required elements to be visible...');
-      return;
-    }
-    appLoadDeferred.callback();
-    window.clearInterval(pollIntervalId);
-  }, this);
-
   this.addWaitForAsync('Waiting for app content to display');
   this.testDeferred.addCallback(function() {
-    pollIntervalId = window.setInterval(function() {
-      try {
-        poll();
-      } catch (ex) {
-        window.clearInterval(pollIntervalId);
-        throw ex;
+    return this.pollUntil_(goog.bind(function() {
+      var hasEventCard = this.appDom.getElementsByClass('event-card').length > 0;
+      var hasTimeMarker = this.appDom.getElementsByClass('time-marker').length >
+          0;
+      var hasTimeAxis = this.appDom.getElementsByClass('time-axis').length > 0;
+      var hasTimeAxisPatchCanvas = this.appDom.getElementsByClass(
+          'time-axis-patch-canvas').length > 0;
+      var spinner = this.appDom.getElementByClass('spinner');
+      var spinnerVisible = spinner && goog.style.isElementShown(spinner);
+      if (!hasEventCard || !hasTimeMarker || !hasTimeAxis ||
+          !hasTimeAxisPatchCanvas || !spinner || spinnerVisible) {
+        return false;
       }
-    }, 10);
-    return appLoadDeferred;
-  });
+      return true;
+    }, this));
+  }, this);
 };
 
 five.EndToEndTest.prototype.addCheckSaveButtonVisible = function(visible) {
@@ -244,9 +256,21 @@ five.EndToEndTest.prototype.addCheckSaveButtonVisible = function(visible) {
   }, this);
 };
 
+five.EndToEndTest.prototype.addPollSaveButtonVisible = function(visible) {
+  this.addWaitForAsync('Poll for save button visible == ' + visible);
+  this.testDeferred.addCallback(function() {
+    return this.pollUntil_(goog.bind(function() {
+      var saveButton = this.getButton_('Save');
+      assertTrue(!!saveButton);
+      return visible == goog.style.isElementShown(saveButton);
+    }, this));
+  }, this);
+};
+
 five.EndToEndTest.prototype.addSaveSequence = function() {
+  this.addCheckSaveButtonVisible(true);
   this.addClickSaveButton();
-  this.addCheckSaveButtonVisible(false);
+  this.addPollSaveButtonVisible(false);
 };
 
 five.EndToEndTest.prototype.addClickSaveButton = function() {
