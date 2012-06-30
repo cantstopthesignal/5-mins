@@ -24,8 +24,12 @@ goog.require('goog.events.EventType');
 five.App = function() {
   this.auth_ = new five.Auth();
 
+  this.appContext_ = new five.AppContext();
+  this.registerDisposable(this.appContext_);
+
   /** @type {!five.CalendarApi} */
   this.calendarApi_ = new five.CalendarApi(this.auth_);
+  this.calendarApi_.register(this.appContext_);
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
@@ -38,9 +42,6 @@ five.App.prototype.logger_ = goog.debug.Logger.getLogger('five.App');
 
 /** @type {five.AppBar} */
 five.App.prototype.appBar_;
-
-/** @type {five.NotificationManager} */
-five.App.prototype.notificationManager_;
 
 /** @type {five.CalendarChooser} */
 five.App.prototype.calendarChooser_;
@@ -66,7 +67,8 @@ five.App.prototype.start = function() {
   this.appBar_ = new five.AppBar();
   this.appBar_.render(this.appEl_);
 
-  this.notificationManager_ = new five.NotificationManager(this.appBar_);
+  var notificationManager = new five.NotificationManager(this.appBar_);
+  notificationManager.register(this.appContext_);
 
   this.auth_.getAuthDeferred().branch().
       addCallback(this.chooseCalendar_, this).
@@ -100,8 +102,8 @@ five.App.prototype.chooseCalendar_ = function() {
 five.App.prototype.showEventsView_ = function() {
   goog.asserts.assert(this.calendarData_);
   goog.asserts.assert(!this.eventsView_);
-  var calendarManager = new five.CalendarManager(
-      this.calendarApi_, this.notificationManager_, this.calendarData_);
+  var calendarManager = new five.CalendarManager(this.appContext_,
+      this.calendarData_);
   this.registerDisposable(calendarManager);
   this.eventsView_ = new five.EventsView(calendarManager, this.appBar_);
   this.registerDisposable(this.eventsView_);

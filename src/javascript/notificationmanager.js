@@ -3,6 +3,7 @@
 goog.provide('five.NotificationManager');
 
 goog.require('five.Component');
+goog.require('five.Service');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
@@ -13,6 +14,7 @@ goog.require('goog.events.EventType');
  * @param {!five.AppBar} appBar
  * @constructor
  * @extends {five.Component}
+ * @implements {five.Service}
  */
 five.NotificationManager = function(appBar) {
   goog.base(this);
@@ -22,11 +24,28 @@ five.NotificationManager = function(appBar) {
 };
 goog.inherits(five.NotificationManager, five.Component);
 
+five.NotificationManager.SERVICE_ID = 's' + goog.getUid(
+    five.NotificationManager);
+
+/**
+ * @param {!five.AppContext} appContext
+ * @return {!five.NotificationManager}
+ */
+five.NotificationManager.get = function(appContext) {
+  return /** @type {!five.NotificationManager} */ (goog.asserts.assertObject(
+      appContext.get(five.NotificationManager.SERVICE_ID)));
+};
+
 /** @type {number} */
 five.NotificationManager.DEFAULT_SHOW_DURATION_MS_ = 5000;
 
 /** @type {number} */
 five.NotificationManager.prototype.showTimeoutId_;
+
+/** @param {!five.AppContext} appContext */
+five.NotificationManager.prototype.register = function(appContext) {
+  appContext.register(five.NotificationManager.SERVICE_ID, this);
+};
 
 five.NotificationManager.prototype.createDom = function() {
   goog.base(this, 'createDom');

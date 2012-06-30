@@ -2,6 +2,7 @@
 
 goog.provide('five.CalendarManager');
 
+goog.require('five.AppContext');
 goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('goog.asserts');
@@ -13,21 +14,22 @@ goog.require('goog.events.EventTarget');
 
 
 /**
- * @param calendarApi {!five.CalendarApi}
- * @param notificationManager {!five.NotificationManager}
- * @param calendarData {Object}
+ * @param {!five.AppContext} appContext
+ * @param {Object} calendarData
  * @constructor
  * @extends {goog.events.EventTarget}
  */
-five.CalendarManager = function(calendarApi, notificationManager,
-    calendarData) {
+five.CalendarManager = function(appContext, calendarData) {
   goog.base(this);
 
+  /** @type {!five.AppContext} */
+  this.appContext_ = appContext;
+
   /** @type {!five.CalendarApi} */
-  this.calendarApi_ = calendarApi;
+  this.calendarApi_ = five.CalendarApi.get(this.appContext_);
 
   /** @type {!five.NotificationManager} */
-  this.notificationManager_ = notificationManager;
+  this.notificationManager_ = five.NotificationManager.get(this.appContext_);
 
   /** @type {Object} */
   this.calendarData_ = calendarData;

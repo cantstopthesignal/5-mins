@@ -2,22 +2,45 @@
 
 goog.provide('five.CalendarApi');
 
+goog.require('five.Service');
 goog.require('goog.debug.Logger');
+goog.require('goog.events.EventTarget');
 goog.require('goog.json');
 
 
 /**
  * @constructor
  * @param {five.Auth} auth
+ * @extends {goog.events.EventTarget}
+ * @implements {five.Service}
  */
 five.CalendarApi = function(auth) {
+  goog.base(this);
+
   /** @type {five.Auth} */
   this.auth_ = auth;
+};
+goog.inherits(five.CalendarApi, goog.events.EventTarget);
+
+five.CalendarApi.SERVICE_ID = 's' + goog.getUid(five.CalendarApi);
+
+/**
+ * @param {!five.AppContext} appContext
+ * @return {!five.CalendarApi}
+ */
+five.CalendarApi.get = function(appContext) {
+  return /** @type {!five.CalendarApi} */ (goog.asserts.assertObject(
+      appContext.get(five.CalendarApi.SERVICE_ID)));
 };
 
 /** @type {goog.debug.Logger} */
 five.CalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
     'five.CalendarApi');
+
+/** @param {!five.AppContext} appContext */
+five.CalendarApi.prototype.register = function(appContext) {
+  appContext.register(five.CalendarApi.SERVICE_ID, this);
+};
 
 /** @return {goog.async.Deferred} */
 five.CalendarApi.prototype.loadCalendarList = function() {
