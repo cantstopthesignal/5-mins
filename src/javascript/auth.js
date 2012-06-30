@@ -26,8 +26,6 @@ five.Auth.GAPI_API_KEY = 'AIzaSyDh5fbf_pmhJko-6SBua7ptbjnrNl9Jer4';
 five.Auth.GAPI_CLIENT_ID = '446611198518.apps.googleusercontent.com';
 five.Auth.GAPI_SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
-five.Auth.GAPI_FULL_AUTH_TIMEOUT = 5000;
-
 /** @type {goog.debug.Logger} */
 five.Auth.prototype.logger_ = goog.debug.Logger.getLogger('five.Auth');
 
@@ -35,10 +33,15 @@ five.Auth.prototype.logger_ = goog.debug.Logger.getLogger('five.Auth');
 five.Auth.prototype.connectDialog_;
 
 /** @type {number} */
-five.Auth.prototype.gapiFullAuthTimeoutId_;
+five.Auth.prototype.authRefreshTimeoutId_;
 
 five.Auth.prototype.start = function() {
   this.loadGapiJavascriptClientAndAuth_();
+
+  if (goog.DEBUG) {
+    goog.exportSymbol('five.auth.invalidateToken',
+        goog.bind(this.invalidateToken_, this));
+  }
 };
 
 /**
@@ -50,7 +53,7 @@ five.Auth.prototype.restart = function() {
     return;
   }
   this.authDeferred_ = new goog.async.Deferred();
-  this.startAuth_();
+  this.checkAuth_();
   goog.asserts.assert(!this.authDeferred_.hasFired());
 };
 
@@ -58,6 +61,12 @@ five.Auth.prototype.restart = function() {
 five.Auth.prototype.getAuthDeferred = function() {
   return this.authDeferred_;
 };
+
+/** @override */
+five.Auth.prototype.disposeInternal = function() {
+  this.clearAuthRefreshTimer_();
+  goog.base(this, 'disposeInternal');
+}
 
 five.Auth.prototype.loadGapiJavascriptClientAndAuth_ = function() {
   if (goog.getObjectByName('gapi.client') &&
@@ -85,14 +94,7 @@ five.Auth.prototype.handleGapiClientLoad_ = function() {
 
 five.Auth.prototype.handleGapiAuthInit_ = function() {
   this.logger_.info('handleGapiAuthInit_');
-  this.startAuth_();
-};
-
-five.Auth.prototype.startAuth_ = function() {
-  this.logger_.info('startAuth_');
   window.setTimeout(goog.bind(this.checkAuth_, this), 1);
-  this.gapiFullAuthTimeoutId_ = window.setTimeout(
-      goog.bind(this.fullAuth_, this), five.Auth.GAPI_FULL_AUTH_TIMEOUT);
 };
 
 five.Auth.prototype.checkAuth_ = function() {
@@ -106,7 +108,6 @@ five.Auth.prototype.checkAuth_ = function() {
 
 five.Auth.prototype.fullAuth_ = function() {
   this.logger_.info('fullAuth_');
-  this.clearFullAuthTimer_();
   if (!this.connectDialog_) {
     this.connectDialog_ = new five.Auth.ConnectDialog_(
         goog.bind(this.handleAuthResult_, this));
@@ -115,16 +116,10 @@ five.Auth.prototype.fullAuth_ = function() {
   this.connectDialog_.show();
 };
 
-five.Auth.prototype.clearFullAuthTimer_ = function() {
-  if (this.gapiFullAuthTimeoutId_) {
-    window.clearTimeout(this.gapiFullAuthTimeoutId_);
-    delete this.gapiFullAuthTimeoutId_;
-  }
-};
-
 five.Auth.prototype.handleAuthResult_ = function(authResult) {
   if (authResult) {
-    this.logger_.info('handleAuthResult_: authorized ');
+    this.logger_.info('handleAuthResult_: authorized');
+    this.setAuthRefreshTimer_(parseInt(authResult['expires_in'], 10));
   } else {
     this.logger_.info('handleAuthResult_: no result');
   }
@@ -138,11 +133,33 @@ five.Auth.prototype.handleAuthResult_ = function(authResult) {
     this.fullAuth_();
     return;
   }
-  this.clearFullAuthTimer_();
   if (this.connectDialog_) {
     this.connectDialog_.hide();
   }
   this.authDeferred_.callback(null);
+};
+
+five.Auth.prototype.clearAuthRefreshTimer_ = function() {
+  if (this.authRefreshTimeoutId_) {
+    window.clearTimeout(this.authRefreshTimeoutId_);
+    delete this.authRefreshTimeoutId_;
+  }
+};
+
+five.Auth.prototype.setAuthRefreshTimer_ = function(expireTimeSecs) {
+  goog.asserts.assert(goog.math.isFiniteNumber(expireTimeSecs));
+  this.clearAuthRefreshTimer_();
+  var refreshDelaySecs = Math.max(5 * 60, expireTimeSecs - 5 * 60);
+  this.authRefreshTimeoutId_ = window.setTimeout(
+      goog.bind(this.checkAuth_, this), refreshDelaySecs * 1000);
+};
+
+five.Auth.prototype.invalidateToken_ = function() {
+  this.logger_.info('invalidateToken_');
+  var token = goog.getObjectByName('gapi.auth.getToken')();
+  var accessToken = goog.asserts.assertString(token['access_token']);
+  token['access_token'] = 'invalid';
+  goog.getObjectByName('gapi.auth.setToken')(token);
 };
 
 /**

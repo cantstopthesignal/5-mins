@@ -341,7 +341,7 @@ function testMove() {
   start.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
   var end = new goog.date.DateTime(new Date(event['end']['dateTime']));
   end.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
-  var expectedBody = {
+  var expectedResource = {
     'etag': goog.asserts.assertString(event['etag']),
     'start': {
       'dateTime': new Date(start.valueOf()).toISOString()
@@ -351,9 +351,9 @@ function testMove() {
     }
   };
   var resultEvent = goog.object.unsafeClone(event);
-  resultEvent['start'] = expectedBody['start'];
-  resultEvent['end'] = expectedBody['end'];
-  test.fakeCalendarApi.expectEventPatch(event, expectedBody, resultEvent);
+  resultEvent['start'] = expectedResource['start'];
+  resultEvent['end'] = expectedResource['end'];
+  test.fakeCalendarApi.expectEventPatch(event, expectedResource, resultEvent);
 
   test.addReplayMocks();
   test.addAppStartupSequence();
@@ -370,7 +370,7 @@ function testDuplicate() {
   var event = test.fakeCalendarApi.event1;
   var start = new goog.date.DateTime(new Date(event['start']['dateTime']));
   var end = new goog.date.DateTime(new Date(event['end']['dateTime']));
-  var expectedBody = {
+  var expectedResource = {
     'summary': goog.asserts.assertString(event['summary']),
     'start': {
       'dateTime': new Date(start.valueOf()).toISOString()
@@ -380,9 +380,9 @@ function testDuplicate() {
     }
   };
   var resultEvent = goog.object.unsafeClone(event);
-  resultEvent['start'] = expectedBody['start'];
-  resultEvent['end'] = expectedBody['end'];
-  test.fakeCalendarApi.expectCreateEvent(event, expectedBody, resultEvent);
+  resultEvent['start'] = expectedResource['start'];
+  resultEvent['end'] = expectedResource['end'];
+  test.fakeCalendarApi.expectEventCreate(event, expectedResource, resultEvent);
 
   test.addReplayMocks();
   test.addAppStartupSequence();
@@ -399,13 +399,13 @@ function testChangeSummary() {
   var promptMockControl = new goog.testing.MockControl();
 
   var event = test.fakeCalendarApi.event1;
-  var expectedBody = {
+  var expectedResource = {
     'etag': goog.asserts.assertString(event['etag']),
     'summary': event['summary'] + ' (edited)'
   };
   var resultEvent = goog.object.unsafeClone(event);
-  resultEvent['summary'] = expectedBody['summary'];
-  test.fakeCalendarApi.expectEventPatch(event, expectedBody, resultEvent);
+  resultEvent['summary'] = expectedResource['summary'];
+  test.fakeCalendarApi.expectEventPatch(event, expectedResource, resultEvent);
 
   test.addReplayMocks();
   test.addAppStartupSequence();

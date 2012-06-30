@@ -54,15 +54,15 @@ five.testing.FakeCalendarApi.calendarListResult_;
 five.testing.FakeCalendarApi.calendar1EventsResult_;
 
 five.testing.FakeCalendarApi.prototype.expectLoadCalendars = function() {
-  this.requestHandler_.handleRequest('/calendar/v3/users/me/calendarList',
-      'GET', {}, null).
+  this.requestHandler_.handleRpcRequest('calendar.calendarList.list', 'v3', {}).
       $returns(this.calendarListResult_);
 };
 
 five.testing.FakeCalendarApi.prototype.expectLoadCalendar1Events = function() {
   var paramMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
-      function(params) {
+      goog.bind(function(params) {
     var expectedParams = {
+      'calendarId': this.calendar1Id_,
       'orderBy': 'startTime',
       'singleEvents': true,
       'timeMin': goog.asserts.assertString(params['timeMin']),
@@ -70,42 +70,30 @@ five.testing.FakeCalendarApi.prototype.expectLoadCalendar1Events = function() {
     };
     assertObjectEquals(expectedParams, params);
     return true;
-  });
-  this.requestHandler_.handleRequest('/calendar/v3/calendars/' +
-      this.calendar1Id_ + '/events', 'GET', paramMatcher, null).
-      $returns(this.calendar1EventsResult_);
+  }, this));
+  this.requestHandler_.handleRpcRequest('calendar.events.list', 'v3',
+      paramMatcher).$returns(this.calendar1EventsResult_);
 };
 
-five.testing.FakeCalendarApi.prototype.expectCreateEvent = function(event,
-    expectedBody, resultEvent) {
-  var bodyMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
-      function(body) {
-    var body = goog.json.parse(body);
-    if (expectedBody instanceof goog.testing.mockmatchers.ArgumentMatcher) {
-      return expectedBody.matches(body);
-    }
-    assertObjectEquals(expectedBody, body);
-    return true;
-  });
-  this.requestHandler_.handleRequest('/calendar/v3/calendars/' +
-      this.calendar1Id_ + '/events', 'POST', {}, bodyMatcher).
-      $returns(resultEvent);
+five.testing.FakeCalendarApi.prototype.expectEventCreate = function(event,
+    expectedResource, resultEvent) {
+  var expectedParams = {
+    'calendarId': this.calendar1Id_,
+    'resource': expectedResource
+  }
+  this.requestHandler_.handleRpcRequest('calendar.events.insert', 'v3',
+      expectedParams).$returns(resultEvent);
 };
 
 five.testing.FakeCalendarApi.prototype.expectEventPatch = function(event,
-    expectedBody, resultEvent) {
-  var bodyMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
-      function(body) {
-    var body = goog.json.parse(body);
-    if (expectedBody instanceof goog.testing.mockmatchers.ArgumentMatcher) {
-      return expectedBody.matches(body);
-    }
-    assertObjectEquals(expectedBody, body);
-    return true;
-  });
-  this.requestHandler_.handleRequest('/calendar/v3/calendars/' +
-      this.calendar1Id_ + '/events/' + event['id'], 'PATCH', {}, bodyMatcher).
-      $returns(resultEvent);
+    expectedResource, resultEvent) {
+  var expectedParams = {
+    'calendarId': this.calendar1Id_,
+    'eventId': event['id'],
+    'resource': expectedResource
+  }
+  this.requestHandler_.handleRpcRequest('calendar.events.patch', 'v3',
+      expectedParams).$returns(resultEvent);
 };
 
 five.testing.FakeCalendarApi.prototype.makeTestData_ = function() {

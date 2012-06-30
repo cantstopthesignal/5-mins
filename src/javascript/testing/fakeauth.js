@@ -34,13 +34,12 @@ goog.inherits(five.testing.FakeAuth, goog.events.EventTarget);
 five.testing.FakeAuth.RequestHandler = function() {};
 
 /**
- * @param {string} path
- * @param {string} method
+ * @param {string} name
+ * @param {string} version
  * @param {Object} params
- * @param {Object} body
  * @return {Object} result
  */
-five.testing.FakeAuth.RequestHandler.prototype.handleRequest =
+five.testing.FakeAuth.RequestHandler.prototype.handleRpcRequest =
     goog.abstractMethod;
 
 /** @type {goog.debug.Logger} */
@@ -70,7 +69,7 @@ five.testing.FakeAuth.prototype.register = function() {
       'init': goog.bind(this.receiveAuthInit_, this)
     },
     'client': {
-      'request': goog.bind(this.receiveClientRequest_, this),
+      'rpcRequest': goog.bind(this.receiveRpcRequest_, this),
       'setApiKey': goog.bind(this.receiveClientSetApiKey_, this)
     }
   };
@@ -106,19 +105,19 @@ five.testing.FakeAuth.prototype.receiveClientSetApiKey_ = function(apiKey) {
 };
 
 /**
- * @param {Object} requestParams
+ * @param {string} name
+ * @param {string} version
+ * @param {Object} params
  * @return {Object}
  */
-five.testing.FakeAuth.prototype.receiveClientRequest_ = function(
-    requestParams) {
-  var path = requestParams['path'];
-  var method = requestParams['method'] || 'GET';
-  var params = requestParams['params'] || {};
-  var body = requestParams['body'] || null;
-  goog.asserts.assertString(path, 'Path request param expected');
+five.testing.FakeAuth.prototype.receiveRpcRequest_ = function(
+    name, version, params) {
+  goog.asserts.assertString(name, 'Rpc name expected');
+  goog.asserts.assertString(version, 'Rpc version expected');
+  goog.asserts.assertObject(params, 'Rpc params expected');
 
   var execute = goog.bind(function(callback) {
-    var result = this.requestHandler_.handleRequest(path, method, params, body);
+    var result = this.requestHandler_.handleRpcRequest(name, version, params);
     goog.asserts.assertObject(result);
     callback(result);
   }, this);
@@ -142,7 +141,10 @@ five.testing.FakeAuth.prototype.receiveAuthAuthorize_ = function(params,
   goog.asserts.assert(params['immediate'] === true,
       "Expected 'immediate' to be true");
   this.authComplete_ = true;
-  var token = {};
+  var token = {
+    'access_token': 'valid_fake',
+    'expires_in': '3600'
+  };
   window.setTimeout(goog.partial(callback, token), 0);
 };
 
