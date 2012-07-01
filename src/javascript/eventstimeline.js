@@ -166,6 +166,12 @@ five.EventsTimeline.prototype.render = function(parentEl) {
   this.renderEvents_();
 };
 
+/** @override */
+five.EventsTimeline.prototype.disposeInternal = function() {
+  goog.disposeAll(this.eventCards_);
+  goog.base(this, 'disposeInternal');
+};
+
 /**
  * @param {!goog.math.Rect} rect
  */

@@ -5,6 +5,7 @@ goog.provide('five.main');
 goog.require('five.App');
 goog.require('five.mainCssLoader');
 goog.require('five.mainTestMode');
+goog.require('goog.asserts');
 goog.require('goog.debug.Console');
 goog.require('goog.Uri');
 goog.require('goog.events');
@@ -18,13 +19,23 @@ five.main.maybeTestMode = function() {
   var url = new goog.Uri(window.location.href);
   var testMode = url.getParameterValue('test') == '1';
   if (testMode) {
-    five.mainTestMode.init(five.main.start);
+    five.mainTestMode.init(five.main.start, five.main.dispose);
   }
   return testMode;
 };
 
+/** @type {five.App} */
+five.main.app_;
+
 five.main.start = function() {
-  new five.App().start();
+  goog.asserts.assert(!five.main.app_);
+  five.main.app_ = new five.App();
+  five.main.app_.start();
+};
+
+five.main.dispose = function() {
+  goog.dispose(five.main.app_);
+  goog.events.unlistenByKey(five.main.windowLoadListenerKey_);
 };
 
 five.main.loadInline = function() {
@@ -39,6 +50,6 @@ five.main.handleWindowLoad = function() {
   }
 };
 
-goog.events.listen(window, goog.events.EventType.LOAD,
-    five.main.handleWindowLoad);
+five.main.windowLoadListenerKey_ = goog.events.listen(window,
+    goog.events.EventType.LOAD, five.main.handleWindowLoad);
 five.main.loadInline();

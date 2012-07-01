@@ -2,12 +2,17 @@
 
 goog.provide('five.mainTestMode');
 
+goog.require('goog.events');
 goog.require('goog.testing.events');
 
 
-/** @param {Function} mainStartFn method to start main app */
-five.mainTestMode.init = function(mainStartFn) {
+/**
+ * @param {Function} mainStartFn method to start main app
+ * @param {Function} mainDisposeFn method to dispose main app
+ */
+five.mainTestMode.init = function(mainStartFn, mainDisposeFn) {
   goog.exportSymbol('five.mainTestMode.start', mainStartFn);
+  goog.exportSymbol('five.mainTestMode.dispose', mainDisposeFn);
 
   goog.exportSymbol('five.mainTestMode.fireClickSequence',
       goog.testing.events.fireClickSequence);
@@ -15,4 +20,6 @@ five.mainTestMode.init = function(mainStartFn) {
       goog.testing.events.fireDoubleClickSequence);
   goog.exportSymbol('five.mainTestMode.fireKeySequence',
       goog.testing.events.fireKeySequence);
+  goog.exportSymbol('five.mainTestMode.getTotalListenerCount',
+      goog.events.getTotalListenerCount);
 };

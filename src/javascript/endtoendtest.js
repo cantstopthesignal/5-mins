@@ -45,6 +45,9 @@ goog.inherits(five.EndToEndTest, goog.testing.DeferredTestCase);
 /** @type {number} */
 five.EndToEndTest.STEP_TIMEOUT_ = 10000;
 
+/** @type {number} */
+five.EndToEndTest.prototype.startTestListenerCount_;
+
 /** @type {goog.async.Deferred} */
 five.EndToEndTest.prototype.testDeferred;
 
@@ -84,6 +87,8 @@ five.EndToEndTest.prototype.waitForDeferred = function() {
 five.EndToEndTest.prototype.setUp = function() {
   goog.base(this, 'setUp');
 
+  this.startTestListenerCount_ = goog.events.getTotalListenerCount();
+
   this.testDeferred = new goog.async.Deferred();
   goog.dom.removeNode(this.appFrame);
 
@@ -101,11 +106,23 @@ five.EndToEndTest.prototype.tearDown = function() {
   delete this.fakeAuth;
   goog.dispose(this.fakeCalendarApi);
   delete this.fakeCalendarApi;
+
+  goog.getObjectByName('five.mainTestMode.dispose',
+      this.appDom.getWindow())();
+  var endAppListenerCount = goog.getObjectByName(
+      'five.mainTestMode.getTotalListenerCount', this.appDom.getWindow())();
+  assertEquals('Expected 0 app listeners after app dispose',
+      0, endAppListenerCount);
+
   goog.dispose(this.appDom);
   delete this.appDom;
   delete this.testDeferred;
   this.mockControl.$tearDown();
   delete this.mockControl;
+
+  var endTestListenerCount = goog.events.getTotalListenerCount();
+  assertEquals('Expect test net listeners to be 0 after test',
+      this.startTestListenerCount_, endTestListenerCount);
 
   goog.base(this, 'tearDown');
 
