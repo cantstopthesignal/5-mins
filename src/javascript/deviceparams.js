@@ -19,6 +19,9 @@ five.deviceParams.DeviceParams = function() {
   this.eventCardMinNormalHeight = isHighDensity ? 50 : 30;
   this.eventCardMinLargeHeight = isHighDensity ? 74 : 44;
 
+  this.timelineMinWidth = isHighDensity ? 600 : 400;
+  this.timelineMaxWidth = isHighDensity ? 850 : 600;
+
   this.showTimeMarkerLabels = !isHighDensity;
   this.enableCursorTimeMarker = !isTouch;
 };
@@ -60,6 +63,16 @@ goog.scope(function() {
   /** @return {number} */
   five.deviceParams.getEventCardMinLargeHeight = function() {
     return getInstance().eventCardMinLargeHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getTimelineMinWidth = function() {
+    return getInstance().timelineMinWidth;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getTimelineMaxWidth = function() {
+    return getInstance().timelineMaxWidth;
   };
 
   /** @return {boolean} */

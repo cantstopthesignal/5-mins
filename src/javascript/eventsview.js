@@ -40,6 +40,7 @@ five.EventsView = function(calendarManager, appBar) {
   this.selectedEvents_ = [];
 
   this.initDefaultDateRange_();
+  this.updateViewDate_();
 
   this.registerListenersForCalendarManager_();
 };
@@ -57,11 +58,17 @@ five.EventsView.prototype.startDate_;
 /** @type {goog.date.DateTime} */
 five.EventsView.prototype.endDate_;
 
+/** @type {goog.date.DateTime} */
+five.EventsView.prototype.viewDate_;
+
 /** @type {Array.<!five.Event>} */
 five.EventsView.prototype.events_;
 
 /** @type {Element} */
 five.EventsView.prototype.scrollEl_;
+
+/** @type {number} */
+five.EventsView.prototype.timelineYOffset_ = 500;
 
 /** @type {five.Button} */
 five.EventsView.prototype.saveButton_;
@@ -115,7 +122,7 @@ five.EventsView.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 
   if (!this.events_) {
-    this.loadEvents_().addCallback(function() {this.scrollToNow_(); }, this);
+    this.loadEvents_().addCallback(this.handleInitialEventsLoad_, this);
   }
 
   if (!this.nowTrackerIntervalId_) {
@@ -222,14 +229,9 @@ five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
 
 five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     timelinesHeight) {
-  // TODO
-  var minPixelsPerTimeline = five.device.getDensity() ==
-      five.device.Density.HIGH ? 600 : 400;
-  var maxPixelsPerTimeline = five.device.getDensity() ==
-      five.device.Density.HIGH ? 850 : 600;
   var numTimelines = Math.max(1, Math.floor(
-      document.body.offsetWidth / minPixelsPerTimeline));
-  var widthPerTimeline = Math.min(maxPixelsPerTimeline,
+      document.body.offsetWidth / five.deviceParams.getTimelineMinWidth()));
+  var widthPerTimeline = Math.min(five.deviceParams.getTimelineMaxWidth(),
       Math.floor(timelinesWidth / numTimelines));
 
   while (this.timelines_.length > numTimelines) {
@@ -238,7 +240,13 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
   }
   while (this.timelines_.length < numTimelines) {
     var newTimeline = new five.EventsTimeline();
-    newTimeline.setDateRange(this.startDate_, this.endDate_);
+    var timelineIndex = this.timelines_.length;
+    var startDate = this.viewDate_.clone();
+    startDate.add(new goog.date.Interval(goog.date.Interval.DAYS,
+        timelineIndex - 1));
+    var endDate = startDate.clone();
+    endDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 3));
+    newTimeline.setDateRange(startDate, endDate);
     newTimeline.render(this.scrollEl_);
     if (this.events_) {
       newTimeline.setEvents(this.events_);
@@ -255,7 +263,7 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     if (index == this.timelines_.length - 1) {
       timelineWidth = timelinesWidth - xPos;
     }
-    var rect = new goog.math.Rect(xPos, 0, timelineWidth,
+    var rect = new goog.math.Rect(xPos, this.timelineYOffset_, timelineWidth,
         Math.max(50, timelinesHeight));
     timeline.setRect(rect);
     xPos += widthPerTimeline;
@@ -307,13 +315,14 @@ five.EventsView.prototype.registerListenersForScrollElement_ = function() {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsView.prototype.handleScroll_ = function(e) {
+  this.updateViewDate_();
   this.updateVisibleRegion_();
 };
 
 five.EventsView.prototype.updateVisibleRegion_ = function() {
   var visibleRect = new goog.math.Rect(this.scrollEl_.scrollLeft,
-      this.scrollEl_.scrollTop, this.scrollEl_.offsetWidth,
-      this.scrollEl_.offsetHeight);
+      this.scrollEl_.scrollTop - this.timelineYOffset_,
+      this.scrollEl_.offsetWidth, this.scrollEl_.offsetHeight);
   goog.array.forEach(this.timelines_, function(timeline) {
     timeline.updateVisibleRegion(visibleRect);
   });
@@ -451,6 +460,42 @@ five.EventsView.prototype.handleCalendarManagerRequestsStateChange_ =
   }
 };
 
+five.EventsView.prototype.handleInitialEventsLoad_ = function() {
+  this.scrollToNow_();
+  this.updateViewDate_();
+};
+
+/**
+ * @param {number=} opt_index Optional index of the timeline to get a map for.
+ * @return {five.EventsLayout.TimeMap}
+ */
+five.EventsView.prototype.getTimeMap_ = function(opt_index) {
+  var index = opt_index || 0;
+  goog.asserts.assert(index < this.timelines_.length);
+  return this.timelines_[index].getTimeMap();
+};
+
+/**
+ * @param {number} yPos
+ * @param {number=} opt_index Optional index of the timeline to use.
+ * @return {!goog.date.DateTime}
+ */
+five.EventsView.prototype.yPosToTime_ = function(yPos, opt_index) {
+  var timeMap = this.getTimeMap_(opt_index);
+  return timeMap.yPosToTime(yPos - this.timelineYOffset_)
+};
+
+/**
+ * @param {goog.date.DateTime} time
+ * @param {number=} opt_index Optional index of the timeline to use.
+ * @return {number}
+ */
+five.EventsView.prototype.timeToYPos_ = function(time, opt_index) {
+  var timeMap = this.getTimeMap_(opt_index);
+  return timeMap.timeToYPos(time) + this.timelineYOffset_;
+};
+
+/** @param {boolean=} opt_animate */
 five.EventsView.prototype.scrollToNow_ = function(opt_animate) {
   this.scrollToTime(new goog.date.DateTime(), true, opt_animate);
 };
@@ -458,39 +503,43 @@ five.EventsView.prototype.scrollToNow_ = function(opt_animate) {
 /**
  * Scroll to a specified time.  Optionally show context before the time
  * instead of starting exactly at the specified time.
+ * @param {goog.date.DateTime} date
+ * @param {boolean=} opt_showContext
+ * @param {boolean=} opt_animate
  */
 five.EventsView.prototype.scrollToTime = function(date,
     opt_showContext, opt_animate) {
-  var timeMap = this.timelines_[0].getTimeMap();
-  if (!timeMap) {
+  if (!this.timelines_.length) {
     return;
   }
-  var yPos = timeMap.timeToYPos(date);
   if (opt_showContext) {
-    yPos -= Math.max(100, this.scrollEl_.offsetHeight / 4);
+    date = this.yPosToTime_(this.timeToYPos_(date) -
+        Math.max(100, this.scrollEl_.offsetHeight / 4));
   }
 
   if (opt_animate) {
-    var lastScrollTop = this.scrollEl_.scrollTop || 0;
-    var animation = new goog.fx.Animation([lastScrollTop], [yPos],
-        five.EventsView.SCROLL_ANIMATION_DURATION_MS,
+    var lastScrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);
+    var animation = new goog.fx.Animation([lastScrollDate.getTime()],
+        [date.getTime()], five.EventsView.SCROLL_ANIMATION_DURATION_MS,
         goog.fx.easing.easeOut);
     var EventType = goog.fx.Animation.EventType;
     animation.registerDisposable(new goog.events.EventHandler(this).
         listen(animation, [EventType.END, EventType.ANIMATE], function(e) {
-      if (this.scrollEl_.scrollTop != lastScrollTop) {
+      if (this.timeToYPos_(lastScrollDate) != this.scrollEl_.scrollTop) {
         // Detect user intervention.
         goog.dispose(animation);
         return;
       }
-      this.scrollEl_.scrollTop = lastScrollTop = Math.round(e.coords[0]);
+      var curTime = new goog.date.DateTime(new Date(Math.round(e.coords[0])));
+      this.scrollToTime(curTime);
+      lastScrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);
       if (e.type == EventType.END) {
         goog.dispose(animation);
       }
     }));
     animation.play();
   } else {
-    this.scrollEl_.scrollTop = yPos;
+    this.scrollEl_.scrollTop = this.timeToYPos_(date);
   }
 };
 
@@ -501,11 +550,13 @@ five.EventsView.prototype.scrollToTime = function(date,
  */
 five.EventsView.prototype.scrollByTime = function(relativeToTime,
     interval, opt_hideScrollAction) {
-  var timeMap = this.timelines_[0].getTimeMap();
+  if (!this.timelines_.length) {
+    return;
+  }
   var toTime = relativeToTime.clone();
   toTime.add(interval);
-  var startYPos = timeMap.timeToYPos(relativeToTime);
-  var endYPos = timeMap.timeToYPos(toTime);
+  var startYPos = this.timeToYPos_(relativeToTime);
+  var endYPos = this.timeToYPos_(toTime);
 
   if (opt_hideScrollAction) {
     // Disable overflow for the scroll event to avoid auto-show scroll bars
@@ -524,8 +575,10 @@ five.EventsView.prototype.scrollByTime = function(relativeToTime,
  * Return whether a specified time is within the visible area.
  */
 five.EventsView.prototype.isTimeInView = function(date) {
-  var timeMap = this.timelines_[0].getTimeMap();
-  var yPos = timeMap.timeToYPos(date);
+  if (!this.timelines_.length) {
+    return;
+  }
+  var yPos = this.timeToYPos_(date);
   if (yPos < this.scrollEl_.scrollTop) {
     return false;
   } else if (yPos > this.scrollEl_.scrollTop + this.scrollEl_.offsetHeight) {
@@ -553,15 +606,35 @@ five.EventsView.prototype.handleNowTrackerTick_ = function() {
 };
 
 five.EventsView.prototype.initDefaultDateRange_ = function() {
-  var yesterday = new goog.date.Date();
-  yesterday.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
-  this.startDate_ = new goog.date.DateTime();
-  this.startDate_.setTime(yesterday.getTime());
+  this.viewDate_ = new goog.date.DateTime();
+  this.viewDate_.setTime(new goog.date.Date().getTime());
 
-  var fourDaysPast = yesterday.clone();
-  fourDaysPast.add(new goog.date.Interval(goog.date.Interval.DAYS, 5));
-  this.endDate_ = new goog.date.DateTime();
-  this.endDate_.setTime(fourDaysPast.getTime());
+  this.startDate_ = this.viewDate_.clone();
+  this.startDate_.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
+
+  this.endDate_ = this.viewDate_.clone();
+  this.endDate_.add(new goog.date.Interval(goog.date.Interval.DAYS, 4));
+};
+
+five.EventsView.prototype.updateViewDate_ = function() {
+  if (!this.timelines_.length) {
+    return;
+  }
+  var scrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);
+  var newViewDate = five.util.dayFloor(scrollDate);
+  if (this.viewDate_ && !goog.date.Date.compare(newViewDate, this.viewDate_)) {
+    return;
+  }
+  this.viewDate_ = newViewDate;
+  var timelineStartDate = this.viewDate_.clone();
+  timelineStartDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
+  goog.array.forEach(this.timelines_, function(timeline) {
+    var timelineEndDate = timelineStartDate.clone();
+    timelineEndDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 3));
+    timeline.setDateRange(timelineStartDate, timelineEndDate);
+    timelineStartDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
+  });
+  this.scrollToTime(scrollDate);
 };
 
 /** @param {goog.events.Event} e */

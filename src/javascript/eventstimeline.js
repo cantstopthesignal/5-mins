@@ -23,6 +23,7 @@ goog.require('goog.dom.classes');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.math.Coordinate');
+goog.require('goog.math.Size');
 goog.require('goog.style');
 
 /**
@@ -177,7 +178,7 @@ five.EventsTimeline.prototype.disposeInternal = function() {
  */
 five.EventsTimeline.prototype.setRect = function(rect) {
   goog.style.setPosition(this.el, rect.left, rect.top);
-  goog.style.setBorderBoxSize(this.el, rect.getSize());
+  goog.style.setWidth(this.el, rect.width);
   this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
       five.deviceParams.getTimeAxisWidth();
   this.layout_();
@@ -197,8 +198,8 @@ five.EventsTimeline.prototype.resize = function(opt_width, opt_height) {
 };
 
 five.EventsTimeline.prototype.setDateRange = function(startDate, endDate) {
-  this.startDate_ = startDate;
-  this.endDate_ = endDate;
+  this.startDate_ = startDate.clone();
+  this.endDate_ = endDate.clone();
   if (this.timeAxis_) {
     this.timeAxis_.setDateRange(this.startDate_, this.endDate_);
   }
@@ -368,9 +369,8 @@ five.EventsTimeline.prototype.doLayout_ = function() {
   params.layoutWidth = this.eventAreaWidth_;
   params.timeAxisPatchWidth = five.deviceParams.getTimeAxisPatchWidth();
   params.patchMinYPosDiff = five.EventsTimeline.PATCH_MIN_YPOS_DIFF;
-  if (this.startDate_) {
-    params.minTime = this.startDate_;
-  }
+  params.minTime = this.startDate_;
+  params.maxTime = this.endDate_;
   var layout = new five.EventsLayout(params);
   layout.setEvents(layoutEvents);
   layout.calc();
@@ -387,6 +387,9 @@ five.EventsTimeline.prototype.doLayout_ = function() {
   this.layoutTimeMarkers_();
   this.inlineEventsEditor_.layout();
   this.timeAxisPatchCanvas_.finishBatchUpdate();
+
+  goog.style.setHeight(this.el, this.timeMap_.timeToYPos(this.endDate_));
+
   goog.asserts.assert(!this.layoutNeeded_);
 };
 

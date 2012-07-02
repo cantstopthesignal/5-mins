@@ -106,10 +106,15 @@ five.TimeAxis.prototype.maybeRenderEntries_ = function() {
     }
     foundEntryKeys[entryKey] = true;
   }, this);
+  var entriesToRemove = {};
   for (var entryKey in entryMap) {
     if (!(entryKey in foundEntryKeys)) {
-      goog.dispose(entryMap[entryKey]);
+      entriesToRemove[entryKey] = true;
     }
+  }
+  for (var entryKey in entriesToRemove) {
+    goog.dispose(entryMap[entryKey]);
+    delete entryMap[entryKey];
   }
   this.entries_ = goog.object.getValues(entryMap);
   this.entries_.sort(function(a, b) {
@@ -220,8 +225,10 @@ five.TimeAxis.Entry.prototype.setTimeBoxRect = function(rect) {
   if (!this.el) {
     this.createDom();
   }
-  this.timeBoxRect = rect;
-  goog.style.setPosition(this.el, rect.left, rect.top);
-  goog.style.setHeight(this.el, rect.height);
-  goog.style.setWidth(this.timeBoxEl_, rect.width);
+  if (!goog.math.Rect.equals(this.timeBoxRect, rect)) {
+    this.timeBoxRect = rect;
+    goog.style.setPosition(this.el, rect.left, rect.top);
+    goog.style.setHeight(this.el, rect.height);
+    goog.style.setWidth(this.timeBoxEl_, rect.width);
+  }
 };

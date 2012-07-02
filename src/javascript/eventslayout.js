@@ -98,11 +98,11 @@ five.EventsLayout.prototype.timeMap_;
 /** @type {five.EventsLayout.TimeMap} */
 five.EventsLayout.prototype.linearTimeMap_;
 
-/** @type {goog.date.DateTime} */
-five.EventsLayout.prototype.minEventTime_;
+/** @type {!goog.date.DateTime} */
+five.EventsLayout.prototype.minTime;
 
-/** @type {goog.date.DateTime} */
-five.EventsLayout.prototype.maxEventTime_;
+/** @type {!goog.date.DateTime} */
+five.EventsLayout.prototype.maxTime;
 
 /** @type {number} (see Params) */
 five.EventsLayout.prototype.distancePerHour;
@@ -164,26 +164,24 @@ five.EventsLayout.prototype.disposeInternal = function() {
 };
 
 five.EventsLayout.prototype.calcTimeRange_ = function() {
-  goog.array.forEach(this.events_, function(event) {
-    if (!this.minEventTime_ || goog.date.Date.compare(
-        this.minEventTime_, event.startTime) > 0) {
-      this.minEventTime_ = event.startTime.clone();
-    }
-    if (!this.maxEventTime_ || goog.date.Date.compare(
-        this.maxEventTime_, event.endTime) < 0) {
-      this.maxEventTime_ = event.endTime.clone();
-    }
-  }, this);
-  if (this.minEventTime_ && this.maxEventTime_) {
-    if (!this.minTime || goog.date.Date.compare(
-        this.minTime, this.minEventTime_) > 0) {
-      this.minTime = this.minEventTime_.clone();
-    }
-    if (!this.maxTime || goog.date.Date.compare(
-        this.maxTime, this.minEventTime_) < 0) {
-      this.maxTime = this.maxEventTime_.clone();
-    }
+  if (!this.minTime) {
+    goog.array.forEach(this.events_, function(event) {
+      if (!this.minTime || goog.date.Date.compare(
+          this.minTime, event.startTime) > 0) {
+        this.minTime = event.startTime.clone();
+      }
+    }, this);
   }
+  if (!this.maxTime) {
+    goog.array.forEach(this.events_, function(event) {
+      if (!this.maxTime || goog.date.Date.compare(
+          this.maxTime, event.endTime) < 0) {
+        this.maxTime = event.endTime.clone();
+      }
+    }, this);
+  }
+  goog.asserts.assert(this.minTime);
+  goog.asserts.assert(this.maxTime);
 };
 
 five.EventsLayout.prototype.calcTimePoints_ = function() {
@@ -357,7 +355,7 @@ five.EventsLayout.prototype.enforceMinEventHeight_ = function() {
 five.EventsLayout.prototype.resolveTimePointConstraints_ = function() {
   goog.array.forEach(this.timePoints_, function(timePoint) {
     var nextTimePoint = timePoint.next;
-    if (!timePoint.next || !timePoint.minHeight) {
+    if (!timePoint.next || !timePoint.minHeight || timePoint.yPos < 0) {
       return;
     }
     nextTimePoint.yPos = Math.max(nextTimePoint.yPos,
@@ -413,14 +411,11 @@ five.EventsLayout.prototype.calcLinearTimeMap_ = function() {
   // matching at each hour.
   var timeAndYPosList = [];
   var hourTimeSet = {};
-  if (this.minEventTime_ && this.maxEventTime_) {
-    five.util.forEachHourWrap(this.minEventTime_, this.maxEventTime_,
-        function(hour) {
-      var yPos = this.timeMap_.timeToYPos(hour);
-      timeAndYPosList.push([hour, yPos]);
-      hourTimeSet[hour.toString()] = true;
-    }, this);
-  }
+  five.util.forEachHourWrap(this.minTime, this.maxTime, function(hour) {
+    var yPos = this.timeMap_.timeToYPos(hour);
+    timeAndYPosList.push([hour, yPos]);
+    hourTimeSet[hour.toString()] = true;
+  }, this);
 
   // Stitch in linear time yPos from time points.
   goog.array.forEach(this.timePoints_, function(timePoint) {

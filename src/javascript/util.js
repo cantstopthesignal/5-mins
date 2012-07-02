@@ -58,6 +58,19 @@ five.util.hourCeil = function(date) {
  * @param {!goog.date.DateTime} date
  * @return {!goog.date.DateTime}
  */
+five.util.dayFloor = function(date) {
+  var dayFloor = date.clone();
+  dayFloor.setHours(0);
+  dayFloor.setMinutes(0);
+  dayFloor.setSeconds(0);
+  dayFloor.setMilliseconds(0);
+  return dayFloor;
+};
+
+/**
+ * @param {!goog.date.DateTime} date
+ * @return {!goog.date.DateTime}
+ */
 five.util.roundToFiveMinutes = function(date) {
   var hourBase = five.util.hourFloor(date);
   hourBase.add(new goog.date.Interval(goog.date.Interval.HOURS, -1));

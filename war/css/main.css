@@ -136,6 +136,7 @@ a:hover {
   -webkit-user-select: none;
   position: absolute;
   box-sizing: border-box;
+  overflow-y: hidden;
 }
 .time-axis {
   position: absolute;

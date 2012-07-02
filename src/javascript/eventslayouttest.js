@@ -30,6 +30,10 @@ function tearDown() {
 }
 
 function testNoEvents() {
+  var params = new five.EventsLayout.Params();
+  params.minTime = new goog.date.DateTime();
+  params.maxTime = params.minTime.clone();
+  layout = new five.EventsLayout(params);
   layout.calc();
 }
 
