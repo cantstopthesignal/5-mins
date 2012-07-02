@@ -48,6 +48,11 @@ body {
   padding: 3px 8px;
   margin-top: 3px;
 }
+.day-banner {
+  font-size: 14px;
+  padding: 4px 5px 4px 53px;
+  top: 48px;
+}
 .time-axis > .time-box {
   font-size: 14px;
   padding: 2px;

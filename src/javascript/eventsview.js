@@ -4,6 +4,7 @@ goog.provide('five.EventsView');
 
 goog.require('five.Button');
 goog.require('five.Component');
+goog.require('five.DayBanner');
 goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('five.EventsTimeline');
@@ -33,8 +34,11 @@ five.EventsView = function(calendarManager, appBar) {
   /** @type {five.AppBar} */
   this.appBar_ = appBar;
 
-  /** @type {!Array.<five.EventsTimeline>} */
+  /** @type {!Array.<!five.EventsTimeline>} */
   this.timelines_ = [];
+
+  /** @type {!Array.<!five.DayBanner>} */
+  this.dayBanners_ = [];
 
   /** @type {!Array.<!five.Event>} */
   this.selectedEvents_ = [];
@@ -150,6 +154,7 @@ five.EventsView.prototype.disposeInternal = function() {
   }
   goog.disposeAll(this.events_);
   goog.disposeAll(this.timelines_);
+  goog.disposeAll(this.dayBanners_);
   goog.base(this, 'disposeInternal');
 };
 
@@ -237,6 +242,8 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
   while (this.timelines_.length > numTimelines) {
     var deletedTimeline = this.timelines_.pop();
     goog.dispose(deletedTimeline);
+    var deletedDayBanner = this.dayBanners_.pop();
+    goog.dispose(deletedDayBanner);
   }
   while (this.timelines_.length < numTimelines) {
     var newTimeline = new five.EventsTimeline();
@@ -255,6 +262,11 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     newTimeline.addTimeMarker(this.nowMarker_);
     this.registerListenersForTimeline_(newTimeline);
     this.timelines_.push(newTimeline);
+    var dayBannerDate = startDate.clone();
+    dayBannerDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
+    var newDayBanner = new five.DayBanner(dayBannerDate);
+    newDayBanner.render(this.el);
+    this.dayBanners_.push(newDayBanner);
   }
 
   var xPos = 0;
@@ -266,6 +278,8 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     var rect = new goog.math.Rect(xPos, this.timelineYOffset_, timelineWidth,
         Math.max(50, timelinesHeight));
     timeline.setRect(rect);
+    this.dayBanners_[index].setRect(new goog.math.Rect(
+        xPos, 0, timelineWidth, 0));
     xPos += widthPerTimeline;
   }, this);
 };
@@ -626,14 +640,16 @@ five.EventsView.prototype.updateViewDate_ = function() {
     return;
   }
   this.viewDate_ = newViewDate;
-  var timelineStartDate = this.viewDate_.clone();
-  timelineStartDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
-  goog.array.forEach(this.timelines_, function(timeline) {
+  var timelineDate = this.viewDate_.clone();
+  goog.array.forEach(this.timelines_, function(timeline, index) {
+    var timelineStartDate = timelineDate.clone();
+    timelineStartDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
     var timelineEndDate = timelineStartDate.clone();
     timelineEndDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 3));
     timeline.setDateRange(timelineStartDate, timelineEndDate);
-    timelineStartDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
-  });
+    this.dayBanners_[index].setDate(timelineDate);
+    timelineDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
+  }, this);
   this.scrollToTime(scrollDate);
 };
 
