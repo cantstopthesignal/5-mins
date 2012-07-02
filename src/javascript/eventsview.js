@@ -481,7 +481,7 @@ five.EventsView.prototype.handleInitialEventsLoad_ = function() {
 
 /**
  * @param {number=} opt_index Optional index of the timeline to get a map for.
- * @return {five.EventsLayout.TimeMap}
+ * @return {five.layout.TimeMap}
  */
 five.EventsView.prototype.getTimeMap_ = function(opt_index) {
   var index = opt_index || 0;

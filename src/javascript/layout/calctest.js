@@ -1,8 +1,10 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('five.EventsLayoutTest');
+goog.provide('five.layout.CalcTest');
 
-goog.require('five.EventsLayout');
+goog.require('five.layout.Calc');
+goog.require('five.layout.Event');
+goog.require('five.layout.Params');
 goog.require('goog.array');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
@@ -13,50 +15,50 @@ goog.require('goog.style');
 goog.require('goog.testing.jsunit');
 
 
-var layout;
+var calc;
 var baseTime;
 
 function setUp() {
-  var params = new five.EventsLayout.Params();
+  var params = new five.layout.Params();
   params.timeAxisPatchWidth = 0;
   params.layoutWidth = 300;
-  layout = new five.EventsLayout(params);
+  calc = new five.layout.Calc(params);
   baseTime = new goog.date.DateTime(new goog.date.Date());
 }
 
 function tearDown() {
-  goog.dispose(layout);
-  delete layout;
+  goog.dispose(calc);
+  delete calc;
 }
 
 function testNoEvents() {
-  var params = new five.EventsLayout.Params();
+  var params = new five.layout.Params();
   params.minTime = new goog.date.DateTime();
   params.maxTime = params.minTime.clone();
-  layout = new five.EventsLayout(params);
-  layout.calc();
+  calc = new five.layout.Calc(params);
+  calc.calc();
 }
 
 function testSingleEvent() {
   var event = createEvent(60, 30, 'event1');
-  layout.setEvents([event]);
-  layout.calc();
+  calc.setEvents([event]);
+  calc.calc();
   assertEventColumn(event, 0, 1);
   assertRectEquals(event.rect, 0, 0, 300, 25);
   assertTimePoint(60, event.startTimePoint);
   assertTimePoint(60 + 30, event.endTimePoint);
   assertTimePoints(event.timePoints, 60);
-  assertTimePoints(layout.timePoints_, 60, 60 + 30);
-  assertEvents(layout.timePoints_[0].openEvents, event);
-  assertEvents(layout.timePoints_[1].openEvents);
+  assertTimePoints(calc.timePoints_, 60, 60 + 30);
+  assertEvents(calc.timePoints_[0].openEvents, event);
+  assertEvents(calc.timePoints_[1].openEvents);
 }
 
 function testTwoEventsNonOverlapping() {
   var event1 = createEvent(60, 30, 'event1');
   var event2 = createEvent(120, 30, 'event2');
   var events = [event1, event2];
-  layout.setEvents(events);
-  layout.calc();
+  calc.setEvents(events);
+  calc.calc();
 
   assertEventColumn(event1, 0, 1);
   assertRectEquals(event1.rect, 0, 0, 300, 25);
@@ -66,11 +68,11 @@ function testTwoEventsNonOverlapping() {
   assertRectEquals(event2.rect, 0, 50, 300, 25);
   assertTimePoints(event2.timePoints, 120);
 
-  assertTimePoints(layout.timePoints_, 60, 60+30, 120, 120+30);
-  assertEvents(layout.timePoints_[0].openEvents, event1);
-  assertEvents(layout.timePoints_[1].openEvents);
-  assertEvents(layout.timePoints_[2].openEvents, event2);
-  assertEvents(layout.timePoints_[3].openEvents);
+  assertTimePoints(calc.timePoints_, 60, 60+30, 120, 120+30);
+  assertEvents(calc.timePoints_[0].openEvents, event1);
+  assertEvents(calc.timePoints_[1].openEvents);
+  assertEvents(calc.timePoints_[2].openEvents, event2);
+  assertEvents(calc.timePoints_[3].openEvents);
 
   assertEventRectsDoNotOverlap(events);
 }
@@ -79,8 +81,8 @@ function testTwoEventsTouching() {
   var event1 = createEvent(60, 30, 'event1');
   var event2 = createEvent(90, 30, 'event2');
   var events = [event1, event2];
-  layout.setEvents(events);
-  layout.calc();
+  calc.setEvents(events);
+  calc.calc();
 
   assertEventColumn(event1, 0, 1);
   assertRectEquals(event1.rect, 0, 0, 300, 25);
@@ -90,10 +92,10 @@ function testTwoEventsTouching() {
   assertRectEquals(event2.rect, 0, 25, 300, 25);
   assertTimePoints(event2.timePoints, 90);
 
-  assertTimePoints(layout.timePoints_, 60, 90, 90+30);
-  assertEvents(layout.timePoints_[0].openEvents, event1);
-  assertEvents(layout.timePoints_[1].openEvents, event2);
-  assertEvents(layout.timePoints_[2].openEvents);
+  assertTimePoints(calc.timePoints_, 60, 90, 90+30);
+  assertEvents(calc.timePoints_[0].openEvents, event1);
+  assertEvents(calc.timePoints_[1].openEvents, event2);
+  assertEvents(calc.timePoints_[2].openEvents);
 
   assertEventRectsDoNotOverlap(events);
 }
@@ -102,8 +104,8 @@ function testTwoEventsSameTime() {
   var event1 = createEvent(60, 30, 'event1');
   var event2 = createEvent(60, 30, 'event2');
   var events = [event1, event2];
-  layout.setEvents(events);
-  layout.calc();
+  calc.setEvents(events);
+  calc.calc();
 
   assertEventColumn(event1, 0, 2);
   assertRectEquals(event1.rect, 0, 0, 150, 25);
@@ -113,9 +115,9 @@ function testTwoEventsSameTime() {
   assertRectEquals(event2.rect, 150, 0, 150, 25);
   assertTimePoints(event2.timePoints, 60);
 
-  assertTimePoints(layout.timePoints_, 60, 60+30);
-  assertEvents(layout.timePoints_[0].openEvents, event1, event2);
-  assertEvents(layout.timePoints_[1].openEvents);
+  assertTimePoints(calc.timePoints_, 60, 60+30);
+  assertEvents(calc.timePoints_[0].openEvents, event1, event2);
+  assertEvents(calc.timePoints_[1].openEvents);
 
   assertEventRectsDoNotOverlap(events);
 }
@@ -126,8 +128,8 @@ function testLongEventWithTwoOverlaps() {
     createEvent(0, 60, 'event2'),
     createEvent(120, 60, 'event3')
   ];
-  layout.setEvents(events);
-  layout.calc();
+  calc.setEvents(events);
+  calc.calc();
 
   assertEventColumn(events[0], 0, 2);
   assertRectEquals(events[0].rect, 0, 0, 150, 150);
@@ -141,11 +143,11 @@ function testLongEventWithTwoOverlaps() {
   assertRectEquals(events[2].rect, 150, 100, 150, 50);
   assertTimePoints(events[2].timePoints, 120);
 
-  assertTimePoints(layout.timePoints_, 0, 60, 120, 180);
-  assertEvents(layout.timePoints_[0].openEvents, events[0], events[1]);
-  assertEvents(layout.timePoints_[1].openEvents, events[0]);
-  assertEvents(layout.timePoints_[2].openEvents, events[0], events[2]);
-  assertEvents(layout.timePoints_[3].openEvents);
+  assertTimePoints(calc.timePoints_, 0, 60, 120, 180);
+  assertEvents(calc.timePoints_[0].openEvents, events[0], events[1]);
+  assertEvents(calc.timePoints_[1].openEvents, events[0]);
+  assertEvents(calc.timePoints_[2].openEvents, events[0], events[2]);
+  assertEvents(calc.timePoints_[3].openEvents);
 
   assertEventRectsDoNotOverlap(events);
 }
@@ -159,13 +161,13 @@ function testManyShortEventsInSeries() {
     createEvent(30, 15, 'event5'),
     createEvent(45, 60, 'event6')
   ];
-  layout.distancePerHour = 50;
-  layout.minDistancePerHour = 30;
-  layout.minEventHeight = 15;
-  layout.setEvents(events);
-  layout.calc();
+  calc.distancePerHour = 50;
+  calc.minDistancePerHour = 30;
+  calc.minEventHeight = 15;
+  calc.setEvents(events);
+  calc.calc();
 
-  assertTimePoints(layout.timePoints_, 0, 5, 10, 20, 30, 45, 60+45);
+  assertTimePoints(calc.timePoints_, 0, 5, 10, 20, 30, 45, 60+45);
 
   assertEventColumn(events[0], 0, 1);
   assertRectEquals(events[0].rect, 0, 0, 300, 15);
@@ -182,7 +184,7 @@ function testManyShortEventsInSeries() {
 
   assertEventRectsDoNotOverlap(events);
 
-  assertTimeMapsHoursYPos(layout, 0, 83, 118);
+  assertTimeMapsHoursYPos(calc, 0, 83, 118);
 }
 
 function testComplexGolden1() {
@@ -194,13 +196,13 @@ function testComplexGolden1() {
     createEvent(3*60 + 15, 10*60 + 5, 'event5'),
     createEvent(9*60 + 50, 10, 'event6')
   ];
-  layout.distancePerHour = 50;
-  layout.minDistancePerHour = 30;
-  layout.minEventHeight = 15;
-  layout.setEvents(events);
-  layout.calc();
+  calc.distancePerHour = 50;
+  calc.minDistancePerHour = 30;
+  calc.minEventHeight = 15;
+  calc.setEvents(events);
+  calc.calc();
 
-  assertTimePoints(layout.timePoints_, -15, 45, 55, 180, 195, 540, 590, 600,
+  assertTimePoints(calc.timePoints_, -15, 45, 55, 180, 195, 540, 590, 600,
       660,800);
 
   assertEventColumn(events[0], 0, 1);
@@ -218,7 +220,7 @@ function testComplexGolden1() {
 
   assertEventRectsDoNotOverlap(events);
 
-  assertTimeMapsHoursYPos(layout, -37, 13, 62, 113, 163, 213, 263, 313, 363,
+  assertTimeMapsHoursYPos(calc, -37, 13, 62, 113, 163, 213, 263, 313, 363,
       413, 463, 519, 563, 613, 662, 712);
 }
 
@@ -229,7 +231,7 @@ function createEvent(startMinute, duration, name) {
   var endTime = startTime.clone();
   endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES,
       duration));
-  var event = new five.EventsLayout.Event(startTime, endTime);
+  var event = new five.layout.Event(startTime, endTime);
   event.toString = function() {
     return 'Event<' + startMinute + ' for ' + duration + ' "' + name + '">';
   };
@@ -283,12 +285,12 @@ function assertEventRectsDoNotOverlap(events) {
   }
 }
 
-function assertTimeMapsHoursYPos(layout, var_arg) {
+function assertTimeMapsHoursYPos(calc, var_arg) {
   expectedYPosList = Array.prototype.slice.call(arguments, 1);
-  assertTimeMapHoursYPos(layout.getTimeMap(), layout.minTime, layout.maxTime,
+  assertTimeMapHoursYPos(calc.getTimeMap(), calc.minTime, calc.maxTime,
       expectedYPosList);
-  assertTimeMapHoursYPos(layout.getLinearTimeMap(), layout.minTime,
-      layout.maxTime, expectedYPosList);
+  assertTimeMapHoursYPos(calc.getLinearTimeMap(), calc.minTime,
+      calc.maxTime, expectedYPosList);
 }
 
 function assertTimeMapHoursYPos(timeMap, minTime, maxTime, expectedYPosList) {
@@ -299,14 +301,14 @@ function assertTimeMapHoursYPos(timeMap, minTime, maxTime, expectedYPosList) {
   assertEquals(expectedYPosList.toString(), actualYPosList.toString());
 }
 
-function show(events, layout) {
+function show(events, calc) {
   var el = document.createElement('div');
   el.style.position = 'relative';
   document.body.appendChild(el);
 
   var scale = 2;
 
-  five.util.forEachHourWrap(layout.minTime, layout.maxTime, function(hour) {
+  five.util.forEachHourWrap(calc.minTime, calc.maxTime, function(hour) {
     var timeEl = document.createElement('div');
     el.appendChild(timeEl);
     timeEl.style.position = 'absolute';
@@ -314,7 +316,7 @@ function show(events, layout) {
     timeEl.style.overflow = 'hidden';
     timeEl.style.font = five.util.round(10 * scale) + 'px Arial';
     timeEl.appendChild(document.createTextNode(hour.toUsTimeString()));
-    goog.style.setPosition(timeEl, 0, layout.getTimeMap().timeToYPos(hour) *
+    goog.style.setPosition(timeEl, 0, calc.getTimeMap().timeToYPos(hour) *
         scale);
     goog.style.setBorderBoxSize(timeEl, new goog.math.Size(50 * scale, 15 *
         scale));

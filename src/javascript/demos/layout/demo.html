@@ -1,0 +1,20 @@
+<!-- Copyright cantstopthesignals@gmail.com -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>five.demos.layout.Demo</title>
+  <script src="../../../../lib/closure-library/closure/goog/base.js"></script>
+  <script src="../../../../src/javascript/deps.js"></script>
+  <script>
+    goog.require('five.demos.layout.Demo');
+    goog.require('goog.events');
+    goog.require('goog.events.EventType');
+  </script>
+  <script>
+    goog.events.listen(window, goog.events.EventType.LOAD, function() {
+      new five.demos.layout.Demo().start();
+    });
+  </script>
+  <link rel="stylesheet" type="text/css" href="demo.css" />
+</head>
+</html>
