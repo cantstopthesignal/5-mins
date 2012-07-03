@@ -23,6 +23,7 @@ five.AllTests.TESTS = [
     'demos/appdemo.html',
     'demos/layout/demo.html',
     'demos/spinnerdemo.html',
+    'demos/splitsdemo.html',
     'endtoenddebugtest.html',
     'endtoendoptimizedtest.html',
     'endtoenduncompiledtest.html',

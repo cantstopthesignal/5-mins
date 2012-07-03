@@ -45,6 +45,7 @@ goog.inherits(five.Event, goog.events.EventTarget);
 five.Event.EventType = {
   SELECT: goog.events.getUniqueId('select'),
   DESELECT: goog.events.getUniqueId('deselect'),
+  DUPLICATE: goog.events.getUniqueId('duplicate'),
   EDIT_SUMMARY: goog.events.getUniqueId('edit_summary'),
   MOVE: five.EventMoveEvent.EventType.MOVE,
   MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),

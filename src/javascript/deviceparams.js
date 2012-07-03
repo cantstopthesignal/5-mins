@@ -22,6 +22,8 @@ five.deviceParams.DeviceParams = function() {
   this.timelineMinWidth = isHighDensity ? 600 : 400;
   this.timelineMaxWidth = isHighDensity ? 850 : 600;
 
+  this.inlineEventsEditorHeight = isHighDensity ? 96 : 48;
+
   this.showTimeMarkerLabels = !isHighDensity;
   this.enableCursorTimeMarker = !isTouch;
 };
@@ -73,6 +75,11 @@ goog.scope(function() {
   /** @return {number} */
   five.deviceParams.getTimelineMaxWidth = function() {
     return getInstance().timelineMaxWidth;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getInlineEventsEditorHeight = function() {
+    return getInstance().inlineEventsEditorHeight;
   };
 
   /** @return {boolean} */

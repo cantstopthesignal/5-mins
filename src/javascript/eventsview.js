@@ -255,6 +255,7 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     endDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 3));
     newTimeline.setDateRange(startDate, endDate);
     newTimeline.render(this.scrollEl_);
+    newTimeline.startBatchUpdate();
     if (this.events_) {
       newTimeline.setEvents(this.events_);
     }
@@ -267,6 +268,7 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     var newDayBanner = new five.DayBanner(dayBannerDate);
     newDayBanner.render(this.el);
     this.dayBanners_.push(newDayBanner);
+    newTimeline.finishBatchUpdate();
   }
 
   var xPos = 0;

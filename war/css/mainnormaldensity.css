@@ -67,6 +67,29 @@ body {
   line-height: 16px;
   padding-right: 2px;
 }
+.inline-events-editor > .button-bar {
+  bottom: -48px;
+  height: 48px;
+  line-height: 48px;
+}
+.inline-events-editor > .button-bar:first-child {
+  top: -48px;
+}
+.inline-events-editor > .button-bar > .shadow {
+  height: 10px;
+  top: -10px;
+  box-shadow: 0 0 20px 0px #000;
+}
+.inline-events-editor > .button-bar > .button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  margin: 8px;
+}
+.inline-events-editor > .button-bar > .button > .arrow {
+  border-width: 8px;
+  margin: 12px 0px;
+}
 .event-card {
   padding: 3px;
   font-size: 13px;

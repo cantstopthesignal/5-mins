@@ -3,7 +3,10 @@
 goog.provide('five.InlineEventsEditor');
 
 goog.require('five.Component');
+goog.require('five.Event');
 goog.require('five.EventMoveEvent');
+goog.require('five.deviceParams');
+goog.require('five.layout.HorzSplit');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.dom');
@@ -24,6 +27,12 @@ goog.inherits(five.InlineEventsEditor, five.Component);
 
 /** @type {five.EventsTimeline} */
 five.InlineEventsEditor.prototype.owner_;
+
+/** @type {five.layout.HorzSplit} */
+five.InlineEventsEditor.prototype.topSplit_;
+
+/** @type {five.layout.HorzSplit} */
+five.InlineEventsEditor.prototype.bottomSplit_;
 
 /** @param {five.EventsTimeline} owner */
 five.InlineEventsEditor.prototype.setOwner = function(owner) {
@@ -54,18 +63,34 @@ five.InlineEventsEditor.prototype.createDom = function() {
   goog.dom.classes.add(topButtonBar, 'button-bar');
   this.el.appendChild(topButtonBar);
 
+  var shadow = document.createElement('div');
+  goog.dom.classes.add(shadow, 'shadow');
+  topButtonBar.appendChild(shadow);
+
   var bottomButtonBar = document.createElement('div');
   goog.dom.classes.add(bottomButtonBar, 'button-bar');
   this.el.appendChild(bottomButtonBar);
 
-  var moveUpButton = this.createButtonDom_('\u25B2', topButtonBar);
-  var moveDownButton = this.createButtonDom_('\u25BC', topButtonBar);
-  var moveStartUpButton = this.createButtonDom_('\u25B2', topButtonBar);
-  var moveStartDownButton = this.createButtonDom_('\u25BC', topButtonBar);
-  var moveEndUpButton = this.createButtonDom_('\u25B2', bottomButtonBar);
-  var moveEndDownButton = this.createButtonDom_('\u25BC', bottomButtonBar);
+  shadow = document.createElement('div');
+  goog.dom.classes.add(shadow, 'shadow');
+  bottomButtonBar.appendChild(shadow);
+
+  var dupButton = document.createElement('button');
+  goog.dom.classes.add(dupButton, 'button');
+  dupButton.style.cssFloat = 'right';
+  topButtonBar.appendChild(dupButton);
+
+  var moveUpButton = this.createArrowButton_(true, topButtonBar);
+  var moveDownButton = this.createArrowButton_(false, topButtonBar);
+  var moveStartUpButton = this.createArrowButton_(true, topButtonBar);
+  var moveStartDownButton = this.createArrowButton_(false, topButtonBar);
+  var moveEndUpButton = this.createArrowButton_(true, bottomButtonBar);
+  var moveEndDownButton = this.createArrowButton_(false, bottomButtonBar);
 
   this.eventHandler.
+      listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(dupButton, goog.events.EventType.CLICK,
+          this.handleDupButtonClick_).
       listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.bothEarlier)).
       listen(moveDownButton, goog.events.EventType.CLICK, goog.partial(
@@ -80,11 +105,14 @@ five.InlineEventsEditor.prototype.createDom = function() {
           this.handleButtonClick_, five.EventMoveEvent.endLater));
 };
 
-five.InlineEventsEditor.prototype.createButtonDom_ = function(buttonText,
+five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
     parentEl) {
   var button = document.createElement('button');
   goog.dom.classes.add(button, 'button');
-  button.appendChild(document.createTextNode(buttonText));
+  var arrow = document.createElement('div');
+  goog.dom.classes.add(arrow, 'arrow');
+  goog.dom.classes.add(arrow, up ? 'up' : 'down');
+  button.appendChild(arrow);
   parentEl.appendChild(button);
   return button;
 };
@@ -97,6 +125,54 @@ five.InlineEventsEditor.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 };
 
+five.InlineEventsEditor.prototype.preLayout = function() {
+  goog.asserts.assert(this.el);
+  goog.asserts.assert(this.owner_);
+  if (!this.events_.length) {
+    if (this.topSplit_) {
+      this.owner_.removeHorzSplit(this.topSplit_);
+      delete this.topSplit_;
+    }
+    if (this.bottomSplit_) {
+      this.owner_.removeHorzSplit(this.bottomSplit_);
+      delete this.bottomSplit_;
+    }
+    return;
+  }
+  var topSplitTime;
+  var bottomSplitTime;
+  goog.array.forEach(this.events_, function(event) {
+    if (!topSplitTime || goog.date.Date.compare(event.getStartTime(),
+        topSplitTime) < 0) {
+      topSplitTime = event.getStartTime();
+    }
+    if (!bottomSplitTime || goog.date.Date.compare(event.getEndTime(),
+        bottomSplitTime) > 0) {
+      bottomSplitTime = event.getEndTime();
+    }
+  });
+  if (!this.topSplit_ || goog.date.Date.compare(topSplitTime,
+      this.topSplit_.getTime()) != 0) {
+    if (this.topSplit_) {
+      this.owner_.removeHorzSplit(this.topSplit_);
+      delete this.topSplit_;
+    }
+    this.topSplit_ = new five.layout.HorzSplit(topSplitTime,
+        five.deviceParams.getInlineEventsEditorHeight());
+    this.owner_.addHorzSplit(this.topSplit_);
+  }
+  if (!this.bottomSplit_ || goog.date.Date.compare(bottomSplitTime,
+      this.bottomSplit_.getTime()) != 0) {
+    if (this.bottomSplit_) {
+      this.owner_.removeHorzSplit(this.bottomSplit_);
+      delete this.bottomSplit_;
+    }
+    this.bottomSplit_ = new five.layout.HorzSplit(bottomSplitTime,
+        five.deviceParams.getInlineEventsEditorHeight());
+    this.owner_.addHorzSplit(this.bottomSplit_);
+  }
+};
+
 five.InlineEventsEditor.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner_);
@@ -104,7 +180,7 @@ five.InlineEventsEditor.prototype.layout = function() {
   if (!this.events_.length) {
     return;
   }
-  var rect = null;
+  var rect;
   goog.array.forEach(this.events_, function(event) {
     if (rect) {
       rect.boundingRect(event.getRect());
@@ -113,14 +189,30 @@ five.InlineEventsEditor.prototype.layout = function() {
     }
   });
   goog.asserts.assert(rect);
-  goog.style.setPosition(this.el, rect.left, rect.top);
-  goog.style.setBorderBoxSize(this.el, rect.getSize());
+  goog.style.setPosition(this.el, 0, rect.top);
+  goog.style.setHeight(this.el, rect.height);
 };
 
 /** @override */
 five.InlineEventsEditor.prototype.disposeInternal = function() {
   delete this.owner_;
   goog.base(this, 'disposeInternal');
+};
+
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.InlineEventsEditor.prototype.handleClick_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.InlineEventsEditor.prototype.handleDupButtonClick_ = function(e) {
+  this.dispatchEvent(five.Event.EventType.DUPLICATE);
 };
 
 /**
@@ -130,6 +222,5 @@ five.InlineEventsEditor.prototype.disposeInternal = function() {
 five.InlineEventsEditor.prototype.handleButtonClick_ = function(
     eventConstructor, e) {
   e.preventDefault();
-  e.stopPropagation();
   this.dispatchEvent(new eventConstructor());
 };

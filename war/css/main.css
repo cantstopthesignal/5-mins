@@ -141,10 +141,8 @@ a:hover {
 }
 .day-banner {
   color: white;
-  font-weight: bold;
   position: absolute;
-  background-color: #333;
-  opacity: 0.5;
+  background-color: rgba(40, 40, 40, 0.5);
   width: 100%;
   box-sizing: border-box;
   pointer-events: none;
@@ -186,24 +184,42 @@ a:hover {
 .inline-events-editor {
   pointer-events: none;
   position: absolute;
+  width: 100%;
 }
 .inline-events-editor > .button-bar {
+  pointer-events: auto;
+  background-color: #444;
+  box-sizing: border-box;
+  overflow: hidden;
   position: absolute;
-  bottom: -18px;
-  height: 18px;
   width: 100%;
 }
 .inline-events-editor > .button-bar:first-child {
   bottom: inherit;
-  top: -18px;
 }
 .inline-events-editor > .button-bar > .button {
-  pointer-events: auto;
   border-radius: 0px;
-  font-size: 7px;
-  padding: 0px 5px;
-  line-height: 16px;
-  vertical-align: top;
+  vertical-align: middle;
+  text-align: center;
+  padding: 0;
+}
+.inline-events-editor > .button-bar > .button > .arrow {
+  border: solid transparent;
+  width: 0px;
+  height: 0px;
+  display: inline-block;
+}
+.arrow.up {
+  border-bottom-color: black !important;
+  border-top-width: 0 !important;
+}
+.arrow.down {
+  border-top-color: black !important;
+  border-bottom-width: 0 !important;
+}
+.inline-events-editor > .button-bar > .shadow {
+  width: 100%;
+  position: absolute;
 }
 .event-card {
   cursor: default;

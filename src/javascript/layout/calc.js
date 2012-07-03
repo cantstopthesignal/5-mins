@@ -22,10 +22,13 @@ goog.require('goog.object');
  * @extends {goog.Disposable}
  */
 five.layout.Calc = function(params) {
-  /** @type {Array.<five.layout.Event>} */
+  /** @type {!Array.<!five.layout.Event>} */
   this.events_ = [];
 
-  /** @type {Array.<five.layout.Event>} */
+  /** @type {!Array.<!five.layout.HorzSplit>} */
+  this.horzSplits_ = [];
+
+  /** @type {!Array.<!five.layout.Event>} */
   this.eventsByDuration_ = [];
 
   /** @type {five.layout.Params} */
@@ -56,12 +59,9 @@ five.layout.Calc.prototype.maxTime;
 /** @type {number} (see Params) */
 five.layout.Calc.prototype.distancePerHour;
 
-/** @param {Array.<five.layout.Event>} events */
+/** @param {!Array.<!five.layout.Event>} events */
 five.layout.Calc.prototype.setEvents = function(events) {
   this.events_ = events;
-  goog.array.forEach(this.events_, function(event) {
-    this.registerDisposable(event);
-  }, this);
   this.events_.sort(function(a, b) {
     return goog.date.Date.compare(a.startTime, b.startTime);
   });
@@ -73,6 +73,11 @@ five.layout.Calc.prototype.setEvents = function(events) {
   });
 };
 
+/** @param {!Array.<!five.layout.HorzSplit>} horzSplits */
+five.layout.Calc.prototype.setHorzSplits = function(horzSplits) {
+  this.horzSplits_ = horzSplits;
+};
+
 five.layout.Calc.prototype.calc = function() {
   goog.asserts.assert(this.events_);
   var startTime = +new Date();
@@ -82,6 +87,7 @@ five.layout.Calc.prototype.calc = function() {
   this.calcColumnCounts_();
   this.positionTimePoints_();
   this.calcInitialTimePointConstraints_();
+  this.enforceHorzSplitHeights_();
   this.enforceMinEventHeight_();
   this.resolveTimePointConstraints_();
   this.calcTimeMap_();
@@ -107,8 +113,18 @@ five.layout.Calc.prototype.getLinearTimeMap = function() {
 
 /** @override */
 five.layout.Calc.prototype.disposeInternal = function() {
+  goog.array.forEach(this.events_, function(event) {
+    delete event.startTimePoint;
+    delete event.endTimePoint;
+    event.timePoints = [];
+  })
   delete this.events_;
   delete this.timePoints_;
+  goog.array.forEach(this.horzSplits_, function(horzSplit) {
+    delete horzSplit.startTimePoint;
+    delete horzSplit.endTimePoint;
+  })
+  delete this.horzSplits_;
   goog.base(this, 'disposeInternal');
 };
 
@@ -147,20 +163,45 @@ five.layout.Calc.prototype.calcTimePoints_ = function() {
     timePointMap[maxTimePoint] = maxTimePoint;
   }
 
+  // Create time points for all horz splits
+  goog.array.forEach(this.horzSplits_, function(horzSplit) {
+    var startKey = five.layout.TimePoint.getKey(horzSplit.getTime(), true);
+    var startPoint = timePointMap[startKey];
+    if (!startPoint) {
+      startPoint = new five.layout.TimePoint(horzSplit.getTime(), true);
+      this.registerDisposable(startPoint);
+      timePointMap[startPoint] = startPoint;
+    }
+    startPoint.linearTimeAnchor = true;
+    horzSplit.startTimePoint = startPoint;
+    var endKey = five.layout.TimePoint.getKey(horzSplit.getTime());
+    var endPoint = timePointMap[endKey];
+    if (!endPoint) {
+      endPoint = new five.layout.TimePoint(horzSplit.getTime());
+      this.registerDisposable(endPoint);
+      timePointMap[endPoint] = endPoint;
+    }
+    endPoint.linearTimeAnchor = true;
+    horzSplit.endTimePoint = endPoint;
+  }, this);
+
   // Create all relevant time points for the start and end times of all events.
   goog.array.forEach(this.events_, function(event) {
-    var startPoint = timePointMap[event.startTime];
+    var startKey = five.layout.TimePoint.getKey(event.startTime);
+    var startPoint = timePointMap[startKey];
     if (!startPoint) {
-      startPoint = new five.layout.TimePoint(
-          event.startTime);
+      startPoint = new five.layout.TimePoint(event.startTime);
       this.registerDisposable(startPoint);
       timePointMap[startPoint] = startPoint;
     }
     event.startTimePoint = startPoint;
-    var endPoint = timePointMap[event.endTime];
+    var endKey = five.layout.TimePoint.getKey(event.endTime, true);
+    if (!(endKey in timePointMap)) {
+      endKey = five.layout.TimePoint.getKey(event.endTime);
+    }
+    var endPoint = timePointMap[endKey];
     if (!endPoint) {
-      endPoint = new five.layout.TimePoint(
-          event.endTime);
+      endPoint = new five.layout.TimePoint(event.endTime);
       this.registerDisposable(endPoint);
       timePointMap[endPoint] = endPoint;
     }
@@ -169,7 +210,9 @@ five.layout.Calc.prototype.calcTimePoints_ = function() {
 
   this.timePoints_ = goog.object.getValues(timePointMap);
   this.timePoints_.sort(function(a, b) {
-    return goog.date.Date.compare(a.time, b.time);
+    a = a.toString();
+    b = b.toString();
+    return a < b ? -1 : (a > b ? 1 : 0);
   });
 
   var lastTimePoint = null;
@@ -276,6 +319,13 @@ five.layout.Calc.prototype.calcInitialTimePointConstraints_ =
   }, this);
 };
 
+five.layout.Calc.prototype.enforceHorzSplitHeights_ = function() {
+  goog.array.forEach(this.horzSplits_, function(horzSplit) {
+    horzSplit.startTimePoint.minHeight = Math.max(
+        horzSplit.startTimePoint.minHeight, horzSplit.getHeight());
+  });
+};
+
 five.layout.Calc.prototype.enforceMinEventHeight_ = function() {
   // Apply minimum height constraints to time points such that once resolved
   // each event will have minimum sizing obeyed.
@@ -346,7 +396,8 @@ five.layout.Calc.prototype.calcLinearTimes_ = function() {
     var hourHeight = this.timeMap_.timeToYPos(nextHour) - hourIterYPos;
     var linearTimeYPos = hourHeight * five.util.msToHourFloat(
         timePoint.time.getTime() - hourIter.getTime()) + hourIterYPos;
-    if (Math.abs(timePoint.yPos - linearTimeYPos) >= this.patchMinYPosDiff) {
+    if (!timePoint.linearTimeAnchor && Math.abs(timePoint.yPos - linearTimeYPos)
+        >= this.patchMinYPosDiff) {
       timePoint.linearTimeYPos = five.util.round(linearTimeYPos);
     } else {
       timePoint.linearTimeYPos = timePoint.yPos;

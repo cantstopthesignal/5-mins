@@ -23,6 +23,9 @@ five.layout.Manager = function(params) {
 
   /** @type {!Array.<!five.layout.Event>} */
   this.events_ = [];
+
+  /** @type {!Array.<!five.layout.HorzSplit>} */
+  this.horzSplits_ = [];
 };
 goog.inherits(five.layout.Manager, goog.Disposable);
 
@@ -52,9 +55,22 @@ five.layout.Manager.prototype.updateParams = function(params) {
   this.params_ = params;
 };
 
+/** @param {five.layout.HorzSplit} horzSplit */
+five.layout.Manager.prototype.addHorzSplit = function(horzSplit) {
+  this.horzSplits_.push(horzSplit);
+};
+
+/** @param {five.layout.HorzSplit} horzSplit */
+five.layout.Manager.prototype.removeHorzSplit = function(horzSplit) {
+  var index = this.horzSplits_.indexOf(horzSplit);
+  goog.asserts.assert(index >= 0);
+  this.horzSplits_.splice(index, 1);
+};
+
 five.layout.Manager.prototype.calc = function() {
   var calc = new five.layout.Calc(this.params_);
   calc.setEvents(this.events_);
+  calc.setHorzSplits(this.horzSplits_);
   calc.calc();
   this.timeMap_ = calc.getTimeMap();
   this.linearTimeMap_ = calc.getLinearTimeMap();

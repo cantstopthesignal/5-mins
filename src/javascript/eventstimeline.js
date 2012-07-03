@@ -148,9 +148,10 @@ five.EventsTimeline.prototype.createDom = function() {
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
-      listen(this.el, goog.events.EventType.BLUR, this.handleBlur_).
       listen(this.inlineEventsEditor_, five.Event.EventType.MOVE,
-          this.handleEventsEditorMove_);
+          this.handleEventsEditorMove_).
+      listen(this.inlineEventsEditor_, five.Event.EventType.DUPLICATE,
+          this.handleEventsEditorDuplicate_);
 
   if (five.deviceParams.getEnableCursorTimeMarker()) {
     this.eventHandler.
@@ -257,6 +258,7 @@ five.EventsTimeline.prototype.eventsChanged = function(changedEvents) {
 five.EventsTimeline.prototype.setSelectedEvents = function(selectedEvents) {
   var selectedEventCards = this.getEventCardsForEvents_(selectedEvents);
   this.inlineEventsEditor_.setEvents(selectedEventCards);
+  this.layout_();
 };
 
 /** @param {!five.TimeMarker} timeMarker */
@@ -303,6 +305,16 @@ five.EventsTimeline.prototype.layoutTimeMarker = function(timeMarker) {
   timeMarker.setRect(rect);
   timeMarker.setLabelRect(new goog.math.Rect(0, yPos - 7,
       five.deviceParams.getTimeAxisWidth() - 1, 14));
+};
+
+/** @param {five.layout.HorzSplit} horzSplit */
+five.EventsTimeline.prototype.addHorzSplit = function(horzSplit) {
+  this.layoutManager_.addHorzSplit(horzSplit);
+};
+
+/** @param {five.layout.HorzSplit} horzSplit */
+five.EventsTimeline.prototype.removeHorzSplit = function(horzSplit) {
+  this.layoutManager_.removeHorzSplit(horzSplit);
 };
 
 /** @param {!five.TimeAxis.Entry} timeAxisEntry */
@@ -376,6 +388,7 @@ five.EventsTimeline.prototype.doLayout_ = function() {
     layoutEvent.eventCard = eventCard;
     return layoutEvent;
   }, this);
+  this.inlineEventsEditor_.preLayout();
   this.layoutManager_.updateEvents(layoutEvents);
   var params = this.layoutManager_.getParams();
   params.layoutWidth = this.eventAreaWidth_;
@@ -387,17 +400,14 @@ five.EventsTimeline.prototype.doLayout_ = function() {
   this.linearTimeMap_ = this.layoutManager_.getLinearTimeMap();
 
   this.timeAxisPatchCanvas_.startBatchUpdate();
-
   this.layoutEvents_(layoutEvents);
   this.layoutTimeAxisPatches_(layoutEvents);
-
   this.timeAxis_.layout();
   this.layoutTimeMarkers_();
   this.inlineEventsEditor_.layout();
   this.timeAxisPatchCanvas_.finishBatchUpdate();
 
   goog.style.setHeight(this.el, this.timeMap_.timeToYPos(this.endDate_));
-
   goog.asserts.assert(!this.layoutNeeded_);
 };
 
@@ -510,15 +520,13 @@ five.EventsTimeline.prototype.handleMouseOut_ = function(e) {
   }
 };
 
-/** @param {goog.events.BrowserEvent} e */
-five.EventsTimeline.prototype.handleBlur_ = function(e) {
-  var event = new goog.events.Event(five.EventsTimeline.EventType.DESELECT);
-  event.shiftKey = e.shiftKey;
-  this.dispatchEvent(event);
-};
-
 /** @param {five.EventMoveEvent} e */
 five.EventsTimeline.prototype.handleEventsEditorMove_ = function(e) {
   e.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   this.dispatchEvent(e);
+};
+
+/** @param {goog.events.Event} e */
+five.EventsTimeline.prototype.handleEventsEditorDuplicate_ = function(e) {
+  this.dispatchEvent(five.EventsTimeline.EventType.EVENTS_DUPLICATE);
 };
