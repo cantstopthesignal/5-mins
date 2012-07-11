@@ -75,8 +75,9 @@ five.App.prototype.start = function() {
       addCallback(this.showEventsView_, this);
   this.auth_.start();
 
-  this.eventHandler_.listen(window, goog.events.EventType.RESIZE,
-      this.handleWindowResize_);
+  this.eventHandler_.
+      listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_).
+      listen(window, 'beforeunload', this.handleWindowBeforeUnload_);
 };
 
 /** @override */
@@ -112,7 +113,7 @@ five.App.prototype.showEventsView_ = function() {
   this.resize();
 };
 
-five.App.prototype.handleWindowResize_ = function(e) {
+five.App.prototype.handleWindowResize_ = function() {
   this.resize();
 };
 
@@ -127,5 +128,18 @@ five.App.prototype.resize = function() {
   var eventsViewHeight = Math.max(0, appHeight - appBarHeight);
   if (this.eventsView_) {
     this.eventsView_.resize(undefined, eventsViewHeight);
+  }
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.App.prototype.handleWindowBeforeUnload_ = function(e) {
+  if (this.eventsView_ && this.eventsView_.hasUnsavedChanges()) {
+    var message = this.eventsView_.getUnloadWarning();
+    if (message) {
+      if (e) {
+        e.returnValue = message;
+      }
+      return message;
+    }
   }
 };

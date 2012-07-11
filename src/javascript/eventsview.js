@@ -658,6 +658,10 @@ five.EventsView.prototype.updateViewDate_ = function() {
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleRefreshClick_ = function(e) {
   e.preventDefault();
+  if (this.calendarManager_.hasMutations() && !window.confirm(
+      'Some events have been modified, are you sure you want to refresh?')) {
+    return;
+  }
   this.loadEvents_();
 };
 
@@ -671,4 +675,17 @@ five.EventsView.prototype.handleNowClick_ = function(e) {
 five.EventsView.prototype.handleSaveClick_ = function(e) {
   e.preventDefault();
   this.calendarManager_.saveMutations();
+};
+
+/** @return {boolean} */
+five.EventsView.prototype.hasUnsavedChanges = function() {
+  return this.calendarManager_.hasMutations();
+};
+
+/** @return {?string} */
+five.EventsView.prototype.getUnloadWarning = function() {
+  if (this.calendarManager_.hasMutations()) {
+    return 'Some events have not been saved.';
+  }
+  return null;
 };
