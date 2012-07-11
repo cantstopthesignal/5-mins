@@ -34,6 +34,9 @@ five.InlineEventsEditor.prototype.topSplit_;
 /** @type {five.layout.HorzSplit} */
 five.InlineEventsEditor.prototype.bottomSplit_;
 
+/** @type {Element} */
+five.InlineEventsEditor.prototype.editSummaryButton_;
+
 /** @param {five.EventsTimeline} owner */
 five.InlineEventsEditor.prototype.setOwner = function(owner) {
   this.owner_ = owner;
@@ -75,10 +78,10 @@ five.InlineEventsEditor.prototype.createDom = function() {
   goog.dom.classes.add(shadow, 'shadow');
   bottomButtonBar.appendChild(shadow);
 
-  var dupButton = document.createElement('button');
-  goog.dom.classes.add(dupButton, 'button');
-  dupButton.style.cssFloat = 'right';
-  topButtonBar.appendChild(dupButton);
+  var dupButton = this.createIconButton_(topButtonBar, true);
+  dupButton.appendChild(document.createTextNode('D'));
+  this.editSummaryButton_ = this.createIconButton_(topButtonBar, true);
+  this.editSummaryButton_.appendChild(document.createTextNode('ES'));
 
   var moveUpButton = this.createArrowButton_(true, topButtonBar);
   var moveDownButton = this.createArrowButton_(false, topButtonBar);
@@ -91,6 +94,8 @@ five.InlineEventsEditor.prototype.createDom = function() {
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
       listen(dupButton, goog.events.EventType.CLICK,
           this.handleDupButtonClick_).
+      listen(this.editSummaryButton_, goog.events.EventType.CLICK,
+          this.handleEditSummaryButtonClick_).
       listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.bothEarlier)).
       listen(moveDownButton, goog.events.EventType.CLICK, goog.partial(
@@ -105,6 +110,10 @@ five.InlineEventsEditor.prototype.createDom = function() {
           this.handleButtonClick_, five.EventMoveEvent.endLater));
 };
 
+/**
+ * @param {boolean} up
+ * @param {Element} parentEl
+ */
 five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
     parentEl) {
   var button = document.createElement('button');
@@ -113,6 +122,21 @@ five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
   goog.dom.classes.add(arrow, 'arrow');
   goog.dom.classes.add(arrow, up ? 'up' : 'down');
   button.appendChild(arrow);
+  parentEl.appendChild(button);
+  return button;
+};
+
+/**
+ * @param {Element} parentEl
+ * @param {boolean=} opt_floatRight
+ */
+five.InlineEventsEditor.prototype.createIconButton_ = function(parentEl,
+    opt_floatRight) {
+  var button = document.createElement('button');
+  goog.dom.classes.add(button, 'button');
+  if (opt_floatRight) {
+    button.style.cssFloat = 'right';
+  }
   parentEl.appendChild(button);
   return button;
 };
@@ -177,6 +201,7 @@ five.InlineEventsEditor.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner_);
   goog.style.showElement(this.el, this.events_.length > 0);
+  goog.style.showElement(this.editSummaryButton_, this.events_.length == 1);
   if (!this.events_.length) {
     return;
   }
@@ -213,6 +238,14 @@ five.InlineEventsEditor.prototype.handleClick_ = function(e) {
  */
 five.InlineEventsEditor.prototype.handleDupButtonClick_ = function(e) {
   this.dispatchEvent(five.Event.EventType.DUPLICATE);
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.InlineEventsEditor.prototype.handleEditSummaryButtonClick_ = function(e) {
+  goog.asserts.assert(this.events_.length == 1);
+  this.events_[0].dispatchEvent(five.Event.EventType.EDIT_SUMMARY);
 };
 
 /**
