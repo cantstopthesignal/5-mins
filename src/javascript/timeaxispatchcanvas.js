@@ -63,7 +63,9 @@ five.TimeAxisPatchCanvas.prototype.addPatch = function(patch) {
 five.TimeAxisPatchCanvas.prototype.removePatch = function(patch) {
   patch.setOwner(null);
   delete this.patchMap_[goog.getUid(patch)];
-  this.paint();
+  if (!this.isDisposed()) {
+    this.paint();
+  }
 };
 
 five.TimeAxisPatchCanvas.prototype.addMarker = function(marker) {
@@ -77,7 +79,9 @@ five.TimeAxisPatchCanvas.prototype.addMarker = function(marker) {
 five.TimeAxisPatchCanvas.prototype.removeMarker = function(marker) {
   marker.setOwner(null);
   delete this.markerMap_[goog.getUid(marker)];
-  this.paint();
+  if (!this.isDisposed()) {
+    this.paint();
+  }
 };
 
 five.TimeAxisPatchCanvas.prototype.setPosition = function(pos) {
