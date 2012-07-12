@@ -138,6 +138,7 @@ a:hover {
   position: absolute;
   box-sizing: border-box;
   overflow-y: hidden;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 .day-banner {
   color: white;
@@ -230,6 +231,7 @@ a:hover {
   white-space: nowrap;
   -moz-user-select: text;
   -webkit-user-select: text;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 .event-card.selected {
 }
