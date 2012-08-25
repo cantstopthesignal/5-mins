@@ -74,25 +74,43 @@ body {
   padding-right: 4px;
 }
 .inline-events-editor > .button-bar {
+  bottom: -32px;
+  height: 32px;
+  line-height: 32px;
+}
+.inline-events-editor > .button-bar:first-child {
+  top: -32px;
+}
+.inline-events-editor > .button-bar > .button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  margin: 0px 4px;
+}
+.inline-events-editor > .button-bar > .button > .arrow {
+  border-width: 8px;
+  margin: 12px 0px;
+}
+.edge-events-editor > .button-bar {
   bottom: -96px;
   height: 96px;
   line-height: 96px;
 }
-.inline-events-editor > .button-bar:first-child {
+.edge-events-editor > .button-bar:first-child {
   top: -96px;
 }
-.inline-events-editor > .button-bar > .shadow {
+.edge-events-editor > .button-bar > .shadow {
   height: 20px;
   top: -20px;
   box-shadow: 0 0 40px 0px #000;
 }
-.inline-events-editor > .button-bar > .button {
+.edge-events-editor > .button-bar > .button {
   width: 64px;
   height: 64px;
   line-height: 64px;
   margin: 16px;
 }
-.inline-events-editor > .button-bar > .button > .arrow {
+.edge-events-editor > .button-bar > .button > .arrow {
   border-width: 16px;
   margin: 24px 0px;
 }

@@ -3,6 +3,7 @@
 goog.provide('five.Button');
 
 goog.require('five.Component');
+goog.require('five.device');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classes');
@@ -29,6 +30,9 @@ goog.inherits(five.Button, five.Component);
 five.Button.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'button');
+  if (five.device.isTouch()) {
+    goog.dom.classes.add(this.el, 'touch');
+  }
 
   this.el.appendChild(this.captionEl_);
 };

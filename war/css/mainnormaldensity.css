@@ -68,25 +68,43 @@ body {
   padding-right: 2px;
 }
 .inline-events-editor > .button-bar {
+  bottom: -16px;
+  height: 16px;
+  line-height: 16px;
+}
+.inline-events-editor > .button-bar:first-child {
+  top: -16px;
+}
+.inline-events-editor > .button-bar > .button {
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  margin: 0px 2px;
+}
+.inline-events-editor > .button-bar > .button > .arrow {
+  border-width: 4px;
+  margin: 6px 0px;
+}
+.edge-events-editor > .button-bar {
   bottom: -48px;
   height: 48px;
   line-height: 48px;
 }
-.inline-events-editor > .button-bar:first-child {
+.edge-events-editor > .button-bar:first-child {
   top: -48px;
 }
-.inline-events-editor > .button-bar > .shadow {
+.edge-events-editor > .button-bar > .shadow {
   height: 10px;
   top: -10px;
   box-shadow: 0 0 20px 0px #000;
 }
-.inline-events-editor > .button-bar > .button {
+.edge-events-editor > .button-bar > .button {
   width: 32px;
   height: 32px;
   line-height: 32px;
   margin: 8px;
 }
-.inline-events-editor > .button-bar > .button > .arrow {
+.edge-events-editor > .button-bar > .button > .arrow {
   border-width: 8px;
   margin: 12px 0px;
 }

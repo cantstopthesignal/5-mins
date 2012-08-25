@@ -3,7 +3,9 @@
 goog.provide('five.EventsTimeline');
 
 goog.require('five.Component');
+goog.require('five.EdgeEventsEditor');
 goog.require('five.EventCard');
+goog.require('five.EventsEditor');
 goog.require('five.InlineEventsEditor');
 goog.require('five.TimeAxis');
 goog.require('five.TimeAxisPatch');
@@ -14,6 +16,7 @@ goog.require('five.TimeMarkerTheme');
 goog.require('five.deviceParams');
 goog.require('five.layout.Calc');
 goog.require('five.layout.Event');
+goog.require('five.layout.HorzSplit');
 goog.require('five.layout.Manager');
 goog.require('five.layout.TimeMap');
 goog.require('goog.array');
@@ -28,6 +31,7 @@ goog.require('goog.events.KeyCodes');
 goog.require('goog.math.Coordinate');
 goog.require('goog.math.Size');
 goog.require('goog.style');
+
 
 /**
  * @constructor
@@ -81,8 +85,8 @@ five.EventsTimeline.prototype.timeAxis_;
 /** @type {five.TimeAxisPatchCanvas} */
 five.EventsTimeline.prototype.timeAxisPatchCanvas_;
 
-/** @type {five.InlineEventsEditor} */
-five.EventsTimeline.prototype.inlineEventsEditor_;
+/** @type {five.EventsEditor} */
+five.EventsTimeline.prototype.eventsEditor_;
 
 /** @type {five.TimeMarker} */
 five.EventsTimeline.prototype.cursorMarker_;
@@ -107,6 +111,14 @@ five.EventsTimeline.prototype.batchUpdateDepth_ = 0;
 
 /** @type {boolean} */
 five.EventsTimeline.prototype.layoutNeeded_ = false;
+
+/** @type {five.EventsView} */
+five.EventsTimeline.prototype.owner_;
+
+/** @param {five.EventsView} owner */
+five.EventsTimeline.prototype.setOwner = function(owner) {
+  this.owner_ = owner;
+};
 
 five.EventsTimeline.prototype.createDom = function() {
   goog.base(this, 'createDom');
@@ -139,18 +151,25 @@ five.EventsTimeline.prototype.createDom = function() {
   this.registerDisposable(this.timeAxisPatchCanvas_);
   this.timeAxisPatchCanvas_.render(this.timeAxisPatchLayer_);
 
-  this.inlineEventsEditor_ = new five.InlineEventsEditor();
-  this.registerDisposable(this.inlineEventsEditor_);
-  this.inlineEventsEditor_.setOwner(this);
-  this.inlineEventsEditor_.render(this.inlineEventsEditorLayer_);
+  if (five.deviceParams.getEnableInlineEventsEditor()) {
+    this.eventsEditor_ = new five.InlineEventsEditor();
+  } else {
+    this.eventsEditor_ = new five.EdgeEventsEditor();
+  }
+  this.registerDisposable(this.eventsEditor_);
+  this.eventsEditor_.setOwner(this);
+  this.eventsEditor_.render(this.inlineEventsEditorLayer_);
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
-      listen(this.inlineEventsEditor_, five.Event.EventType.MOVE,
+      listen(this.eventsEditor_, [five.EventsEditor.EventType.SHOW,
+          five.EventsEditor.EventType.HIDE],
+          this.handleEventsEditorVisibilityChanged_).
+      listen(this.eventsEditor_, five.Event.EventType.MOVE,
           this.handleEventsEditorMove_).
-      listen(this.inlineEventsEditor_, five.Event.EventType.DUPLICATE,
+      listen(this.eventsEditor_, five.Event.EventType.DUPLICATE,
           this.handleEventsEditorDuplicate_);
 
   if (five.deviceParams.getEnableCursorTimeMarker()) {
@@ -185,6 +204,7 @@ five.EventsTimeline.prototype.render = function(parentEl) {
 /** @override */
 five.EventsTimeline.prototype.disposeInternal = function() {
   goog.disposeAll(this.eventCards_);
+  delete this.owner_;
   goog.base(this, 'disposeInternal');
 };
 
@@ -257,7 +277,7 @@ five.EventsTimeline.prototype.eventsChanged = function(changedEvents) {
 /** @param {!Array.<!five.Event>} selectedEvents */
 five.EventsTimeline.prototype.setSelectedEvents = function(selectedEvents) {
   var selectedEventCards = this.getEventCardsForEvents_(selectedEvents);
-  this.inlineEventsEditor_.setEvents(selectedEventCards);
+  this.eventsEditor_.setEvents(selectedEventCards);
   this.layout_();
 };
 
@@ -388,7 +408,6 @@ five.EventsTimeline.prototype.doLayout_ = function() {
     layoutEvent.eventCard = eventCard;
     return layoutEvent;
   }, this);
-  this.inlineEventsEditor_.preLayout();
   this.layoutManager_.updateEvents(layoutEvents);
   var params = this.layoutManager_.getParams();
   params.layoutWidth = this.eventAreaWidth_;
@@ -404,7 +423,7 @@ five.EventsTimeline.prototype.doLayout_ = function() {
   this.layoutTimeAxisPatches_(layoutEvents);
   this.timeAxis_.layout();
   this.layoutTimeMarkers_();
-  this.inlineEventsEditor_.layout();
+  this.eventsEditor_.layout();
   this.timeAxisPatchCanvas_.finishBatchUpdate();
 
   goog.style.setHeight(this.el, this.timeMap_.timeToYPos(this.endDate_));
@@ -518,6 +537,12 @@ five.EventsTimeline.prototype.handleMouseOut_ = function(e) {
   if (this.cursorMarker_) {
     this.cursorMarker_.setVisible(false);
   }
+};
+
+/** @param {five.EventMoveEvent} e */
+five.EventsTimeline.prototype.handleEventsEditorVisibilityChanged_ =
+    function(e) {
+  goog.asserts.assert(this.owner_);
 };
 
 /** @param {five.EventMoveEvent} e */

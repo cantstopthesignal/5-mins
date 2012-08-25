@@ -1,6 +1,6 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('five.InlineEventsEditor');
+goog.provide('five.EdgeEventsEditor');
 
 goog.require('five.Component');
 goog.require('five.Event');
@@ -17,22 +17,38 @@ goog.require('goog.style');
  * @constructor
  * @extends {five.EventsEditor}
  */
-five.InlineEventsEditor = function() {
+five.EdgeEventsEditor = function() {
   goog.base(this);
 };
-goog.inherits(five.InlineEventsEditor, five.EventsEditor);
+goog.inherits(five.EdgeEventsEditor, five.EventsEditor);
 
-five.InlineEventsEditor.prototype.createDom = function() {
+/** @type {Element} */
+five.EdgeEventsEditor.prototype.editSummaryButton_;
+
+five.EdgeEventsEditor.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'inline-events-editor');
+  goog.dom.classes.add(this.el, 'edge-events-editor');
 
   var topButtonBar = document.createElement('div');
   goog.dom.classes.add(topButtonBar, 'button-bar');
   this.el.appendChild(topButtonBar);
 
+  var shadow = document.createElement('div');
+  goog.dom.classes.add(shadow, 'shadow');
+  topButtonBar.appendChild(shadow);
+
   var bottomButtonBar = document.createElement('div');
   goog.dom.classes.add(bottomButtonBar, 'button-bar');
   this.el.appendChild(bottomButtonBar);
+
+  shadow = document.createElement('div');
+  goog.dom.classes.add(shadow, 'shadow');
+  bottomButtonBar.appendChild(shadow);
+
+  var dupButton = this.createIconButton_(topButtonBar, true);
+  dupButton.appendChild(document.createTextNode('D'));
+  this.editSummaryButton_ = this.createIconButton_(topButtonBar, true);
+  this.editSummaryButton_.appendChild(document.createTextNode('ES'));
 
   var moveUpButton = this.createArrowButton_(true, topButtonBar);
   var moveDownButton = this.createArrowButton_(false, topButtonBar);
@@ -43,6 +59,10 @@ five.InlineEventsEditor.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(dupButton, goog.events.EventType.CLICK,
+          this.handleDupButtonClick_).
+      listen(this.editSummaryButton_, goog.events.EventType.CLICK,
+          this.handleEditSummaryButtonClick_).
       listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.bothEarlier)).
       listen(moveDownButton, goog.events.EventType.CLICK, goog.partial(
@@ -61,7 +81,7 @@ five.InlineEventsEditor.prototype.createDom = function() {
  * @param {boolean} up
  * @param {Element} parentEl
  */
-five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
+five.EdgeEventsEditor.prototype.createArrowButton_ = function(up,
     parentEl) {
   var button = document.createElement('button');
   goog.dom.classes.add(button, 'button');
@@ -77,7 +97,7 @@ five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
  * @param {Element} parentEl
  * @param {boolean=} opt_floatRight
  */
-five.InlineEventsEditor.prototype.createIconButton_ = function(parentEl,
+five.EdgeEventsEditor.prototype.createIconButton_ = function(parentEl,
     opt_floatRight) {
   var button = document.createElement('button');
   goog.dom.classes.add(button, 'button');
@@ -89,14 +109,15 @@ five.InlineEventsEditor.prototype.createIconButton_ = function(parentEl,
 };
 
 /** @override */
-five.InlineEventsEditor.prototype.getType = function() {
-  return five.EventsEditor.Type.INLINE;
+five.EdgeEventsEditor.prototype.getType = function() {
+  return five.EventsEditor.Type.EDGE;
 };
 
-five.InlineEventsEditor.prototype.layout = function() {
+five.EdgeEventsEditor.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner);
   goog.style.showElement(this.el, this.events.length > 0);
+  goog.style.showElement(this.editSummaryButton_, this.events.length == 1);
   if (!this.events.length) {
     return;
   }
@@ -109,23 +130,38 @@ five.InlineEventsEditor.prototype.layout = function() {
     }
   });
   goog.asserts.assert(rect);
-  goog.style.setPosition(this.el, rect.left, rect.top);
-  goog.style.setBorderBoxSize(this.el, rect.getSize());
+  goog.style.setPosition(this.el, 0, rect.top);
+  goog.style.setHeight(this.el, rect.height);
 };
 
 /**
  * @param {goog.events.Event} e
  */
-five.InlineEventsEditor.prototype.handleClick_ = function(e) {
+five.EdgeEventsEditor.prototype.handleClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.EdgeEventsEditor.prototype.handleDupButtonClick_ = function(e) {
+  this.dispatchEvent(five.Event.EventType.DUPLICATE);
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.EdgeEventsEditor.prototype.handleEditSummaryButtonClick_ = function(e) {
+  goog.asserts.assert(this.events.length == 1);
+  this.events[0].dispatchEvent(five.Event.EventType.EDIT_SUMMARY);
 };
 
 /**
  * @param {!Function} eventConstructor
  * @param {goog.events.Event} e
  */
-five.InlineEventsEditor.prototype.handleButtonClick_ = function(
+five.EdgeEventsEditor.prototype.handleButtonClick_ = function(
     eventConstructor, e) {
   e.preventDefault();
   this.dispatchEvent(new eventConstructor());

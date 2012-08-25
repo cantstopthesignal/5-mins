@@ -186,6 +186,10 @@ five.EndToEndTest.prototype.addLoadApp = function() {
     url.setParameterValue('jsmode', this.jsMode);
     url.setParameterValue('Debug', 'true');
     url.setParameterValue('test', '1');
+    url.setParameterValue('touch', new goog.Uri(window.location.href)
+        .getParameterValue('touch'));
+    url.setParameterValue('density', new goog.Uri(window.location.href)
+        .getParameterValue('density'));
     this.appFrame.src = url.toString();
     this.appFrame.addEventListener(goog.events.EventType.LOAD, goog.bind(
         function() {
