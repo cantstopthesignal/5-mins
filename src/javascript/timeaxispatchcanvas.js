@@ -126,7 +126,9 @@ five.TimeAxisPatchCanvas.prototype.doPaint_ = function() {
     this.strokePatch_(patch);
   }, this);
   goog.object.forEach(this.markerMap_, function(marker) {
-    this.strokeMarker_(marker);
+    if (marker.visible) {
+      this.strokeMarker_(marker);
+    }
   }, this);
 
   this.paintNeeded_ = false;

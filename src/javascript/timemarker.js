@@ -90,6 +90,9 @@ five.TimeMarker.Component.prototype.owner_;
 /** @type {Element} */
 five.TimeMarker.Component.prototype.labelEl_;
 
+/** @type {boolean} */
+five.TimeMarker.prototype.visible_ = true;
+
 /** @type {five.TimeAxisPatchMarker} */
 five.TimeMarker.Component.prototype.timeAxisPatchMarker_;
 
@@ -148,9 +151,13 @@ five.TimeMarker.Component.prototype.setVisible = function(visible) {
   if (!this.el) {
     this.createDom();
   }
+  this.visible_ = visible;
   goog.style.showElement(this.el, visible);
   if (this.labelEl_) {
     goog.style.showElement(this.labelEl_, visible);
+  }
+  if (this.timeAxisPatchMarker_) {
+    this.timeAxisPatchMarker_.setVisible(this.visible_);
   }
 };
 
@@ -179,6 +186,7 @@ five.TimeMarker.Component.prototype.setTimeAxisPatchMarker = function(patchMarke
   this.timeAxisPatchMarker_ = patchMarker;
   if (this.timeAxisPatchMarker_) {
     this.timeAxisPatchMarker_.setTheme(this.theme_);
+    this.timeAxisPatchMarker_.setVisible(this.visible_);
   }
 };
 

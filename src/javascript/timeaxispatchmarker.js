@@ -21,6 +21,9 @@ five.TimeAxisPatchMarker.prototype.owner_;
 /** @type {five.TimeMarkerTheme} */
 five.TimeAxisPatchMarker.prototype.theme;
 
+/** @type {boolean} */
+five.TimeAxisPatchMarker.prototype.visible = true;
+
 /** @type {number} */
 five.TimeAxisPatchMarker.prototype.axisYPos;
 
@@ -40,6 +43,14 @@ five.TimeAxisPatchMarker.prototype.setOwner = function(owner) {
 /** @param {five.TimeMarkerTheme} theme */
 five.TimeAxisPatchMarker.prototype.setTheme = function(theme) {
   this.theme = theme;
+};
+
+/** @param {boolean} visible */
+five.TimeAxisPatchMarker.prototype.setVisible = function(visible) {
+  this.visible = visible;
+  if (this.owner_) {
+    this.owner_.paint();
+  }
 };
 
 /**

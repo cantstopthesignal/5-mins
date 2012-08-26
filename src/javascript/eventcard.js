@@ -74,6 +74,7 @@ five.EventCard.prototype.setTimeAxisPatch = function(patch) {
   this.timeAxisPatch_ = patch;
   if (this.timeAxisPatch_) {
     this.timeAxisPatch_.setEventTheme(this.theme_);
+    this.timeAxisPatch_.setSelected(this.selected_);
   }
   this.timeAxisPatchUpdated();
 };
