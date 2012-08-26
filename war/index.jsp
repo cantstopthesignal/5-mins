@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="com.cantstopthesignals.JsMode" %>
+<%@ page import="com.cantstopthesignals.MobileMode" %>
 <%@ page import="com.google.appengine.api.users.User" %>
 <%@ page import="com.google.appengine.api.users.UserService" %>
 <%@ page import="com.google.appengine.api.users.UserServiceFactory" %>
@@ -8,8 +9,7 @@
   if (jsMode == null) {
     jsMode = JsMode.OPTIMIZED;
   }
-  UserService userService = UserServiceFactory.getUserService();
-  User user = userService.getCurrentUser();
+  MobileMode mobileMode = MobileMode.fromRequest(request);
 %>
 
 <!DOCTYPE html>
@@ -18,12 +18,13 @@
   <head>
     <title>5 minutes</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0,
-        user-scalable=yes, target-densitydpi=device-dpi">
-    <script type="text/javascript">
-      var userEmail = "<%= user != null ? user.getEmail() : "" %>";
-    </script>
     <%
+      if (mobileMode == MobileMode.TRUE) {
+        %>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0,
+            user-scalable=yes, target-densitydpi=device-dpi">
+        <%
+      }
       if (jsMode == JsMode.UNCOMPILED) {
         %>
         <script type="text/javascript" src="debug/lib/closure-library/closure/goog/base.js"></script>
