@@ -291,7 +291,9 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
       listen(timeline, EventType.EVENTS_MOVE,
           this.handleEventsTimelineEventsMove_).
       listen(timeline, EventType.EVENTS_DUPLICATE,
-          this.handleEventsTimelineEventsDuplicate_);
+          this.handleEventsTimelineEventsDuplicate_).
+      listen(timeline, EventType.EVENTS_DELETE,
+          this.handleEventsTimelineEventsDelete_);
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
@@ -318,6 +320,19 @@ five.EventsView.prototype.handleEventsTimelineEventsDuplicate_ = function() {
     var newEvent = event.duplicate();
     this.addEvent_(newEvent);
   }, this);
+  this.finishBatchRenderUpdate_();
+};
+
+five.EventsView.prototype.handleEventsTimelineEventsDelete_ = function() {
+  if (!this.selectedEvents_.length) {
+    return;
+  }
+  this.startBatchRenderUpdate_();
+  goog.array.forEach(this.selectedEvents_, function(event) {
+    this.removeEvent_(event);
+  }, this);
+  this.selectedEvents_ = [];
+  this.selectedEventsChanged_();
   this.finishBatchRenderUpdate_();
 };
 
@@ -348,6 +363,21 @@ five.EventsView.prototype.addEvent_ = function(newEvent) {
   this.registerListenersForEvent_(newEvent);
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.addEvent(newEvent);
+  });
+};
+
+/**
+ * Remove an event.
+ * Note: does not check if this event was in selected set.
+ * @param {!five.Event} event
+ */
+five.EventsView.prototype.removeEvent_ = function(event) {
+  this.calendarManager_.removeEvent(event);
+  var index = this.events_.indexOf(event);
+  goog.asserts.assert(index >= 0);
+  this.events_.splice(index, 1);
+  goog.array.forEach(this.columns_, function(column) {
+    column.timeline.removeEvent(event);
   });
 };
 

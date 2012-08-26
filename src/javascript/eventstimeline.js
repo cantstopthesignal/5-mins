@@ -52,7 +52,8 @@ goog.inherits(five.EventsTimeline, five.Component);
 five.EventsTimeline.EventType = {
   DESELECT: goog.events.getUniqueId('deselect'),
   EVENTS_MOVE: goog.events.getUniqueId('events_move'),
-  EVENTS_DUPLICATE: goog.events.getUniqueId('events_duplicate')
+  EVENTS_DUPLICATE: goog.events.getUniqueId('events_duplicate'),
+  EVENTS_DELETE: goog.events.getUniqueId('events_delete')
 };
 
 /** @type {number} */
@@ -264,6 +265,21 @@ five.EventsTimeline.prototype.addEvent = function(event) {
   if (this.el) {
     this.layout_();
     eventCard.render(this.eventCardsLayer_);
+  }
+};
+
+/** @param {!five.Event} event */
+five.EventsTimeline.prototype.removeEvent = function(event) {
+  var index = goog.array.findIndex(this.eventCards_, function(eventCard) {
+    if (eventCard.getEvent() === event) {
+      return true;
+    }
+  }, this);
+  goog.asserts.assert(index >= 0);
+  goog.dispose(this.eventCards_[index]);
+  this.eventCards_.splice(index, 1);
+  if (this.el) {
+    this.layout_();
   }
 };
 
@@ -500,9 +516,13 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.D) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
+  } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
+      e.keyCode == goog.events.KeyCodes.DELETE) {
+    event = five.EventsTimeline.EventType.EVENTS_DELETE;
   }
   if (event && this.dispatchEvent(event)) {
     e.preventDefault();
+    e.stopPropagation();
   }
 };
 

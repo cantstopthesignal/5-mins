@@ -130,7 +130,37 @@ five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
       addCallbacks(callback, errback, this);
 };
 
-five.CalendarApi.prototype.callApi_ = function(name, version, params) {
+/**
+ * @param {string} calendarId
+ * @param {Object} eventDeleteData
+ * @return {goog.async.Deferred}
+ */
+five.CalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
+  goog.asserts.assert(eventDeleteData['id']);
+  goog.asserts.assert(eventDeleteData['etag']);
+  var params = {
+    'calendarId': calendarId,
+    'eventId': eventDeleteData['id']
+  };
+  var callback = function(resp) {
+    goog.asserts.assert(resp === null);
+    this.logger_.info('Event deleted');
+  };
+  var errback = function(error) {
+    this.logger_.severe('Error deleting event: ' + error, error);
+  };
+  return this.callApi_('calendar.events.delete', 'v3', params, true).
+      addCallbacks(callback, errback, this);
+};
+
+/**
+ * @param {string} name
+ * @param {string} version
+ * @param {Object} params
+ * @param {boolean=} opt_expectEmptyResponse
+ */
+five.CalendarApi.prototype.callApi_ = function(name, version, params,
+    opt_expectEmptyResponse) {
   var d = new goog.async.Deferred();
   this.logger_.info(name);
   var retryOnAuthFailure = true;
@@ -139,7 +169,11 @@ five.CalendarApi.prototype.callApi_ = function(name, version, params) {
         name, version, params);
     request['execute'](goog.bind(function(resp) {
       if (!resp) {
-        d.errback('Empty response');
+        if (opt_expectEmptyResponse) {
+          d.callback(null);
+        } else {
+          d.errback('Empty response');
+        }
       } else if (resp['error']) {
         var error = resp ? resp['error'] : null;
         if (error && error['code'] == 401) {

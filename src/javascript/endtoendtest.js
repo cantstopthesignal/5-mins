@@ -323,6 +323,16 @@ five.EndToEndTest.prototype.addDuplicateEvent = function() {
   }, this);
 };
 
+five.EndToEndTest.prototype.addDeleteEvent = function() {
+  this.addWaitForAsync('Deleting one event');
+  this.testDeferred.addCallback(function() {
+    var eventCard = goog.asserts.assertObject(this.appDom.getElementsByClass(
+        'event-card')[0]);
+    this.fireAppClickSequence_(eventCard);
+    this.fireAppKeySequence_(eventCard, goog.events.KeyCodes.BACKSPACE);
+  }, this);
+};
+
 five.EndToEndTest.prototype.addChangeEventSummary = function() {
   this.addWaitForAsync('Changing the summary of one event');
   this.testDeferred.addCallback(function() {
@@ -433,6 +443,21 @@ function testDuplicate() {
   test.addAppStartupSequence();
   test.addCheckSaveButtonVisible(false);
   test.addDuplicateEvent();
+  test.addSaveSequence();
+  test.addVerifyMocks();
+  test.waitForDeferred();
+}
+
+function testDelete() {
+  test.expectCalendarApiLoads();
+
+  var event = test.fakeCalendarApi.event1;
+  test.fakeCalendarApi.expectEventDelete(event);
+
+  test.addReplayMocks();
+  test.addAppStartupSequence();
+  test.addCheckSaveButtonVisible(false);
+  test.addDeleteEvent();
   test.addSaveSequence();
   test.addVerifyMocks();
   test.waitForDeferred();

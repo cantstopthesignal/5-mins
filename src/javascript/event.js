@@ -263,6 +263,13 @@ five.Event.prototype.abortMutationOrCreate_ = function() {
   this.dispatchEvent(five.Event.EventType.DATA_CHANGED);
 };
 
+/** @return {Object} */
+five.Event.prototype.startDelete = function() {
+  goog.asserts.assert(!this.isNew());
+  var eventDeleteData = goog.json.parse(goog.json.serialize(this.eventData_));
+  return eventDeleteData;
+};
+
 /** @return {boolean} Whether the current state of this event is valid. */
 five.Event.prototype.stateIsValid_ = function() {
   var startTime = this.getStartTime();

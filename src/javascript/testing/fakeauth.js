@@ -118,7 +118,6 @@ five.testing.FakeAuth.prototype.receiveRpcRequest_ = function(
 
   var execute = goog.bind(function(callback) {
     var result = this.requestHandler_.handleRpcRequest(name, version, params);
-    goog.asserts.assertObject(result);
     window.setTimeout(function() { callback(result); }, 0);
   }, this);
 

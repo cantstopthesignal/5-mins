@@ -96,6 +96,15 @@ five.testing.FakeCalendarApi.prototype.expectEventPatch = function(event,
       expectedParams).$returns(resultEvent);
 };
 
+five.testing.FakeCalendarApi.prototype.expectEventDelete = function(event) {
+  var expectedParams = {
+    'calendarId': this.calendar1Id_,
+    'eventId': event['id']
+  }
+  this.requestHandler_.handleRpcRequest('calendar.events.delete', 'v3',
+      expectedParams).$returns(null);
+};
+
 five.testing.FakeCalendarApi.prototype.makeTestData_ = function() {
   this.event1 = this.makeEvent1_();
   this.calendarListResult_ = this.makeCalendarListResult_();
