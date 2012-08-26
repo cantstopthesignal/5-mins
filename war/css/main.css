@@ -190,7 +190,6 @@ a:hover {
   width: 100%;
 }
 .inline-events-editor > .button-bar {
-  pointer-events: auto;
   box-sizing: border-box;
   overflow: hidden;
   position: absolute;
@@ -201,9 +200,9 @@ a:hover {
 }
 .inline-events-editor > .button-bar > .button {
   border-radius: 0px;
-  vertical-align: middle;
   text-align: center;
   padding: 0;
+  pointer-events: auto;
 }
 .inline-events-editor > .button-bar > .button > .arrow {
   border: solid transparent;

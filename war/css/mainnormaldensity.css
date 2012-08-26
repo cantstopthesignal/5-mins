@@ -70,7 +70,6 @@ body {
 .inline-events-editor > .button-bar {
   bottom: -16px;
   height: 16px;
-  line-height: 16px;
 }
 .inline-events-editor > .button-bar:first-child {
   top: -16px;
