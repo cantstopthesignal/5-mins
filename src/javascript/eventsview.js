@@ -87,6 +87,12 @@ five.EventsView.prototype.nowTrackerIntervalId_;
 /** @type {five.Spinner.Entry} */
 five.EventsView.prototype.calendarManagerSpinEntry_;
 
+/** @type {five.EventsTimeline} */
+five.EventsView.prototype.scrollAnchorTimeline_;
+
+/** @type {Object} */
+five.EventsView.prototype.scrollAnchorData_;
+
 five.EventsView.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-view');
@@ -396,6 +402,7 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   if (!this.selectedEvents_.length) {
     return;
   }
+  this.scrollAnchorPreCheck_();
   var mutation;
   if (e.anchor == five.EventMoveEvent.Anchor.BOTH) {
     goog.asserts.assert(e.dir);
@@ -439,6 +446,7 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.eventsChanged(this.selectedEvents_);
   }, this);
+  this.scrollAnchorPostCheck_();
 };
 
 /** @param {goog.events.Event} e */
@@ -707,6 +715,36 @@ five.EventsView.prototype.handleSaveClick_ = function(e) {
 /** @return {boolean} */
 five.EventsView.prototype.hasUnsavedChanges = function() {
   return this.calendarManager_.hasMutations();
+};
+
+/**
+ * Before a display shift that could cause a scroll anchor to move,
+ * record current state.
+ */
+five.EventsView.prototype.scrollAnchorPreCheck_ = function() {
+  this.scrollAnchorTimeline_ = null;
+  this.scrollAnchorData_ = null;
+  for (var i = 0; i < this.columns_.length; i++) {
+    var column = this.columns_[i];
+    var data = column.timeline.getScrollAnchorData();
+    if (data) {
+      this.scrollAnchorTimeline_ = column.timeline;
+      this.scrollAnchorData_ = data;
+      break;
+    }
+  }
+};
+
+/**
+ * After a possible display shift, check if any scroll anchors were set.
+ */
+five.EventsView.prototype.scrollAnchorPostCheck_ = function() {
+  if (!this.scrollAnchorTimeline_) {
+    return;
+  }
+  var deltaY = this.scrollAnchorTimeline_.getScrollAnchorDeltaY(
+      this.scrollAnchorData_);
+  this.scrollEl_.scrollTop = this.scrollEl_.scrollTop + deltaY;
 };
 
 /** @return {?string} */

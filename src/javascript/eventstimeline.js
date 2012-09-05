@@ -497,13 +497,25 @@ five.EventsTimeline.prototype.updateVisibleRegion = function(visibleRect) {
   this.timeAxis_.updateVisibleRegion(visibleRect);
 };
 
+/** @return {?Object} */
+five.EventsTimeline.prototype.getScrollAnchorData = function() {
+  return this.eventsEditor_.getScrollAnchorData();
+};
+
+/**
+ * @param {Object} data
+ * @return {number}
+ */
+five.EventsTimeline.prototype.getScrollAnchorDeltaY = function(data) {
+  return this.eventsEditor_.getScrollAnchorDeltaY(data);
+};
+
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleClick_ = function(e) {
   var event = new goog.events.Event(five.EventsTimeline.EventType.DESELECT);
   event.shiftKey = e.shiftKey;
   this.dispatchEvent(event);
 };
-
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleKeyDown_ = function(e) {

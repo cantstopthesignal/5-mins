@@ -95,6 +95,15 @@ five.EventsEditor.prototype.render = function(parentEl) {
   goog.style.showElement(this.el, this.visible_);
 };
 
+/** @return {?Object} */
+five.EventsEditor.prototype.getScrollAnchorData = function() {return null;};
+
+/**
+ * @param {Object} oldData
+ * @return {number}
+ */
+five.EventsEditor.prototype.getScrollAnchorDeltaY = goog.abstractMethod;
+
 /** @return {!five.EventsEditor.Type} */
 five.EventsEditor.prototype.getType = goog.abstractMethod;
 
