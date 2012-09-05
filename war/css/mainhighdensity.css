@@ -84,12 +84,13 @@ body {
 .inline-events-editor > .button-bar > .button {
   width: 32px;
   height: 32px;
-  line-height: 32px;
-  margin: 0px 4px;
 }
 .inline-events-editor > .button-bar > .button > .arrow {
   border-width: 8px;
   margin: 12px 0px;
+}
+.inline-events-editor > .button-bar > .spacer {
+  width: 8px;
 }
 .edge-events-editor > .button-bar {
   bottom: -96px;

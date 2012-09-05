@@ -210,6 +210,9 @@ a:hover {
   height: 0px;
   display: inline-block;
 }
+.inline-events-editor > .button-bar > .spacer {
+  display: inline-block;
+}
 .inline-events-editor > .button-bar > .shadow {
   width: 100%;
   position: absolute;

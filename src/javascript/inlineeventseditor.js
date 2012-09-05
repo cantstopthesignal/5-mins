@@ -35,7 +35,9 @@ five.InlineEventsEditor.prototype.createDom = function() {
   this.el.appendChild(bottomButtonBar);
 
   var moveUpButton = this.createArrowButton_(true, topButtonBar);
+  var moveDragButton = this.createDragButton_(topButtonBar);
   var moveDownButton = this.createArrowButton_(false, topButtonBar);
+  this.createSpacer_(topButtonBar);
   var moveStartUpButton = this.createArrowButton_(true, topButtonBar);
   var moveStartDownButton = this.createArrowButton_(false, topButtonBar);
   var moveEndUpButton = this.createArrowButton_(true, bottomButtonBar);
@@ -43,6 +45,8 @@ five.InlineEventsEditor.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.MOUSEOVER, this.handleMouseOver_).
+      listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
       listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.bothEarlier)).
       listen(moveDownButton, goog.events.EventType.CLICK, goog.partial(
@@ -56,6 +60,9 @@ five.InlineEventsEditor.prototype.createDom = function() {
       listen(moveEndDownButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.endLater));
 };
+
+/** @type {boolean} */
+five.InlineEventsEditor.prototype.mouseHover_ = false;
 
 /**
  * @param {boolean} up
@@ -71,6 +78,26 @@ five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
   button.appendChild(arrow);
   parentEl.appendChild(button);
   return button;
+};
+
+/**
+ * @param {Element} parentEl
+ */
+five.InlineEventsEditor.prototype.createDragButton_ = function(parentEl) {
+  var button = document.createElement('button');
+  goog.dom.classes.add(button, 'button');
+  parentEl.appendChild(button);
+  return button;
+};
+
+/**
+ * @param {Element} parentEl
+ */
+five.InlineEventsEditor.prototype.createSpacer_ = function(parentEl) {
+  var spacer = document.createElement('div');
+  goog.dom.classes.add(spacer, 'spacer');
+  parentEl.appendChild(spacer);
+  return spacer;
 };
 
 /**
@@ -109,6 +136,12 @@ five.InlineEventsEditor.prototype.layout = function() {
     }
   });
   goog.asserts.assert(rect);
+  if (this.mouseHover_) {
+    var oldPosition = goog.style.getPosition(this.el);
+    var oldSize = goog.style.getBorderBoxSize(this.el);
+    rect.left = oldPosition.x;
+    rect.width = oldSize.width;
+  }
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.el, rect.getSize());
 };
@@ -119,6 +152,26 @@ five.InlineEventsEditor.prototype.layout = function() {
 five.InlineEventsEditor.prototype.handleClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.InlineEventsEditor.prototype.handleMouseOver_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
+  this.mouseHover_ = true;
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.InlineEventsEditor.prototype.handleMouseOut_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
+  this.mouseHover_ = false;
 };
 
 /**

@@ -77,12 +77,13 @@ body {
 .inline-events-editor > .button-bar > .button {
   width: 16px;
   height: 16px;
-  line-height: 16px;
-  margin: 0px 2px;
 }
 .inline-events-editor > .button-bar > .button > .arrow {
   border-width: 4px;
   margin: 6px 0px;
+}
+.inline-events-editor > .button-bar > .spacer {
+  width: 4px;
 }
 .edge-events-editor > .button-bar {
   bottom: -48px;

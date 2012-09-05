@@ -91,7 +91,7 @@ five.TimeMarker.Component.prototype.owner_;
 five.TimeMarker.Component.prototype.labelEl_;
 
 /** @type {boolean} */
-five.TimeMarker.prototype.visible_ = true;
+five.TimeMarker.Component.prototype.visible_ = true;
 
 /** @type {five.TimeAxisPatchMarker} */
 five.TimeMarker.Component.prototype.timeAxisPatchMarker_;
