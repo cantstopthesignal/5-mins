@@ -110,7 +110,8 @@ five.EventCard.prototype.createDom = function() {
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
       listen(this.el, goog.events.EventType.DBLCLICK, this.handleDblClick_).
-      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_);
+      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_).
+      listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_);
 };
 
 /** @override */
@@ -204,4 +205,15 @@ five.EventCard.prototype.handleMouseDown_ = function(e) {
   if (e.shiftKey) {
     e.preventDefault();
   }
+  this.el.style.MozUserSelect = 'text';
+  this.el.style.webkitUserSelect = 'text';
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventCard.prototype.handleMouseOut_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
+  this.el.style.MozUserSelect = '';
+  this.el.style.webkitUserSelect = '';
 };
