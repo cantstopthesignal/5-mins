@@ -174,6 +174,18 @@ five.EventsView.prototype.displayEvents_ = function() {
   }, this);
 };
 
+/** @param {!Array.<!five.Event>} newSelectedEvents */
+five.EventsView.prototype.replaceSelectedEvents_ = function(newSelectedEvents) {
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    selectedEvent.setSelected(false);
+  });
+  goog.array.forEach(newSelectedEvents, function(selectedEvent) {
+    selectedEvent.setSelected(true);
+  });
+  this.selectedEvents_ = newSelectedEvents;
+  this.selectedEventsChanged_();
+};
+
 five.EventsView.prototype.selectedEventsChanged_ = function() {
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.setSelectedEvents(this.selectedEvents_);
@@ -209,32 +221,30 @@ five.EventsView.prototype.finishBatchRenderUpdate_ = function() {
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
-  goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
+  var event = /** @type {!five.Event} */ (e.target);
+  goog.asserts.assert(this.events_.indexOf(event) >= 0);
   this.startBatchRenderUpdate_();
   if (e.shiftKey) {
-    var existingIndex = this.selectedEvents_.indexOf(e.target);
+    var existingIndex = this.selectedEvents_.indexOf(event);
     if (e.type == five.Event.EventType.SELECT) {
       goog.asserts.assert(existingIndex < 0);
-      e.target.setSelected(true);
-      this.selectedEvents_.push(e.target);
+      event.setSelected(true);
+      this.selectedEvents_.push(event);
     } else if (e.type == five.Event.EventType.DESELECT) {
       goog.asserts.assert(existingIndex >= 0);
-      e.target.setSelected(false);
+      event.setSelected(false);
       this.selectedEvents_.splice(existingIndex, 1);
     } else {
       goog.asserts.fail('Type unexpected: ' + e.type);
     }
+    this.selectedEventsChanged_();
   } else {
-    goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
-      selectedEvent.setSelected(false);
-    });
-    this.selectedEvents_ = [];
+    var newSelectedEvents = [];
     if (e.type == five.Event.EventType.SELECT) {
-      e.target.setSelected(true);
-      this.selectedEvents_ = [e.target];
+      newSelectedEvents.push(event);
     }
+    this.replaceSelectedEvents_(newSelectedEvents);
   }
-  this.selectedEventsChanged_();
   this.finishBatchRenderUpdate_();
 };
 
@@ -306,13 +316,7 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
-  this.startBatchRenderUpdate_();
-  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
-    selectedEvent.setSelected(false);
-  });
-  this.selectedEvents_ = [];
-  this.selectedEventsChanged_();
-  this.finishBatchRenderUpdate_();
+  this.replaceSelectedEvents_([]);
 };
 
 /** @param {five.EventMoveEvent} e */
@@ -330,12 +334,9 @@ five.EventsView.prototype.handleEventsTimelineEventsDuplicate_ = function() {
     var newEvent = event.duplicate();
     this.addEvent_(newEvent);
     duplicatedEvents.push(newEvent);
-    event.setSelected(false);
-    newEvent.setSelected(true);
   }, this);
   this.finishBatchRenderUpdate_();
-  this.selectedEvents_ = duplicatedEvents;
-  this.selectedEventsChanged_();
+  this.replaceSelectedEvents_(duplicatedEvents);
 };
 
 five.EventsView.prototype.handleEventsTimelineEventsDelete_ = function() {
@@ -383,7 +384,7 @@ five.EventsView.prototype.addEvent_ = function(newEvent) {
 
 /**
  * Remove an event.
- * Note: does not check if this event was in selected set.
+ * Note: Does not check if the event was in selected events.
  * @param {!five.Event} event
  */
 five.EventsView.prototype.removeEvent_ = function(event) {
@@ -404,9 +405,9 @@ five.EventsView.prototype.removeEvent_ = function(event) {
 five.EventsView.prototype.createOrUpdateDragCreateEvent = function(
     startTime, endTime) {
   if (this.dragCreateEvent_ == null) {
-    this.dragCreateEvent_ = five.Event.createNew(startTime, endTime,
-        'New event');
+    this.dragCreateEvent_ = five.Event.createNew(startTime, endTime, '<new>');
     this.addEvent_(this.dragCreateEvent_);
+    this.replaceSelectedEvents_([this.dragCreateEvent_]);
   } else {
     this.dragCreateEvent_.addMutation(new five.EventMutation.SetTimeRange(
         startTime, endTime));
@@ -419,6 +420,7 @@ five.EventsView.prototype.createOrUpdateDragCreateEvent = function(
 
 five.EventsView.prototype.clearDragCreateEvent = function() {
   if (this.dragCreateEvent_) {
+    this.replaceSelectedEvents_([]);
     this.removeEvent_(this.dragCreateEvent_);
     delete this.dragCreateEvent_;
   }
