@@ -125,6 +125,34 @@ five.EventMutation.MoveEndBy.prototype.clone = function() {
 };
 
 /**
+ * @param {!goog.date.DateTime} startTime
+ * @param {!goog.date.DateTime} endTime
+ * @param {boolean=} opt_locked
+ * @constructor
+ * @extends {five.EventMutation}
+ */
+five.EventMutation.SetTimeRange = function(startTime, endTime, opt_locked) {
+  goog.base(this, opt_locked);
+
+  /** @type {!goog.date.DateTime} */
+  this.startTime_ = startTime;
+
+  /** @type {!goog.date.DateTime} */
+  this.endTime_ = endTime;
+};
+goog.inherits(five.EventMutation.SetTimeRange, five.EventMutation);
+
+/** @return {!goog.date.DateTime} */
+five.EventMutation.SetTimeRange.prototype.getStartTime = function() {
+  return this.startTime_;
+};
+
+/** @return {!goog.date.DateTime} */
+five.EventMutation.SetTimeRange.prototype.getEndTime = function() {
+  return this.endTime_;
+};
+
+/**
  * @param {string} text
  * @param {boolean=} opt_locked
  * @constructor

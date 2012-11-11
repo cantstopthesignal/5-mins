@@ -52,6 +52,25 @@ five.Event.EventType = {
   DATA_CHANGED: goog.events.getUniqueId('data_changed')
 };
 
+/**
+ * @param {!goog.date.DateTime} startTime
+ * @param {!goog.date.DateTime} endTime
+ * @param {!string} summary
+ * @return {!five.Event}
+ */
+five.Event.createNew = function(startTime, endTime, summary) {
+  var eventData = {
+    'summary': summary,
+    'start': {
+      'dateTime': new Date(startTime.valueOf()).toISOString()
+    },
+    'end': {
+      'dateTime': new Date(endTime.valueOf()).toISOString()
+    }
+  };
+  return new five.Event(eventData, true);
+};
+
 /** @return {goog.date.DateTime} */
 five.Event.parseEventDataDate_ = function(dateData) {
   if ('dateTime' in dateData) {
@@ -356,6 +375,9 @@ five.Event.prototype.calcMutations_ = function(collapse) {
       this.mutatedStartTime_.add(mutation.getInterval());
     } else if (mutation instanceof five.EventMutation.MoveEndBy) {
       this.mutatedEndTime_.add(mutation.getInterval());
+    } else if (mutation instanceof five.EventMutation.SetTimeRange) {
+      this.mutatedStartTime_ = mutation.getStartTime();
+      this.mutatedEndTime_ = mutation.getEndTime();
     } else if (mutation instanceof five.EventMutation.ChangeSummary) {
       this.mutatedSummary_ = mutation.getText();
     } else {
@@ -395,7 +417,14 @@ five.Event.prototype.maybeGetMergedMutation_ = function(mutation1, mutation2) {
   if (mutation1.isLocked() || mutation2.isLocked()) {
     return null;
   }
-  if (mutation1 instanceof five.EventMutation.MoveBy) {
+  if (mutation2 instanceof five.EventMutation.SetTimeRange) {
+    if (mutation1 instanceof five.EventMutation.MoveBy ||
+        mutation1 instanceof five.EventMutation.MoveStartBy ||
+        mutation1 instanceof five.EventMutation.MoveEndBy ||
+        mutation1 instanceof five.EventMutation.SetTimeRange) {
+      return mutation2;
+    }
+  } else if (mutation1 instanceof five.EventMutation.MoveBy) {
     if (mutation2 instanceof five.EventMutation.MoveBy) {
       var interval = mutation1.getInterval().clone();
       interval.add(mutation2.getInterval());

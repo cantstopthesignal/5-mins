@@ -27,6 +27,7 @@ five.deviceParams.DeviceParams = function() {
 
   this.showTimeMarkerLabels = !isHighDensity;
   this.enableCursorTimeMarker = !isTouch;
+  this.enableDragCreateEvent = !isTouch;
 };
 goog.addSingletonGetter(five.deviceParams.DeviceParams);
 
@@ -96,5 +97,10 @@ goog.scope(function() {
   /** @return {boolean} */
   five.deviceParams.getEnableCursorTimeMarker = function() {
     return getInstance().enableCursorTimeMarker;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableDragCreateEvent = function() {
+    return getInstance().enableDragCreateEvent;
   };
 });

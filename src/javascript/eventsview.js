@@ -93,6 +93,9 @@ five.EventsView.prototype.scrollAnchorTimeline_;
 /** @type {Object} */
 five.EventsView.prototype.scrollAnchorData_;
 
+/** @type {five.Event} */
+five.EventsView.prototype.dragCreateEvent_;
+
 five.EventsView.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-view');
@@ -387,6 +390,44 @@ five.EventsView.prototype.removeEvent_ = function(event) {
   });
 };
 
+/**
+ * @param {!goog.date.DateTime} startTime
+ * @param {!goog.date.DateTime} endTime
+ * @return {!five.Event}
+ */
+five.EventsView.prototype.createOrUpdateDragCreateEvent = function(
+    startTime, endTime) {
+  if (this.dragCreateEvent_ == null) {
+    this.dragCreateEvent_ = five.Event.createNew(startTime, endTime,
+        'New event');
+    this.addEvent_(this.dragCreateEvent_);
+  } else {
+    this.dragCreateEvent_.addMutation(new five.EventMutation.SetTimeRange(
+        startTime, endTime));
+    goog.array.forEach(this.columns_, function(column) {
+      column.timeline.eventsChanged([this.dragCreateEvent_]);
+    }, this);
+  }
+  return this.dragCreateEvent_;
+};
+
+five.EventsView.prototype.clearDragCreateEvent = function() {
+  if (this.dragCreateEvent_) {
+    this.removeEvent_(this.dragCreateEvent_);
+    delete this.dragCreateEvent_;
+  }
+};
+
+five.EventsView.prototype.commitDragCreateEvent = function() {
+  if (this.dragCreateEvent_) {
+    if (!this.promptEditEventSummary_(this.dragCreateEvent_, true)) {
+      this.clearDragCreateEvent();
+      return;
+    }
+  }
+  delete this.dragCreateEvent_;
+};
+
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleEventDataChanged_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
@@ -452,19 +493,36 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleEventEditSummary_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
-  goog.asserts.assert(this.events_.indexOf(e.target) >= 0);
   var event = /** @type {!five.Event} */ (e.target);
-  var newSummary = window.prompt("Choose a new title for event '" +
-      event.getSummary() + "'", event.getSummary());
+  this.promptEditEventSummary_(event, false);
+};
+
+/**
+ * @param {!five.Event} event
+ * @param {boolean} firstSummarySet Whether the prompt should indicate that
+ *     this is the first setting of the summary.
+ * @return {boolean} Whether the summary was correctly edited.
+ */
+five.EventsView.prototype.promptEditEventSummary_ = function(event,
+    firstSummarySet) {
+  goog.asserts.assert(this.events_.indexOf(event) >= 0);
+  var prompt;
+  if (firstSummarySet) {
+    prompt = "Choose a new title for this event";
+  } else {
+    prompt = "Choose a new title for event '" + event.getSummary() + "'";
+  }
+  var newSummary = window.prompt(prompt, event.getSummary());
   newSummary ? newSummary.trim() : null;
   if (!newSummary) {
-    return;
+    return false;
   }
   event.addMutation(new five.EventMutation.ChangeSummary(newSummary));
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.eventsChanged([event]);
   });
-}
+  return true;
+};
 
 five.EventsView.prototype.registerListenersForCalendarManager_ = function() {
   this.eventHandler.
@@ -483,6 +541,7 @@ five.EventsView.prototype.registerListenersForCalendarManager_ = function() {
 five.EventsView.prototype.handleCalendarManagerEventsChange_ = function(e) {
   this.events_ = goog.array.clone(this.calendarManager_.getEvents());
   this.selectedEvents_ = [];
+  this.dragCreateEvent_ = null;
   goog.array.forEach(this.events_, function(event) {
     this.registerListenersForEvent_(event);
   }, this);

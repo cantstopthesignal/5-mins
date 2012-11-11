@@ -101,6 +101,12 @@ five.EventsTimeline.prototype.timeMap_;
 /** @type {five.layout.TimeMap} */
 five.EventsTimeline.prototype.linearTimeMap_;
 
+/** @type {goog.date.DateTime} */
+five.EventsTimeline.prototype.mouseDownTime_;
+
+/** @type {?number} */
+five.EventsTimeline.prototype.globalMouseUpListenerKey_;
+
 /** @type {number} */
 five.EventsTimeline.prototype.scale_ = 1.0;
 
@@ -165,6 +171,7 @@ five.EventsTimeline.prototype.createDom = function() {
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
+      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_).
       listen(this.eventsEditor_, [five.EventsEditor.EventType.SHOW,
           five.EventsEditor.EventType.HIDE],
           this.handleEventsEditorVisibilityChanged_).
@@ -172,10 +179,10 @@ five.EventsTimeline.prototype.createDom = function() {
           this.handleEventsEditorMove_).
       listen(this.eventsEditor_, five.Event.EventType.DUPLICATE,
           this.handleEventsEditorDuplicate_);
-
-  if (five.deviceParams.getEnableCursorTimeMarker()) {
-    this.eventHandler.
-        listen(this.el, goog.events.EventType.MOUSEMOVE, this.handleMouseMove_);
+  if (five.deviceParams.getEnableCursorTimeMarker() ||
+      five.deviceParams.getEnableDragCreateEvent()) {
+    this.eventHandler.listen(this.el, goog.events.EventType.MOUSEMOVE,
+        this.handleMouseMove_);
   }
 
   var params = new five.layout.Params();
@@ -206,6 +213,10 @@ five.EventsTimeline.prototype.render = function(parentEl) {
 five.EventsTimeline.prototype.disposeInternal = function() {
   goog.disposeAll(this.eventCards_);
   delete this.owner_;
+  if (this.globalMouseUpListenerKey_) {
+    goog.events.unlistenByKey(this.globalMouseUpListenerKey_);
+    delete this.globalMouseUpListenerKey_;
+  }
   goog.base(this, 'disposeInternal');
 };
 
@@ -531,10 +542,43 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;
+  } else if (e.keyCode == goog.events.KeyCodes.ESC) {
+    this.clearDragEventCreate_();
   }
   if (event && this.dispatchEvent(event)) {
     e.preventDefault();
     e.stopPropagation();
+  }
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsTimeline.prototype.handleMouseDown_ = function(e) {
+  this.clearMouseDown_();
+  if (!this.timeMap_) {
+    return;
+  }
+  var time = this.timeMap_.yPosToTime(this.getEventYPos_(e));
+  this.mouseDownTime_ = five.util.roundToFiveMinutes(time);
+  this.globalMouseUpListenerKey_ = goog.events.listen(window,
+      goog.events.EventType.MOUSEUP, this.handleGlobalMouseUp_, false, this);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsTimeline.prototype.handleGlobalMouseUp_ = function(e) {
+  var mouseDownTime = this.mouseDownTime_;
+  this.clearMouseDown_();
+  if (!this.timeMap_) {
+    return;
+  }
+  if (five.deviceParams.getEnableDragCreateEvent() && mouseDownTime) {
+    if (goog.dom.contains(this.el, e.target)) {
+      var mouseUpTime = this.timeMap_.yPosToTime(this.getEventYPos_(e));
+      mouseUpTime = five.util.roundToFiveMinutes(mouseUpTime);
+      this.updateDragCreateEventTimeRange_(mouseDownTime, mouseUpTime);
+      this.owner_.commitDragCreateEvent();
+    } else {
+      this.owner_.clearDragCreateEvent();
+    }
   }
 };
 
@@ -544,13 +588,7 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
     return;
   }
   if (five.deviceParams.getEnableCursorTimeMarker()) {
-    var el = e.target;
-    var yPos = e.offsetY;
-    while (el && el != this.el) {
-      yPos += el.offsetTop;
-      el = el.parentNode;
-    }
-    var time = this.timeMap_.yPosToTime(yPos);
+    var time = this.timeMap_.yPosToTime(this.getEventYPos_(e));
     time = five.util.roundToFiveMinutes(time);
     if (!this.cursorMarker_) {
       this.cursorMarker_ = new five.TimeMarker(time,
@@ -562,13 +600,59 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
       this.cursorMarker_.setVisible(true);
     }
   }
+  if (five.deviceParams.getEnableDragCreateEvent() && this.mouseDownTime_) {
+    var time = this.timeMap_.yPosToTime(this.getEventYPos_(e));
+    time = five.util.roundToFiveMinutes(time);
+    this.updateDragCreateEventTimeRange_(this.mouseDownTime_, time);
+  }
 };
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleMouseOut_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
   if (this.cursorMarker_) {
     this.cursorMarker_.setVisible(false);
   }
+};
+
+five.EventsTimeline.prototype.clearMouseDown_ = function() {
+  delete this.mouseDownTime_;
+  if (this.globalMouseUpListenerKey_) {
+    goog.events.unlistenByKey(this.globalMouseUpListenerKey_);
+    delete this.globalMouseUpListenerKey_;
+  }
+};
+
+five.EventsTimeline.prototype.clearDragEventCreate_ = function() {
+  this.owner_.clearDragCreateEvent();
+  this.clearMouseDown_();
+};
+
+five.EventsTimeline.prototype.updateDragCreateEventTimeRange_ = function(time1,
+    time2) {
+  var timeCompare = goog.date.Date.compare(time1, time2); 
+  if (!timeCompare) {
+    return;
+  }
+  var startTime = timeCompare < 0 ? time1 : time2;
+  var endTime = timeCompare < 0 ? time2 : time1;
+  this.owner_.createOrUpdateDragCreateEvent(startTime, endTime);
+};
+
+/**
+ * @param {goog.events.BrowserEvent} e
+ * @return {number}
+ */
+five.EventsTimeline.prototype.getEventYPos_ = function(e) {
+  var el = e.target;
+  var yPos = e.offsetY;
+  while (el && el != this.el) {
+    yPos += el.offsetTop;
+    el = el.parentNode;
+  }
+  return yPos;
 };
 
 /** @param {five.EventMoveEvent} e */
