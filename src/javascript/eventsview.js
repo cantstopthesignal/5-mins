@@ -325,11 +325,17 @@ five.EventsView.prototype.handleEventsTimelineEventsDuplicate_ = function() {
     return;
   }
   this.startBatchRenderUpdate_();
+  var duplicatedEvents = [];
   goog.array.forEach(this.selectedEvents_, function(event) {
     var newEvent = event.duplicate();
     this.addEvent_(newEvent);
+    duplicatedEvents.push(newEvent);
+    event.setSelected(false);
+    newEvent.setSelected(true);
   }, this);
   this.finishBatchRenderUpdate_();
+  this.selectedEvents_ = duplicatedEvents;
+  this.selectedEventsChanged_();
 };
 
 five.EventsView.prototype.handleEventsTimelineEventsDelete_ = function() {
