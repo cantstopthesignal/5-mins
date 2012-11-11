@@ -8,6 +8,7 @@ goog.require('five.EventMutation');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
+goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventType');
 goog.require('goog.events.EventTarget');
@@ -61,6 +62,10 @@ five.CalendarManager.EVENT_CREATE_ERROR_ =
 five.CalendarManager.EVENT_DELETE_ERROR_ =
   'Error deleting event. Please try again.';
 
+/** @type {goog.debug.Logger} */
+five.CalendarManager.prototype.logger_ = goog.debug.Logger.getLogger(
+    'five.CalendarManager');
+
 /** @type {Array.<!five.Event>} */
 five.CalendarManager.prototype.events_;
 
@@ -112,7 +117,8 @@ five.CalendarManager.prototype.loadEvents = function(startDate, endDate) {
         this.requestEnded_();
         return this.events_;
       }, this).
-      addErrback(function() {
+      addErrback(function(error) {
+        this.logger_.severe('Error loading events: ' + error, error);
         this.requestEnded_();
         this.notificationManager_.show(
             five.CalendarManager.EVENTS_LOAD_ERROR_);
@@ -132,7 +138,11 @@ five.CalendarManager.prototype.removeEvent = function(event) {
   var index = this.events_.indexOf(event);
   goog.asserts.assert(index >= 0);
   this.events_.splice(index, 1);
-  this.removedEvents_.push(event);
+  if (!event.isNew()) {
+    this.removedEvents_.push(event);
+  } else {
+    goog.dispose(event);
+  }
   this.updateHasMutations_();
 };
 
@@ -162,7 +172,8 @@ five.CalendarManager.prototype.createEvent_ = function(event) {
         event.endCreate(resp);
         this.requestEnded_();
       }, this).
-      addErrback(function() {
+      addErrback(function(error) {
+        this.logger_.severe('Error creating event: ' + error, error);
         event.abortCreate();
         this.requestEnded_();
         this.notificationManager_.show(
@@ -181,7 +192,8 @@ five.CalendarManager.prototype.saveMutatedEvent_ = function(event) {
         event.endMutationPatch(resp);
         this.requestEnded_();
       }, this).
-      addErrback(function() {
+      addErrback(function(error) {
+        this.logger_.severe('Error saving event: ' + error, error);
         event.abortMutationPatch();
         this.requestEnded_();
         this.notificationManager_.show(
@@ -203,7 +215,8 @@ five.CalendarManager.prototype.deleteEvent_ = function(event) {
         this.eventDeleted_(event);
         this.requestEnded_();
       }, this).
-      addErrback(function() {
+      addErrback(function(error) {
+        this.logger_.severe('Error deleting events: ' + error, error);
         this.requestEnded_();
         this.notificationManager_.show(
             five.CalendarManager.EVENT_DELETE_ERROR_);
