@@ -211,7 +211,6 @@ five.CalendarManager.prototype.deleteEvent_ = function(event) {
   }
   this.calendarApi_.deleteEvent(this.calendarData_['id'], event.startDelete()).
       addCallback(function(resp) {
-        goog.asserts.assert(resp === null);
         this.eventDeleted_(event);
         this.requestEnded_();
       }, this).

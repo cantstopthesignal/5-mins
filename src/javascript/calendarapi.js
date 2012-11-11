@@ -143,7 +143,6 @@ five.CalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
     'eventId': eventDeleteData['id']
   };
   var callback = function(resp) {
-    goog.asserts.assert(resp === null);
     this.logger_.info('Event deleted');
   };
   var errback = function(error) {
