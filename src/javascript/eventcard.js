@@ -130,6 +130,7 @@ five.EventCard.prototype.updateDisplay = function() {
   }
   goog.dom.setTextContent(this.dateRangeEl_, dateRangeText);
   goog.dom.setTextContent(this.summaryEl_, this.event_.getSummary());
+  this.el.setAttribute('title', this.event_.getSummary());
 };
 
 five.EventCard.prototype.updateThemeDisplay_ = function() {
