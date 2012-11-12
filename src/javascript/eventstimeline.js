@@ -557,8 +557,7 @@ five.EventsTimeline.prototype.handleMouseDown_ = function(e) {
   if (!this.timeMap_) {
     return;
   }
-  var time = this.timeMap_.yPosToTime(this.getEventYPos_(e));
-  this.mouseDownTime_ = five.util.roundToFiveMinutes(time);
+  this.mouseDownTime_ = this.getMouseEventTime_(e);
   this.globalMouseUpListenerKey_ = goog.events.listen(window,
       goog.events.EventType.MOUSEUP, this.handleGlobalMouseUp_, false, this);
 };
@@ -572,8 +571,7 @@ five.EventsTimeline.prototype.handleGlobalMouseUp_ = function(e) {
   }
   if (five.deviceParams.getEnableDragCreateEvent() && mouseDownTime) {
     if (goog.dom.contains(this.el, e.target)) {
-      var mouseUpTime = this.timeMap_.yPosToTime(this.getEventYPos_(e));
-      mouseUpTime = five.util.roundToFiveMinutes(mouseUpTime);
+      var mouseUpTime = this.getMouseEventTime_(e);
       this.updateDragCreateEventTimeRange_(mouseDownTime, mouseUpTime);
       this.owner_.commitDragCreateEvent();
     } else {
@@ -588,8 +586,7 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
     return;
   }
   if (five.deviceParams.getEnableCursorTimeMarker()) {
-    var time = this.timeMap_.yPosToTime(this.getEventYPos_(e));
-    time = five.util.roundToFiveMinutes(time);
+    var time = this.getMouseEventTime_(e);
     if (!this.cursorMarker_) {
       this.cursorMarker_ = new five.TimeMarker(time,
           five.TimeMarkerTheme.CURSOR);
@@ -601,8 +598,7 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
     }
   }
   if (five.deviceParams.getEnableDragCreateEvent() && this.mouseDownTime_) {
-    var time = this.timeMap_.yPosToTime(this.getEventYPos_(e));
-    time = five.util.roundToFiveMinutes(time);
+    var time = this.getMouseEventTime_(e);
     this.updateDragCreateEventTimeRange_(this.mouseDownTime_, time);
   }
 };
@@ -643,14 +639,31 @@ five.EventsTimeline.prototype.updateDragCreateEventTimeRange_ = function(time1,
 
 /**
  * @param {goog.events.BrowserEvent} e
+ * @return {!goog.date.DateTime}
+ */
+five.EventsTimeline.prototype.getMouseEventTime_ = function(e) {
+  var yPos = this.getMouseEventYPos_(e);
+  var xPos = e.offsetX;
+  for (var el = e.target; el && el != this.el; el = el.parentNode) {
+    xPos += el.offsetLeft;
+  }
+  var time;
+  if (xPos <= five.deviceParams.getTimeAxisWidth()) {
+    time = this.linearTimeMap_.yPosToTime(yPos);
+  } else {
+    time = this.timeMap_.yPosToTime(yPos);
+  }
+  return five.util.roundToFiveMinutes(time); 
+};
+
+/**
+ * @param {goog.events.BrowserEvent} e
  * @return {number}
  */
-five.EventsTimeline.prototype.getEventYPos_ = function(e) {
-  var el = e.target;
+five.EventsTimeline.prototype.getMouseEventYPos_ = function(e) {
   var yPos = e.offsetY;
-  while (el && el != this.el) {
+  for (var el = e.target; el && el != this.el; el = el.parentNode) {
     yPos += el.offsetTop;
-    el = el.parentNode;
   }
   return yPos;
 };
