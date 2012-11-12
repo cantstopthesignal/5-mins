@@ -365,9 +365,15 @@ five.Event.prototype.calcMutations_ = function(collapse) {
   if (collapse) {
     this.collapseMutations_();
   }
+  this.mutatedSummary_ = this.eventData_['summary'];
   this.mutatedStartTime_ = this.startTime_.clone();
   this.mutatedEndTime_ = this.endTime_.clone();
+  var newMutations = [];
   goog.array.forEach(this.mutations_, function(mutation) {
+    if (mutation instanceof five.EventMutation.IntervalMutation &&
+        mutation.getInterval().isZero()) {
+      return;
+    }
     if (mutation instanceof five.EventMutation.MoveBy) {
       this.mutatedStartTime_.add(mutation.getInterval());
       this.mutatedEndTime_.add(mutation.getInterval());
@@ -376,20 +382,33 @@ five.Event.prototype.calcMutations_ = function(collapse) {
     } else if (mutation instanceof five.EventMutation.MoveEndBy) {
       this.mutatedEndTime_.add(mutation.getInterval());
     } else if (mutation instanceof five.EventMutation.SetTimeRange) {
-      this.mutatedStartTime_ = mutation.getStartTime();
-      this.mutatedEndTime_ = mutation.getEndTime();
+      this.mutatedStartTime_ = mutation.getStartTime().clone();
+      this.mutatedEndTime_ = mutation.getEndTime().clone();
     } else if (mutation instanceof five.EventMutation.ChangeSummary) {
+      if (this.mutatedSummary_ == mutation.getText()) {
+        return;
+      }
       this.mutatedSummary_ = mutation.getText();
     } else {
       goog.asserts.fail('Unexpected mutation: ' + mutation);
     }
+    if (collapse) {
+      newMutations.push(mutation);
+    }
   }, this);
+  if (collapse) {
+    this.mutations_ = newMutations;
+  }
 };
 
 five.Event.prototype.collapseMutations_ = function() {
   var newMutations = [];
+  var sortedMutations = goog.array.clone(this.mutations_);
+  goog.array.stableSort(sortedMutations, function(a, b) {
+    return a.getSortIndex() - b.getSortIndex();
+  });
   var topMutation = null;
-  goog.array.forEach(this.mutations_, function(mutation) {
+  goog.array.forEach(sortedMutations, function(mutation) {
     if (!topMutation) {
       topMutation = mutation;
       return;
@@ -447,6 +466,5 @@ five.Event.prototype.maybeGetMergedMutation_ = function(mutation1, mutation2) {
       return mutation2;
     }
   }
-
   return null;
-}
+};
