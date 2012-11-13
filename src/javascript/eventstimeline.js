@@ -543,7 +543,8 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;
   } else if (e.keyCode == goog.events.KeyCodes.ESC) {
-    this.clearDragEventCreate_();
+    this.clearMouseDown_();
+    this.clearDragCreateEvent_();
   }
   if (event && this.dispatchEvent(event)) {
     e.preventDefault();
@@ -573,9 +574,9 @@ five.EventsTimeline.prototype.handleGlobalMouseUp_ = function(e) {
     if (goog.dom.contains(this.el, e.target)) {
       var mouseUpTime = this.getMouseEventTime_(e);
       this.updateDragCreateEventTimeRange_(mouseDownTime, mouseUpTime);
-      this.owner_.commitDragCreateEvent();
+      this.commitDragCreateEvent_();
     } else {
-      this.owner_.clearDragCreateEvent();
+      this.clearDragCreateEvent_();
     }
   }
 };
@@ -621,9 +622,17 @@ five.EventsTimeline.prototype.clearMouseDown_ = function() {
   }
 };
 
-five.EventsTimeline.prototype.clearDragEventCreate_ = function() {
-  this.owner_.clearDragCreateEvent();
-  this.clearMouseDown_();
+five.EventsTimeline.prototype.commitDragCreateEvent_ = function() {
+  this.owner_.commitDragCreateEvent();
+  this.layoutManager_.allowLayoutCondensing(true);
+  this.layout_();
+};
+
+five.EventsTimeline.prototype.clearDragCreateEvent_ = function() {
+  if (this.owner_.clearDragCreateEvent()) {
+    this.layoutManager_.allowLayoutCondensing(true);
+    this.layout_();
+  }
 };
 
 five.EventsTimeline.prototype.updateDragCreateEventTimeRange_ = function(time1,
@@ -632,6 +641,7 @@ five.EventsTimeline.prototype.updateDragCreateEventTimeRange_ = function(time1,
   if (!timeCompare) {
     return;
   }
+  this.layoutManager_.allowLayoutCondensing(false);
   var startTime = timeCompare < 0 ? time1 : time2;
   var endTime = timeCompare < 0 ? time2 : time1;
   this.owner_.createOrUpdateDragCreateEvent(startTime, endTime);

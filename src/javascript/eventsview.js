@@ -418,12 +418,15 @@ five.EventsView.prototype.createOrUpdateDragCreateEvent = function(
   return this.dragCreateEvent_;
 };
 
+/** @return {boolean} Whether a drag create event was cleared. */
 five.EventsView.prototype.clearDragCreateEvent = function() {
   if (this.dragCreateEvent_) {
     this.replaceSelectedEvents_([]);
     this.removeEvent_(this.dragCreateEvent_);
     delete this.dragCreateEvent_;
+    return true;
   }
+  return false;
 };
 
 five.EventsView.prototype.commitDragCreateEvent = function() {

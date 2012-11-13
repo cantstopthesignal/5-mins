@@ -50,6 +50,9 @@ five.layout.Calc.prototype.timeMap_;
 /** @type {five.layout.TimeMap} */
 five.layout.Calc.prototype.linearTimeMap_;
 
+/** @type {five.layout.TimeMap} */
+five.layout.Calc.prototype.condenseRestrictTimeMap_;
+
 /** @type {!goog.date.DateTime} */
 five.layout.Calc.prototype.minTime;
 
@@ -78,6 +81,15 @@ five.layout.Calc.prototype.setHorzSplits = function(horzSplits) {
   this.horzSplits_ = horzSplits;
 };
 
+/**
+ * Set a time map which will be used to restrict condensing of the layout
+ * smaller than this map.
+ * @param {!five.layout.TimeMap} timeMap
+ */
+five.layout.Calc.prototype.setCondensingRestriction = function(timeMap) {
+  this.condenseRestrictTimeMap_ = timeMap;
+};
+
 five.layout.Calc.prototype.calc = function() {
   goog.asserts.assert(this.events_);
   var startTime = +new Date();
@@ -89,6 +101,7 @@ five.layout.Calc.prototype.calc = function() {
   this.calcInitialTimePointConstraints_();
   this.enforceHorzSplitHeights_();
   this.enforceMinEventHeight_();
+  this.enforceCondenseRestriction_();
   this.resolveTimePointConstraints_();
   this.calcTimeMap_();
   this.calcLinearTimes_();
@@ -347,6 +360,24 @@ five.layout.Calc.prototype.enforceMinEventHeight_ = function() {
     }
     if (this.minEventHeight > totalMinHeights) {
       maxTimeGapTimePoint.minHeight += this.minEventHeight - totalMinHeights;
+    }
+  }, this);
+};
+
+five.layout.Calc.prototype.enforceCondenseRestriction_ = function() {
+  // If a condensing restriction is in place, make sure the layout
+  // does not condense below the provided time map.
+  if (!this.condenseRestrictTimeMap_) {
+    return;
+  }
+  goog.array.forEach(this.timePoints_, function(timePoint) {
+    if (timePoint.next) {
+      var yPosStart = this.condenseRestrictTimeMap_.timeToYPos(
+          timePoint.time);
+      var yPosEnd = this.condenseRestrictTimeMap_.timeToYPos(
+          timePoint.next.time);
+      timePoint.minHeight = Math.max(timePoint.minHeight,
+          yPosEnd - yPosStart);
     }
   }, this);
 };

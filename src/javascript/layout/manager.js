@@ -29,6 +29,9 @@ five.layout.Manager = function(params) {
 };
 goog.inherits(five.layout.Manager, goog.Disposable);
 
+/** @type {boolean} */
+five.layout.Manager.prototype.allowCondensing_ = true;
+
 /** @type {five.layout.TimeMap} */
 five.layout.Manager.prototype.timeMap_;
 
@@ -67,10 +70,18 @@ five.layout.Manager.prototype.removeHorzSplit = function(horzSplit) {
   this.horzSplits_.splice(index, 1);
 };
 
+five.layout.Manager.prototype.allowLayoutCondensing = function(
+    allowCondensing) {
+  this.allowCondensing_ = allowCondensing;
+};
+
 five.layout.Manager.prototype.calc = function() {
   var calc = new five.layout.Calc(this.params_);
   calc.setEvents(this.events_);
   calc.setHorzSplits(this.horzSplits_);
+  if (!this.allowCondensing_ && this.timeMap_) {
+    calc.setCondensingRestriction(this.timeMap_);
+  }
   calc.calc();
   this.timeMap_ = calc.getTimeMap();
   this.linearTimeMap_ = calc.getLinearTimeMap();
