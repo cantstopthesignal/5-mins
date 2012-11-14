@@ -105,6 +105,9 @@ five.Event.prototype.mutatedEndTime_;
 /** @type {string} */
 five.Event.prototype.mutatedSummary_;
 
+/** @type {five.Event} */
+five.Event.prototype.insertAfter_;
+
 /** @return {goog.date.DateTime} */
 five.Event.prototype.getStartTime = function() {
   return this.mutatedStartTime_ || this.startTime_;
@@ -144,6 +147,16 @@ five.Event.prototype.detachDisplay = function(display) {
   });
 };
 
+/** @param {five.Event} otherEvent */
+five.Event.prototype.setInsertAfter = function(otherEvent) {
+  this.insertAfter_ = otherEvent;
+};
+
+/** @return {five.Event} */
+five.Event.prototype.getInsertAfter = function() {
+  return this.insertAfter_;
+};
+
 /** @return {!five.Event} */
 five.Event.prototype.duplicate = function() {
   var eventData = {
@@ -155,7 +168,9 @@ five.Event.prototype.duplicate = function() {
       'dateTime': new Date(this.getEndTime().valueOf()).toISOString()
     }
   };
-  return new five.Event(eventData, true);
+  var newEvent = new five.Event(eventData, true);
+  newEvent.setInsertAfter(this);
+  return newEvent;
 };
 
 /**
@@ -334,6 +349,7 @@ five.Event.prototype.parseEventData_ = function() {
 five.Event.prototype.disposeInternal = function() {
   delete this.displays_;
   delete this.mutations_;
+  delete this.insertAfter_;
   goog.base(this, 'disposeInternal');
 };
 

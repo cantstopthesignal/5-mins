@@ -1,4 +1,4 @@
-//Copyright cantstopthesignals@gmail.com
+// Copyright cantstopthesignals@gmail.com
 
 goog.provide('five.TimeAxisPatch');
 

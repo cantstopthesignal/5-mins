@@ -7,6 +7,7 @@ goog.require('five.Component');
 goog.require('five.DayBanner');
 goog.require('five.Event');
 goog.require('five.EventMutation');
+goog.require('five.EventsSplitter');
 goog.require('five.EventsTimeline');
 goog.require('five.TimeMarker');
 goog.require('five.TimeMarkerTheme');
@@ -312,7 +313,9 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
       listen(timeline, EventType.EVENTS_DUPLICATE,
           this.handleEventsTimelineEventsDuplicate_).
       listen(timeline, EventType.EVENTS_DELETE,
-          this.handleEventsTimelineEventsDelete_);
+          this.handleEventsTimelineEventsDelete_).
+      listen(timeline, EventType.EVENTS_SPLIT,
+          this.handleEventsTimelineEventsSplit_);
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
@@ -350,6 +353,21 @@ five.EventsView.prototype.handleEventsTimelineEventsDelete_ = function() {
   this.selectedEvents_ = [];
   this.selectedEventsChanged_();
   this.finishBatchRenderUpdate_();
+};
+
+five.EventsView.prototype.handleEventsTimelineEventsSplit_ = function() {
+  if (this.selectedEvents_.length <= 1) {
+    return;
+  }
+  this.startBatchRenderUpdate_();
+  var eventSplitter = new five.EventsSplitter(this.selectedEvents_);
+  eventSplitter.split();
+  goog.array.forEach(eventSplitter.getNewEvents(), function(newEvent) {
+    this.addEvent_(newEvent);
+  }, this);
+  var newSelectedEvents = eventSplitter.getAllEvents();
+  this.finishBatchRenderUpdate_();
+  this.replaceSelectedEvents_(newSelectedEvents);
 };
 
 five.EventsView.prototype.registerListenersForScrollElement_ = function() {
