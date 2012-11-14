@@ -35,6 +35,9 @@
         </script>
         <%
       } else {
+        if (jsMode == JsMode.DEBUG) {
+          %><script type="text/javascript">CLOSURE_NO_DEPS = true;</script><%
+        }
         %>
         <script type="text/javascript" src="js/main<%= jsMode.getName() %>.js"></script>
         <%
