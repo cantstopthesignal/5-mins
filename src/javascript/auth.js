@@ -78,6 +78,7 @@ five.Auth.prototype.loadGapiJavascriptClientAndAuth_ = function() {
   goog.exportSymbol(callbackName,
       goog.bind(this.handleGapiClientLoad_, this));
   var scriptEl = document.createElement("script");
+  scriptEl.async = true;
   scriptEl.type = "text/javascript";
   scriptEl.src = "https://apis.google.com/js/client.js?onload=" +
       encodeURIComponent(callbackName);

@@ -5,6 +5,7 @@ goog.provide('five.CalendarManager');
 goog.require('five.AppContext');
 goog.require('five.Event');
 goog.require('five.EventMutation');
+goog.require('five.NotificationManager');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
