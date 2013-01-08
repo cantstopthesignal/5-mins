@@ -42,7 +42,7 @@ five.EventsView = function(calendarManager, appBar) {
   /** @type {!Array.<!five.Event>} */
   this.selectedEvents_ = [];
 
-  this.initDefaultDateRange_();
+  this.initDefaultViewDate_();
   this.updateViewDate_();
 
   this.registerListenersForCalendarManager_();
@@ -54,12 +54,6 @@ five.EventsView.NOW_TRACKER_INTERVAL_ = 15 * 1000;
 
 /** @type {number} */
 five.EventsView.SCROLL_ANIMATION_DURATION_MS = 500;
-
-/** @type {goog.date.DateTime} */
-five.EventsView.prototype.startDate_;
-
-/** @type {goog.date.DateTime} */
-five.EventsView.prototype.endDate_;
 
 /** @type {goog.date.DateTime} */
 five.EventsView.prototype.viewDate_;
@@ -134,7 +128,7 @@ five.EventsView.prototype.render = function(parentEl) {
   parentEl.appendChild(this.el);
 
   if (!this.events_) {
-    this.loadEvents_().addCallback(this.handleInitialEventsLoad_, this);
+    this.reloadEvents_().addCallback(this.handleInitialEventsLoad_, this);
   }
 
   if (!this.nowTrackerIntervalId_) {
@@ -165,8 +159,12 @@ five.EventsView.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
-five.EventsView.prototype.loadEvents_ = function() {
-  return this.calendarManager_.loadEvents(this.startDate_, this.endDate_);
+five.EventsView.prototype.reloadEvents_ = function() {
+  var startDate = this.viewDate_.clone();
+  startDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -2));
+  var endDate = this.viewDate_.clone();
+  endDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 4));
+  return this.calendarManager_.loadEvents(startDate, endDate);
 };
 
 five.EventsView.prototype.displayEvents_ = function() {
@@ -744,15 +742,9 @@ five.EventsView.prototype.handleNowTrackerTick_ = function() {
   }
 };
 
-five.EventsView.prototype.initDefaultDateRange_ = function() {
+five.EventsView.prototype.initDefaultViewDate_ = function() {
   this.viewDate_ = new goog.date.DateTime();
   this.viewDate_.setTime(new goog.date.Date().getTime());
-
-  this.startDate_ = this.viewDate_.clone();
-  this.startDate_.add(new goog.date.Interval(goog.date.Interval.DAYS, -1));
-
-  this.endDate_ = this.viewDate_.clone();
-  this.endDate_.add(new goog.date.Interval(goog.date.Interval.DAYS, 4));
 };
 
 five.EventsView.prototype.updateViewDate_ = function() {
@@ -785,7 +777,7 @@ five.EventsView.prototype.handleRefreshClick_ = function(e) {
       'Some events have been modified, are you sure you want to refresh?')) {
     return;
   }
-  this.loadEvents_();
+  this.reloadEvents_();
 };
 
 /** @param {goog.events.Event} e */
