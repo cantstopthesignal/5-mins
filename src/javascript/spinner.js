@@ -112,9 +112,22 @@ five.Spinner.prototype.maybeStartAnimation_ = function() {
         this.el.offsetHeight));
   }
 
-  this.el.setAttribute('width', this.size_ + 'px');
-  this.el.setAttribute('height', this.size_ + 'px');
   this.ctx_ = this.el.getContext('2d');
+
+  var devicePixelRatio = window.devicePixelRatio || 1;
+  var backingStoreRatio = this.ctx_['webkitBackingStorePixelRatio'] ||
+      this.ctx_['mozBackingStorePixelRatio'] ||
+      this.ctx_['msBackingStorePixelRatio'] ||
+      this.ctx_['oBackingStorePixelRatio'] ||
+      this.ctx_['backingStorePixelRatio'] || 1;
+  var upscaleRatio = devicePixelRatio / backingStoreRatio;
+
+  this.el.setAttribute('width', (this.size_ * upscaleRatio) + 'px');
+  this.el.setAttribute('height', (this.size_ * upscaleRatio) + 'px');
+  this.el.style.width = this.size_ + 'px';
+  this.el.style.height = this.size_ + 'px';
+  this.ctx_.setTransform(1, 0, 0, 1, 0, 0);
+  this.ctx_.scale(upscaleRatio, upscaleRatio);
 
   if (this.size_ >= 128) {
     this.numBlips_ = 15;

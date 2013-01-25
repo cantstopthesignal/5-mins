@@ -44,6 +44,9 @@ five.TimeAxisPatchCanvas.prototype.topOffset_ = 0;
 /** @type {number} */
 five.TimeAxisPatchCanvas.prototype.height_ = 0;
 
+/** @type {number} */
+five.TimeAxisPatchCanvas.prototype.upscaleRatio_ = 1;
+
 five.TimeAxisPatchCanvas.prototype.createDom = function() {
   goog.asserts.assert(!this.el);
   this.el = document.createElement('canvas');
@@ -110,8 +113,11 @@ five.TimeAxisPatchCanvas.prototype.finishBatchUpdate = function() {
 };
 
 five.TimeAxisPatchCanvas.prototype.doPaint_ = function() {
+  this.doPaintCheckDevicePixelRatio_();
   this.doPaintUpdateRect_();
 
+  this.ctx_.setTransform(1, 0, 0, 1, 0, 0);
+  this.ctx_.scale(this.upscaleRatio_, this.upscaleRatio_);
   this.ctx_.clearRect(0, 0, this.width_, this.height_);
 
   this.ctx_.lineWidth = 1;
@@ -182,6 +188,23 @@ five.TimeAxisPatchCanvas.prototype.strokePatchLine_ = function(
   this.ctx_.stroke();
 };
 
+five.TimeAxisPatchCanvas.prototype.doPaintCheckDevicePixelRatio_ = function() {
+  var devicePixelRatio = window.devicePixelRatio || 1;
+  var backingStoreRatio = this.ctx_['webkitBackingStorePixelRatio'] ||
+      this.ctx_['mozBackingStorePixelRatio'] ||
+      this.ctx_['msBackingStorePixelRatio'] ||
+      this.ctx_['oBackingStorePixelRatio'] ||
+      this.ctx_['backingStorePixelRatio'] || 1;
+  var oldUpscaleRatio = this.upscaleRatio_;
+  this.upscaleRatio_ = devicePixelRatio / backingStoreRatio;
+  if (oldUpscaleRatio != this.upscaleRatio_) {
+    this.el.setAttribute('width', (this.width_ * this.upscaleRatio_) + 'px');
+    this.el.style.width = this.width_ + 'px';
+    // Force height to reset
+    this.height_ = 0;
+  }
+};
+
 five.TimeAxisPatchCanvas.prototype.doPaintUpdateRect_ = function() {
   var minYPos = null, maxYPos = null;
   goog.object.forEach(this.patchMap_, function(patch) {
@@ -210,9 +233,10 @@ five.TimeAxisPatchCanvas.prototype.doPaintUpdateRect_ = function() {
     goog.style.setPosition(this.el, this.pos_.x, this.pos_.y + this.topOffset_);
   }
   var oldHeight = this.height_;
-  this.height_ = maxYPos - minYPos + 1;
+  this.height_ = maxYPos - minYPos + 2;
   if (oldHeight != this.height_) {
-    this.el.setAttribute('height', this.height_ + 'px');
+    this.el.setAttribute('height', (this.height_ * this.upscaleRatio_) + 'px');
+    this.el.style.height = this.height_ + 'px';
   }
 };
 
