@@ -175,7 +175,7 @@ five.CalendarApi.prototype.callApi_ = function(name, version, params,
         }
       } else if (resp['error']) {
         var error = resp ? resp['error'] : null;
-        if (error && error['code'] == 401) {
+        if (error && this.isLikelyAuthFailure_(error)) {
           // Authorization failure.
           if (!retryOnAuthFailure) {
             d.errback('Authorization failed');
@@ -195,4 +195,20 @@ five.CalendarApi.prototype.callApi_ = function(name, version, params,
   }, this);
   doRequest();
   return d;
+};
+
+/**
+ * @param {Object} error Error response object
+ * @return {boolean}
+ */
+five.CalendarApi.prototype.isLikelyAuthFailure_ = function(error) {
+  if (error['code'] == 401) {
+    return true;
+  }
+  // Due to a bug in google apis, a 404 can be returned instead of a 401
+  // sometimes.
+  if (error['code'] == 404 && !this.auth_.isTokenValid()) {
+    return true;
+  }
+  return false;
 };

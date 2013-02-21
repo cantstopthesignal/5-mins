@@ -56,6 +56,15 @@ five.Auth.prototype.restart = function() {
   goog.asserts.assert(!this.authDeferred_.hasFired());
 };
 
+/**
+ * Check if the current auth token seems to be valid.
+ * @return {boolean}
+ */
+five.Auth.prototype.isTokenValid = function() {
+  var token = goog.getObjectByName('gapi.auth.getToken')();
+  return token && ('access_token' in token);
+};
+
 /** @return {goog.async.Deferred} */
 five.Auth.prototype.getAuthDeferred = function() {
   return this.authDeferred_;
