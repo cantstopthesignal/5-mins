@@ -413,8 +413,7 @@ five.layout.Calc.prototype.calcLinearTimes_ = function() {
   var timePointIdx = 0;
   while (timePointIdx < this.timePoints_.length) {
     var timePoint = this.timePoints_[timePointIdx];
-    var nextHour = hourIter.clone();
-    nextHour.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
+    var nextHour = five.util.hourAddSafe(hourIter);
     if (goog.date.Date.compare(timePoint.time, hourIter) < 0) {
       timePoint.linearTimeYPos = timePoint.yPos;
       timePointIdx++;

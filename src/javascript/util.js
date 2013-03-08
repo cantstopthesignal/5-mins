@@ -3,7 +3,6 @@
 goog.provide('five.util');
 
 goog.require('goog.date.Date');
-goog.require('goog.date.Interval');
 
 
 five.util.round = function(number) {
@@ -49,9 +48,22 @@ five.util.hourFloor = function(date) {
 five.util.hourCeil = function(date) {
   var hourCeil = five.util.hourFloor(date);
   if (goog.date.Date.compare(date, hourCeil) > 0) {
-    hourCeil.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
+    hourCeil = five.util.hourAddSafe(hourCeil);
   }
   return hourCeil;
+};
+
+/**
+ * Safely add an hour to a date without the risk of daylight savings issues.
+ * @param {!goog.date.DateTime} date
+ * @param {number=} opt_hours
+ * @return {!goog.date.DateTime}
+ */
+five.util.hourAddSafe = function(date, opt_hours) {
+  var hours = goog.isDefAndNotNull(opt_hours) ? opt_hours : 1;
+  var newDate = new goog.date.DateTime();
+  newDate.setTime(date.getTime() + hours * 3600 * 1000);
+  return newDate;
 };
 
 /**
@@ -72,8 +84,7 @@ five.util.dayFloor = function(date) {
  * @return {!goog.date.DateTime}
  */
 five.util.roundToFiveMinutes = function(date) {
-  var hourBase = five.util.hourFloor(date);
-  hourBase.add(new goog.date.Interval(goog.date.Interval.HOURS, -1));
+  var hourBase = five.util.hourAddSafe(five.util.hourFloor(date), -1);
   var factor = 1000 * 60 * 5;
   var newTime = five.util.round((date.getTime() - hourBase.getTime()) /
       factor) * factor + hourBase.getTime();
@@ -107,8 +118,7 @@ five.util.forEachHourWrapInternal_ = function(startTime, endTime, fn,
   var maxTime = endTime.getTime();
   var firstIter = true;
   while (hourIter.getTime() < maxTime || firstIter) {
-    var nextHour = hourIter.clone();
-    nextHour.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
+    var nextHour = five.util.hourAddSafe(hourIter);
     var isLast = nextHour.getTime() >= maxTime && !callWithFinal;
     fn.call(opt_scope, hourIter, nextHour, isLast);
     firstIter = false;

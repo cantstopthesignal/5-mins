@@ -203,6 +203,14 @@ function testDayFloor() {
   doTest('20120527T000000', '20120527T120000');
 }
 
+function testHourAddSafe() {
+  var start = goog.date.fromIsoString('20120526T110000');
+  var expected = start.clone();
+  expected.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
+  assertTimesEqualOrNull('Should be equal', expected,
+      five.util.hourAddSafe(start));
+}
+
 function assertTimesEqualOrNull(msg, time1, time2) {
   assertEquals(msg, time1 === null, time2 === null);
   if (time1 !== null) {
