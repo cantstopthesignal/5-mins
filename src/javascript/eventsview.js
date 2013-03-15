@@ -540,7 +540,7 @@ five.EventsView.prototype.promptEditEventSummary_ = function(event,
     prompt = "Choose a new title for event '" + event.getSummary() + "'";
   }
   var newSummary = window.prompt(prompt, event.getSummary());
-  newSummary ? newSummary.trim() : null;
+  newSummary = newSummary ? newSummary.trim() : null;
   if (!newSummary) {
     return false;
   }

@@ -58,7 +58,10 @@ five.NotificationManager.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
-/** @param {string} message */
+/**
+ * @param {string} message
+ * @param {number=} opt_duration
+ */
 five.NotificationManager.prototype.show = function(message, opt_duration) {
   if (!this.el) {
     this.createDom();

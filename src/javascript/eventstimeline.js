@@ -105,7 +105,7 @@ five.EventsTimeline.prototype.linearTimeMap_;
 /** @type {goog.date.DateTime} */
 five.EventsTimeline.prototype.mouseDownTime_;
 
-/** @type {?number} */
+/** @type {?goog.events.Key} */
 five.EventsTimeline.prototype.globalMouseUpListenerKey_;
 
 /** @type {number} */
@@ -295,9 +295,7 @@ five.EventsTimeline.prototype.addEvent = function(event) {
 /** @param {!five.Event} event */
 five.EventsTimeline.prototype.removeEvent = function(event) {
   var index = goog.array.findIndex(this.eventCards_, function(eventCard) {
-    if (eventCard.getEvent() === event) {
-      return true;
-    }
+    return (eventCard.getEvent() === event);
   }, this);
   goog.asserts.assert(index >= 0);
   goog.dispose(this.eventCards_[index]);

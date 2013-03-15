@@ -53,14 +53,32 @@ five.layout.Calc.prototype.linearTimeMap_;
 /** @type {five.layout.TimeMap} */
 five.layout.Calc.prototype.condenseRestrictTimeMap_;
 
-/** @type {!goog.date.DateTime} */
-five.layout.Calc.prototype.minTime;
-
-/** @type {!goog.date.DateTime} */
-five.layout.Calc.prototype.maxTime;
-
 /** @type {number} (see Params) */
 five.layout.Calc.prototype.distancePerHour;
+
+/** @type {number} (see Params) */
+five.layout.Calc.prototype.minDistancePerHour;
+
+/** @type {number} (see Params) */
+five.layout.Calc.prototype.minTimePointSpacing;
+
+/** @type {number} (see Params) */
+five.layout.Calc.prototype.minEventHeight;
+
+/** @type {number} (see Params) */
+five.layout.Calc.prototype.layoutWidth;
+
+/** @type {number} (see Params) */
+five.layout.Calc.prototype.timeAxisPatchWidth;
+
+/** @type {number} (see Params) */
+five.layout.Calc.prototype.patchMinYPosDiff;
+
+/** @type {!goog.date.DateTime} (see Params) */
+five.layout.Calc.prototype.minTime;
+
+/** @type {!goog.date.DateTime} (see Params) */
+five.layout.Calc.prototype.maxTime;
 
 /** @param {!Array.<!five.layout.Event>} events */
 five.layout.Calc.prototype.setEvents = function(events) {

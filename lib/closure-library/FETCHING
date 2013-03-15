@@ -2,4 +2,6 @@ Grab the latest closure library into this directory.
 
 svn checkout http://closure-library.googlecode.com/svn/trunk/ .
 
+Or use svn update if a repo already exists, then update FETCHED_VERSION.
+
 See also http://code.google.com/p/closure-library/

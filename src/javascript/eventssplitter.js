@@ -36,7 +36,7 @@ five.EventsSplitter.prototype.split = function() {
   });
   goog.array.forEach(this.inputEvents_, function(event) {
     var lastStartTime = event.getStartTime();
-    var endTime = event.getEndTime();
+    var endTime = goog.asserts.assertObject(event.getEndTime());
     var lastSplitEvent = event;
     goog.array.forEach(splitTimes, function(splitTime) {
       if (goog.date.Date.compare(splitTime, lastStartTime) <= 0 ||
