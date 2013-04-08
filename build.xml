@@ -50,32 +50,7 @@
     </delete>
   </target>
 
-  <target name="deploy" depends="clean,compile,uninstall-debug-dirs" />
-
-  <target name="develop" depends="compile-debug,install-debug-dirs" />
-
-  <target name="install-debug-dirs">
-    <mkdir dir="${war.dir}/debug" />
-    <mkdir dir="${war.dir}/debug/src" />
-    <mkdir dir="${war.dir}/debug/lib" />
-    <symlink link="${war.dir}/debug/src/javascript"
-        resource="${js-source.dir}" overwrite="true" />
-    <symlink link="${war.dir}/debug/lib/closure-library"
-        resource="${closure-library.dir}" overwrite="true" />
-  </target>
-
-  <target name="uninstall-debug-dirs">
-    <symlink action="delete" link="${war.dir}/debug/src/javascript" />
-    <symlink action="delete" link="${war.dir}/debug/lib/closure-library" />
-    <delete includeemptydirs="true" failonerror="false">
-      <fileset dir="${war.dir}/debug">
-        <and>
-          <size value="0"/>
-          <type type="dir"/>
-         </and>
-      </fileset>
-    </delete>
-  </target>
+  <target name="deploy" depends="clean,compile" />
 
   <taskdef name="jscomp"
       classname="com.google.javascript.jscomp.ant.CompileTask"

@@ -12,8 +12,8 @@
 <listEntry value="org.eclipse.debug.ui.launchGroup.run"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="com.google.gdt.eclipse.suite.appengineClasspathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.appengine.tools.development.DevAppServerMain"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--port=8888 &quot;${workspace_loc:5Mins/war}&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.cantstopthesignals.development.DevAppServerWrapperMain"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--addDebugWarSymlink &quot;debug/lib=${workspace_loc:5Mins/lib}&quot; --addDebugWarSymlink &quot;debug/src=${workspace_loc:5Mins/src}&quot; -- --port=8888 &quot;${workspace_loc:5Mins/war}&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="5Mins"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-javaagent:/Applications/Eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.7.5/appengine-java-sdk-1.7.5/lib/agent/appengine-agent.jar -Xmx512m -XstartOnFirstThread -Xbootclasspath/p:/Applications/Eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.6.4.v201203300216r37/appengine-java-sdk-1.6.4/lib/override/appengine-dev-jdk-overrides.jar"/>
 </launchConfiguration>
