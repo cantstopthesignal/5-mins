@@ -55,13 +55,13 @@ five.CalendarManager.EVENTS_LOAD_ERROR_ =
     'Error loading events. Please try again.';
 
 five.CalendarManager.EVENTS_SAVE_ERROR_ =
-  'Error saving events. Please try again.';
+    'Error saving events. Please try again.';
 
 five.CalendarManager.EVENT_CREATE_ERROR_ =
-  'Error creating event. Please try again.';
+    'Error creating event. Please try again.';
 
 five.CalendarManager.EVENT_DELETE_ERROR_ =
-  'Error deleting event. Please try again.';
+    'Error deleting event. Please try again.';
 
 /** @type {goog.debug.Logger} */
 five.CalendarManager.prototype.logger_ = goog.debug.Logger.getLogger(
@@ -251,7 +251,22 @@ five.CalendarManager.prototype.eventDeleted_ = function(event) {
 /** @param {Array.<Object>} eventsData */
 five.CalendarManager.prototype.updateEventsData_ = function(eventsData) {
   goog.disposeAll(this.events_);
-  this.events_ = goog.array.map(eventsData, function(eventData) {
+  var filteredEventsData = goog.array.filter(eventsData, function(eventData) {
+    var startTime = five.Event.parseEventDataDate(eventData['start']);
+    var endTime = five.Event.parseEventDataDate(eventData['end']);
+    if (goog.date.Date.compare(startTime, endTime) >= 0) {
+      window.console.warn('Ignoring event with invalid date range: "' +
+          eventData['summary'] + '", ' +
+          new Date(startTime.valueOf()).toISOString() + ' to ' +
+          new Date(endTime.valueOf()).toISOString());
+      this.notificationManager_.show(
+          'Ignoring event "' + eventData['summary'] + '" because ' +
+          'it has an invalid date range.');
+      return false;
+    }
+    return true;
+  }, this);
+  this.events_ = goog.array.map(filteredEventsData, function(eventData) {
     var event = new five.Event(eventData);
     this.registerListenersForEvent_(event);
     return event;

@@ -71,8 +71,8 @@ five.Event.createNew = function(startTime, endTime, summary) {
   return new five.Event(eventData, true);
 };
 
-/** @return {goog.date.DateTime} */
-five.Event.parseEventDataDate_ = function(dateData) {
+/** @return {!goog.date.DateTime} */
+five.Event.parseEventDataDate = function(dateData) {
   if ('dateTime' in dateData) {
     var dateStr = goog.asserts.assertString(dateData['dateTime']);
     return new goog.date.DateTime(new Date(dateStr));
@@ -80,8 +80,7 @@ five.Event.parseEventDataDate_ = function(dateData) {
     var dateStr = goog.asserts.assertString(dateData['date']);
     return new goog.date.DateTime(new Date(dateStr));
   }
-  goog.asserts.fail('Unexpected date data');
-  return null;
+  throw Error('Unexpected date data');
 };
 
 /** @type {!five.EventTheme} */
@@ -340,8 +339,8 @@ five.Event.prototype.mergeMutationsIntoData_ = function(eventData) {
 };
 
 five.Event.prototype.parseEventData_ = function() {
-  this.startTime_ = five.Event.parseEventDataDate_(this.eventData_['start']);
-  this.endTime_ = five.Event.parseEventDataDate_(this.eventData_['end']);
+  this.startTime_ = five.Event.parseEventDataDate(this.eventData_['start']);
+  this.endTime_ = five.Event.parseEventDataDate(this.eventData_['end']);
   goog.asserts.assert(this.stateIsValid_());
 };
 
