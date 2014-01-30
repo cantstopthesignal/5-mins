@@ -27,7 +27,6 @@ public class DevAppServerWrapperMain {
     String[] devAppArgs = parseArgs(args);
 
     File warDir = new File(args[args.length - 1]).getCanonicalFile();
-    DevAppServerMain.validateWarPath(warDir);
 
     debugWarDir = createDevelopmentWarDirectory(warDir);
     devAppArgs[devAppArgs.length - 1] = debugWarDir.getPath();
