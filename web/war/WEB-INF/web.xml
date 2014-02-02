@@ -6,7 +6,7 @@
     version="2.5">
   <servlet>
     <servlet-name>FiveMins</servlet-name>
-    <servlet-class>com.cantstopthesignals.FiveMinsServlet</servlet-class>
+    <servlet-class>com.cantstopthesignals.five.FiveMinsServlet</servlet-class>
   </servlet>
   <servlet-mapping>
     <servlet-name>FiveMins</servlet-name>

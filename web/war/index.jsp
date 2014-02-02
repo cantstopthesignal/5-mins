@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="com.cantstopthesignals.JsMode" %>
-<%@ page import="com.cantstopthesignals.MobileMode" %>
+<%@ page import="com.cantstopthesignals.five.JsMode" %>
+<%@ page import="com.cantstopthesignals.five.MobileMode" %>
 <%@ page import="com.google.appengine.api.users.User" %>
 <%@ page import="com.google.appengine.api.users.UserService" %>
 <%@ page import="com.google.appengine.api.users.UserServiceFactory" %>
