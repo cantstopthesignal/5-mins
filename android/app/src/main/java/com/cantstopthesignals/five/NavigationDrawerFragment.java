@@ -1,16 +1,23 @@
 package com.cantstopthesignals.five;
 
-;
-import android.app.Activity;
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
+import android.app.LoaderManager;
+import android.content.Context;
+import android.content.CursorLoader;
+import android.content.Loader;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.provider.CalendarContract.Calendars;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,25 +27,39 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
  * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
-public class NavigationDrawerFragment extends Fragment {
+public class NavigationDrawerFragment extends Fragment
+        implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final String ACCOUNT_TYPE_GOOGLE = "com.google";
 
-    /**
-     * Remember the position of the selected item.
-     */
-    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+    /** Remember the user's account name selection */
+    private static final String PREF_SELECTED_ACCOUNT_NAME = "selected_account_name";
 
-    /**
-     * Per the design guidelines, you should show the drawer on launch until the user manually
-     * expands it. This shared preference tracks this.
-     */
+    /** Remember the user's calendar id selection */
+    private static final String PREF_SELECTED_CALENDAR_ID = "selected_calendar_id";
+
+    /** Remember if the user has learned how to use the drawer */
     private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+
+    private static String[] CALENDARS_PROJECTION = new String[] {
+            Calendars._ID,
+            Calendars.CALENDAR_DISPLAY_NAME
+    };
+    private static final int CALENDARS_PROJECTION_ID_INDEX = 0;
+    private static final int CALENDARS_PROJECTION_DISPLAY_NAME_INDEX = 1;
+
+    private static final int CALENDAR_LIST_LOADER_ID = 0;
 
     /**
      * A pointer to the current callbacks instance (the Activity).
@@ -51,10 +72,16 @@ public class NavigationDrawerFragment extends Fragment {
     private ActionBarDrawerToggle mDrawerToggle;
 
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawerListView;
+    private ListView mCalendarListView;
+    private Spinner mAccountSpinner;
     private View mFragmentContainerView;
 
-    private int mCurrentSelectedPosition = 0;
+    private Account[] mAccounts;
+    private CalendarInfo[] mCalendars;
+
+    private String mCurrentAccountName;
+    private long mCurrentCalendarId;
+
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
@@ -65,22 +92,23 @@ public class NavigationDrawerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Read in the flag indicating whether or not the user has demonstrated awareness of the
-        // drawer. See PREF_USER_LEARNED_DRAWER for details.
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+        mCurrentAccountName = sp.getString(PREF_SELECTED_ACCOUNT_NAME, null);
+        mCurrentCalendarId = sp.getLong(PREF_SELECTED_CALENDAR_ID, 0);
 
         if (savedInstanceState != null) {
-            mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
             mFromSavedInstanceState = true;
         }
 
-        // Select either the default item (0) or the last selected item.
-        selectItem(mCurrentSelectedPosition);
+        AccountManager accountManager = AccountManager.get(getActivity());
+        mAccounts = accountManager.getAccountsByType(ACCOUNT_TYPE_GOOGLE);
+
+        selectAccount(mCurrentAccountName);
     }
 
     @Override
-    public void onActivityCreated (Bundle savedInstanceState) {
+    public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         // Indicate that this fragment would like to influence the set of actions in the action bar.
         setHasOptionsMenu(true);
@@ -89,25 +117,31 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        mDrawerListView = (ListView) inflater.inflate(
+        View drawerView = inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
-        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+        mAccountSpinner = (Spinner) drawerView.findViewById(R.id.account_spinner);
+        mAccountSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectAccount(mAccounts[position].name);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
             }
         });
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
-                getActionBar().getThemedContext(),
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                new String[]{
-                        getString(R.string.title_section1),
-                        getString(R.string.title_section2),
-                        getString(R.string.title_section3),
-                }));
-        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
-        return mDrawerListView;
+        mAccountSpinner.setAdapter(new AccountListAdapter(getActivity(), mAccounts));
+
+        mCalendarListView = (ListView) drawerView.findViewById(R.id.calendar_picker);
+        mCalendarListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectCalendar(mCalendars[position].id);
+            }
+        });
+
+        return drawerView;
     }
 
     public boolean isDrawerOpen() {
@@ -135,12 +169,11 @@ public class NavigationDrawerFragment extends Fragment {
         // ActionBarDrawerToggle ties together the the proper interactions
         // between the navigation drawer and the action bar app icon.
         mDrawerToggle = new ActionBarDrawerToggle(
-                getActivity(),                    /* host Activity */
-                mDrawerLayout,                    /* DrawerLayout object */
-                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
-                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
-                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
-        ) {
+                getActivity(),
+                mDrawerLayout,
+                R.drawable.ic_drawer,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close) {
             @Override
             public void onDrawerClosed(View drawerView) {
                 super.onDrawerClosed(drawerView);
@@ -188,17 +221,86 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
     }
 
-    private void selectItem(int position) {
-        mCurrentSelectedPosition = position;
-        if (mDrawerListView != null) {
-            mDrawerListView.setItemChecked(position, true);
+    private void selectAccount(String accountName) {
+        boolean accountNameChanged = (mCurrentAccountName != null && accountName != null
+                && !mCurrentAccountName.equals(accountName));
+        if (mCurrentAccountName != null) {
+            mCurrentAccountName = accountName;
+            if (accountNameChanged) {
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putString(PREF_SELECTED_ACCOUNT_NAME, accountName).apply();
+                mCurrentCalendarId = 0;
+            }
+            loadCalendarList();
         }
-        if (mDrawerLayout != null) {
-            mDrawerLayout.closeDrawer(mFragmentContainerView);
+    }
+
+    private void selectCalendar(long calendarId) {
+        int position = 0;
+        CalendarInfo calendarInfo = null;
+        for (int i = 0, count = mCalendars.length; i < count; i++) {
+            if (mCalendars[i].id == calendarId) {
+                position = i;
+                calendarInfo = mCalendars[i];
+                break;
+            }
+        }
+        if (calendarInfo != null) {
+            if (mCurrentCalendarId != 0 && mCurrentCalendarId != calendarId) {
+                SharedPreferences sp = PreferenceManager
+                        .getDefaultSharedPreferences(getActivity());
+                sp.edit().putLong(PREF_SELECTED_CALENDAR_ID, calendarInfo.id).apply();
+            }
+            mCurrentCalendarId = calendarId;
+            if (mCalendarListView != null) {
+                mCalendarListView.setItemChecked(position, true);
+            }
+            if (mDrawerLayout != null) {
+                mDrawerLayout.closeDrawer(mFragmentContainerView);
+            }
         }
         if (mCallbacks != null) {
-            mCallbacks.onNavigationDrawerItemSelected(position);
+            mCallbacks.onNavigationDrawerCalendarSelected(calendarInfo);
         }
+    }
+
+    private void loadCalendarList() {
+        getLoaderManager().restartLoader(CALENDAR_LIST_LOADER_ID, null, this);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle args) {
+        switch (loaderId) {
+            case CALENDAR_LIST_LOADER_ID:
+                CursorLoader cursorLoader = new CursorLoader(getActivity());
+                cursorLoader.setUri(Calendars.CONTENT_URI);
+                cursorLoader.setSelection("((" + Calendars.ACCOUNT_TYPE + " = ?) AND ("
+                        + Calendars.ACCOUNT_NAME + " = ?))");
+                cursorLoader.setSelectionArgs(new String[] {ACCOUNT_TYPE_GOOGLE,
+                        mCurrentAccountName});
+                cursorLoader.setProjection(CALENDARS_PROJECTION);
+                return cursorLoader;
+        }
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        List<CalendarInfo> calendarList = new ArrayList<CalendarInfo>();
+        while (cursor.moveToNext()) {
+            calendarList.add(new CalendarInfo(mCurrentAccountName,
+                    cursor.getLong(CALENDARS_PROJECTION_ID_INDEX),
+                    cursor.getString(CALENDARS_PROJECTION_DISPLAY_NAME_INDEX)));
+        }
+        mCalendars = calendarList.toArray(new CalendarInfo[0]);
+        mCalendarListView.setAdapter(new CalendarListAdapter(getActivity(), mCalendars));
+        selectCalendar(mCurrentCalendarId);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        mCalendarListView.setAdapter(null);
     }
 
     @Override
@@ -220,7 +322,6 @@ public class NavigationDrawerFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
     }
 
     @Override
@@ -274,9 +375,49 @@ public class NavigationDrawerFragment extends Fragment {
      * Callbacks interface that all activities using this fragment must implement.
      */
     public static interface NavigationDrawerCallbacks {
-        /**
-         * Called when an item in the navigation drawer is selected.
-         */
-        void onNavigationDrawerItemSelected(int position);
+        void onNavigationDrawerCalendarSelected(CalendarInfo calendarInfo);
+    }
+
+    private class AccountListAdapter extends ArrayAdapter<Account> {
+        private Context mContext;
+
+        public AccountListAdapter(Context context, Account[] accounts) {
+            super(context, R.layout.account_list_item, accounts);
+            mContext = context;
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView, ViewGroup parent) {
+            return getView(position, convertView, parent);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = (LayoutInflater) mContext
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            TextView rowView = (TextView) inflater.inflate(R.layout.account_list_item, parent, false);
+            Account account = getItem(position);
+            rowView.setText(account.name);
+            return rowView;
+        }
+    }
+
+    private class CalendarListAdapter extends ArrayAdapter<CalendarInfo> {
+        private Context mContext;
+
+        public CalendarListAdapter(Context context, CalendarInfo[] calendars) {
+            super(context, R.layout.calendar_list_item, calendars);
+            mContext = context;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = (LayoutInflater) mContext
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            TextView rowView = (TextView) inflater.inflate(R.layout.calendar_list_item, parent, false);
+            CalendarInfo calendar = getItem(position);
+            rowView.setText(calendar.displayName);
+            return rowView;
+        }
     }
 }
