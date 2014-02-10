@@ -130,9 +130,10 @@ five.Event.prototype.attachDisplay = function(display) {
   this.displays_.push(display);
   display.setSelected(this.selected_);
   display.setTheme(this.theme_);
-  var Event = five.Event.EventType;
+  var EventType = five.Event.EventType;
   this.eventHandler_.
-      listen(display, [Event.SELECT, Event.DESELECT, Event.EDIT_SUMMARY],
+      listen(display, [EventType.SELECT, EventType.DESELECT,
+          EventType.EDIT_SUMMARY],
           this.dispatchDisplayEvent_);
 };
 

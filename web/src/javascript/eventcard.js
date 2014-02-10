@@ -202,7 +202,6 @@ five.EventCard.prototype.handleDblClick_ = function(e) {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventCard.prototype.handleMouseDown_ = function(e) {
-  if (e.shiftKey) {
-    e.preventDefault();
-  }
+  var event = new goog.events.Event(goog.events.EventType.MOUSEDOWN);
+  this.dispatchEvent(event);
 };

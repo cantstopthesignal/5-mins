@@ -21,6 +21,7 @@ five.deviceParams.DeviceParams = function() {
 
   this.timelineMinWidth = isHighDensity ? 600 : 400;
   this.timelineMaxWidth = isHighDensity ? 850 : 600;
+  this.timelineRightGutterWidth = !isTouch ? (isHighDensity ? 48 : 24) : 0;
 
   this.enableInlineEventsEditor = !isTouch;
   this.inlineEventsEditorHeight = isHighDensity ? 96 : 48;
@@ -28,6 +29,7 @@ five.deviceParams.DeviceParams = function() {
   this.showTimeMarkerLabels = !isHighDensity;
   this.enableCursorTimeMarker = !isTouch;
   this.enableDragCreateEvent = !isTouch;
+  this.enableDragEvents = !isTouch;
 };
 goog.addSingletonGetter(five.deviceParams.DeviceParams);
 
@@ -79,6 +81,11 @@ goog.scope(function() {
     return getInstance().timelineMaxWidth;
   };
 
+  /** @return {number} */
+  five.deviceParams.getTimelineRightGutterWidth = function() {
+    return getInstance().timelineRightGutterWidth;
+  };
+
   /** @return {boolean} */
   five.deviceParams.getEnableInlineEventsEditor = function() {
     return getInstance().enableInlineEventsEditor;
@@ -102,5 +109,10 @@ goog.scope(function() {
   /** @return {boolean} */
   five.deviceParams.getEnableDragCreateEvent = function() {
     return getInstance().enableDragCreateEvent;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableDragEvents = function() {
+    return getInstance().enableDragEvents;
   };
 });

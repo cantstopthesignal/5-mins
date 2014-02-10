@@ -47,7 +47,6 @@ five.InlineEventsEditor.prototype.createDom = function() {
   this.el.appendChild(this.bottomButtonBar_);
 
   var moveUpButton = this.createArrowButton_(true, this.topButtonBar_);
-  var moveDragButton = this.createDragButton_(this.topButtonBar_);
   var moveDownButton = this.createArrowButton_(false, this.topButtonBar_);
   this.createSpacer_(this.topButtonBar_);
   var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_);
@@ -85,16 +84,6 @@ five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
   goog.dom.classes.add(arrow, 'arrow');
   goog.dom.classes.add(arrow, up ? 'up' : 'down');
   button.appendChild(arrow);
-  parentEl.appendChild(button);
-  return button;
-};
-
-/**
- * @param {Element} parentEl
- */
-five.InlineEventsEditor.prototype.createDragButton_ = function(parentEl) {
-  var button = document.createElement('button');
-  goog.dom.classes.add(button, 'button');
   parentEl.appendChild(button);
   return button;
 };

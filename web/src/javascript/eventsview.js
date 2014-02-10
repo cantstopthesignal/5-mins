@@ -91,6 +91,12 @@ five.EventsView.prototype.scrollAnchorData_;
 /** @type {five.Event} */
 five.EventsView.prototype.dragCreateEvent_;
 
+/** @type {goog.date.DateTime} */
+five.EventsView.prototype.dragEventsStartTime_;
+
+/** @type {goog.date.DateTime} */
+five.EventsView.prototype.dragEventsLastUpdateTime_;
+
 five.EventsView.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'events-view');
@@ -171,6 +177,16 @@ five.EventsView.prototype.displayEvents_ = function() {
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.setEvents(goog.asserts.assertArray(this.events_));
   }, this);
+};
+
+/** @param {five.Event} event */
+five.EventsView.prototype.selectEvent = function(event) {
+  goog.asserts.assert(this.events_.indexOf(event) >= 0);
+  var existingIndex = this.selectedEvents_.indexOf(event);
+  goog.asserts.assert(existingIndex < 0);
+  event.setSelected(true);
+  this.selectedEvents_.push(event);
+  this.selectedEventsChanged_();
 };
 
 /** @param {!Array.<!five.Event>} newSelectedEvents */
@@ -313,7 +329,9 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
       listen(timeline, EventType.EVENTS_DELETE,
           this.handleEventsTimelineEventsDelete_).
       listen(timeline, EventType.EVENTS_SPLIT,
-          this.handleEventsTimelineEventsSplit_);
+          this.handleEventsTimelineEventsSplit_).
+      listen(timeline, EventType.EVENTS_SAVE,
+          this.handleEventsTimelineEventsSave_);
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
@@ -368,6 +386,10 @@ five.EventsView.prototype.handleEventsTimelineEventsSplit_ = function() {
   this.replaceSelectedEvents_(newSelectedEvents);
 };
 
+five.EventsView.prototype.handleEventsTimelineEventsSave_ = function() {
+  this.calendarManager_.saveMutations();
+};
+
 five.EventsView.prototype.registerListenersForScrollElement_ = function() {
   this.eventHandler.
       listen(this.scrollEl_, goog.events.EventType.SCROLL, this.handleScroll_);
@@ -420,7 +442,7 @@ five.EventsView.prototype.removeEvent_ = function(event) {
  */
 five.EventsView.prototype.createOrUpdateDragCreateEvent = function(
     startTime, endTime) {
-  if (this.dragCreateEvent_ == null) {
+  if (!this.dragCreateEvent_) {
     this.dragCreateEvent_ = five.Event.createNew(startTime, endTime, '<new>');
     this.addEvent_(this.dragCreateEvent_);
     this.replaceSelectedEvents_([this.dragCreateEvent_]);
@@ -435,7 +457,7 @@ five.EventsView.prototype.createOrUpdateDragCreateEvent = function(
 };
 
 /** @return {boolean} Whether a drag create event was cleared. */
-five.EventsView.prototype.clearDragCreateEvent = function() {
+five.EventsView.prototype.cancelDragCreateEvent = function() {
   if (this.dragCreateEvent_) {
     this.replaceSelectedEvents_([]);
     this.removeEvent_(this.dragCreateEvent_);
@@ -448,11 +470,57 @@ five.EventsView.prototype.clearDragCreateEvent = function() {
 five.EventsView.prototype.commitDragCreateEvent = function() {
   if (this.dragCreateEvent_) {
     if (!this.promptEditEventSummary_(this.dragCreateEvent_, true)) {
-      this.clearDragCreateEvent();
+      this.cancelDragCreateEvent();
       return;
     }
   }
   delete this.dragCreateEvent_;
+};
+
+/**
+ * @param {!goog.date.DateTime} dragStartTime
+ * @param {!goog.date.DateTime} dragEndTime
+ */
+five.EventsView.prototype.startOrUpdateDragEvents = function(
+    dragStartTime, dragEndTime) {
+  if (!this.dragEventsStartTime_) {
+    this.dragEventsStartTime_ = dragStartTime;
+    this.dragEventsLastUpdateTime_ = dragStartTime;
+  }
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    var interval = new goog.date.Interval(goog.date.Interval.SECONDS,
+        five.util.msToSec(dragEndTime.getTime() -
+        this.dragEventsLastUpdateTime_.getTime()));
+    selectedEvent.addMutation(new five.EventMutation.MoveBy(interval));
+  }, this);
+  goog.array.forEach(this.columns_, function(column) {
+    column.timeline.eventsChanged(this.selectedEvents_);
+  }, this);
+  this.dragEventsLastUpdateTime_ = dragEndTime;
+};
+
+/** @return {boolean} Whether dragging events state was cleared. */
+five.EventsView.prototype.cancelDragEvents = function() {
+  if (this.dragEventsStartTime_) {
+    goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+      var interval = new goog.date.Interval(goog.date.Interval.SECONDS,
+          five.util.msToSec(this.dragEventsStartTime_.getTime() -
+          this.dragEventsLastUpdateTime_.getTime()));
+      selectedEvent.addMutation(new five.EventMutation.MoveBy(interval));
+    }, this);
+    goog.array.forEach(this.columns_, function(column) {
+      column.timeline.eventsChanged(this.selectedEvents_);
+    }, this);
+    delete this.dragEventsStartTime_;
+    delete this.dragEventsLastUpdateTime_;
+    return true;
+  }
+  return false;
+};
+
+five.EventsView.prototype.commitDragEvents = function() {
+  delete this.dragEventsStartTime_;
+  delete this.dragEventsLastUpdateTime_;
 };
 
 /** @param {goog.events.Event} e */
@@ -568,7 +636,8 @@ five.EventsView.prototype.registerListenersForCalendarManager_ = function() {
 five.EventsView.prototype.handleCalendarManagerEventsChange_ = function(e) {
   this.events_ = goog.array.clone(this.calendarManager_.getEvents());
   this.selectedEvents_ = [];
-  this.dragCreateEvent_ = null;
+  delete this.dragCreateEvent_;
+  delete this.dragEventsStartTime_;
   goog.array.forEach(this.events_, function(event) {
     this.registerListenersForEvent_(event);
   }, this);

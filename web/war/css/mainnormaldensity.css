@@ -68,15 +68,15 @@ body {
   padding-right: 2px;
 }
 .inline-events-editor > .button-bar {
-  bottom: -16px;
-  height: 16px;
+  bottom: -18px;
+  height: 18px;
 }
 .inline-events-editor > .button-bar:first-child {
-  top: -16px;
+  top: -18px;
 }
 .inline-events-editor > .button-bar > .button {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 .inline-events-editor > .button-bar > .button > .arrow {
   border-width: 4px;

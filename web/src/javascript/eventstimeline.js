@@ -54,7 +54,8 @@ five.EventsTimeline.EventType = {
   EVENTS_MOVE: goog.events.getUniqueId('events_move'),
   EVENTS_DUPLICATE: goog.events.getUniqueId('events_duplicate'),
   EVENTS_DELETE: goog.events.getUniqueId('events_delete'),
-  EVENTS_SPLIT: goog.events.getUniqueId('events_split')
+  EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
+  EVENTS_SAVE: goog.events.getUniqueId('events_save')
 };
 
 /** @type {number} */
@@ -104,6 +105,18 @@ five.EventsTimeline.prototype.linearTimeMap_;
 
 /** @type {goog.date.DateTime} */
 five.EventsTimeline.prototype.mouseDownTime_;
+
+/** @type {five.EventCard} */
+five.EventsTimeline.prototype.mouseDownCard_;
+
+/** @type {boolean} */
+five.EventsTimeline.prototype.draggingEvents_;
+
+/** @type {five.EventCard} */
+five.EventsTimeline.prototype.dragCard_;
+
+/** @type {boolean} */
+five.EventsTimeline.prototype.dragCreatingEvent_;
 
 /** @type {?goog.events.Key} */
 five.EventsTimeline.prototype.globalMouseUpListenerKey_;
@@ -181,7 +194,8 @@ five.EventsTimeline.prototype.createDom = function() {
       listen(this.eventsEditor_, five.Event.EventType.DUPLICATE,
           this.handleEventsEditorDuplicate_);
   if (five.deviceParams.getEnableCursorTimeMarker() ||
-      five.deviceParams.getEnableDragCreateEvent()) {
+      five.deviceParams.getEnableDragCreateEvent() ||
+      five.deviceParams.getEnableDragEvents()) {
     this.eventHandler.listen(this.el, goog.events.EventType.MOUSEMOVE,
         this.handleMouseMove_);
   }
@@ -203,9 +217,7 @@ five.EventsTimeline.prototype.render = function(parentEl) {
 
   parentEl.appendChild(this.el);
 
-  this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
-      five.deviceParams.getTimeAxisWidth();
-
+  this.calcEventAreaWidth_();
   this.layout_();
   this.renderEvents_();
 };
@@ -227,8 +239,7 @@ five.EventsTimeline.prototype.disposeInternal = function() {
 five.EventsTimeline.prototype.setRect = function(rect) {
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setWidth(this.el, rect.width);
-  this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
-      five.deviceParams.getTimeAxisWidth();
+  this.calcEventAreaWidth_();
   this.layout_();
 };
 
@@ -240,8 +251,7 @@ five.EventsTimeline.prototype.resize = function(opt_width, opt_height) {
   var width = opt_width || this.el.parentNode.offsetWidth;
   var height = opt_height || this.el.parentNode.offsetHeight;
   goog.style.setBorderBoxSize(this.el, new goog.math.Size(width, height));
-  this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
-      five.deviceParams.getTimeAxisWidth();
+  this.calcEventAreaWidth_();
   this.layout_();
 };
 
@@ -261,7 +271,9 @@ five.EventsTimeline.prototype.setEvents = function(events) {
   this.startBatchUpdate();
   goog.disposeAll(this.eventCards_);
   this.eventCards_ = goog.array.map(events, function(event) {
-    return new five.EventCard(event);
+    var eventCard = new five.EventCard(event);
+    this.registerListenersForEventCard_(eventCard);
+    return eventCard;
   }, this);
   if (this.el) {
     this.layout_();
@@ -273,6 +285,7 @@ five.EventsTimeline.prototype.setEvents = function(events) {
 /** @param {!five.Event} event */
 five.EventsTimeline.prototype.addEvent = function(event) {
   var eventCard = new five.EventCard(event);
+  this.registerListenersForEventCard_(eventCard);
   var insertAfterEvent = event.getInsertAfter();
   var insertAfterIndex = -1;
   if (insertAfterEvent) {
@@ -438,6 +451,12 @@ five.EventsTimeline.prototype.layout_ = function() {
   }
 };
 
+five.EventsTimeline.prototype.calcEventAreaWidth_ = function() {
+  this.eventAreaWidth_ = goog.style.getContentBoxSize(this.el).width -
+      five.deviceParams.getTimeAxisWidth() -
+      five.deviceParams.getTimelineRightGutterWidth();
+};
+
 five.EventsTimeline.prototype.doLayout_ = function() {
   this.layoutNeeded_ = false;
   var layoutEvents = goog.array.map(this.eventCards_, function(eventCard) {
@@ -532,6 +551,14 @@ five.EventsTimeline.prototype.getScrollAnchorDeltaY = function(data) {
   return this.eventsEditor_.getScrollAnchorDeltaY(data);
 };
 
+/** @param {five.EventCard} eventCard */
+five.EventsTimeline.prototype.registerListenersForEventCard_ =
+    function(eventCard) {
+  this.eventHandler.
+      listen(eventCard, goog.events.EventType.MOUSEDOWN,
+          this.handleEventCardMouseDown_);
+};
+
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleClick_ = function(e) {
   var event = new goog.events.Event(five.EventsTimeline.EventType.DESELECT);
@@ -551,13 +578,18 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.D) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
   } else if (e.keyCode == goog.events.KeyCodes.S) {
-    event = five.EventsTimeline.EventType.EVENTS_SPLIT;
+    if (e.ctrlKey) {
+      event = five.EventsTimeline.EventType.EVENTS_SAVE;
+    } else {
+      event = five.EventsTimeline.EventType.EVENTS_SPLIT;
+    }
   } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;
   } else if (e.keyCode == goog.events.KeyCodes.ESC) {
     this.clearMouseDown_();
-    this.clearDragCreateEvent_();
+    this.cancelDragCreateEvent_();
+    this.cancelDragEvents_();
   }
   if (event && this.dispatchEvent(event)) {
     e.preventDefault();
@@ -567,13 +599,28 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleMouseDown_ = function(e) {
+  var mouseDownCard = this.mouseDownCard_;
   this.clearMouseDown_();
   if (!this.timeMap_) {
     return;
   }
   this.mouseDownTime_ = this.getMouseEventTime_(e);
+  this.dragCreatingEvent_ = five.deviceParams.getEnableDragCreateEvent() &&
+      !mouseDownCard;
+  this.draggingEvents_ = five.deviceParams.getEnableDragEvents() &&
+      !!mouseDownCard;
+  if (this.draggingEvents_) {
+    this.dragCard_ = mouseDownCard;
+  }
   this.globalMouseUpListenerKey_ = goog.events.listen(window,
       goog.events.EventType.MOUSEUP, this.handleGlobalMouseUp_, false, this);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsTimeline.prototype.handleEventCardMouseDown_ = function(e) {
+  goog.asserts.assertInstanceof(e.target, five.EventCard);
+  this.clearMouseDown_();
+  this.mouseDownCard_ = e.target;
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -583,13 +630,22 @@ five.EventsTimeline.prototype.handleGlobalMouseUp_ = function(e) {
   if (!this.timeMap_) {
     return;
   }
-  if (five.deviceParams.getEnableDragCreateEvent() && mouseDownTime) {
+  if (this.dragCreatingEvent_) {
     if (goog.dom.contains(this.el, e.target)) {
       var mouseUpTime = this.getMouseEventTime_(e);
       this.updateDragCreateEventTimeRange_(mouseDownTime, mouseUpTime);
       this.commitDragCreateEvent_();
     } else {
-      this.clearDragCreateEvent_();
+      this.cancelDragCreateEvent_();
+    }
+  }
+  if (this.draggingEvents_) {
+    if (goog.dom.contains(this.el, e.target)) {
+      var mouseUpTime = this.getMouseEventTime_(e);
+      this.updateDragEventsTimeRange_(mouseDownTime, mouseUpTime);
+      this.commitDragEvents_();
+    } else {
+      this.cancelDragEvents_();
     }
   }
 };
@@ -611,9 +667,13 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
       this.cursorMarker_.setVisible(true);
     }
   }
-  if (five.deviceParams.getEnableDragCreateEvent() && this.mouseDownTime_) {
+  if (this.dragCreatingEvent_) {
     var time = this.getMouseEventTime_(e);
     this.updateDragCreateEventTimeRange_(this.mouseDownTime_, time);
+  }
+  if (this.draggingEvents_) {
+    var time = this.getMouseEventTime_(e);
+    this.updateDragEventsTimeRange_(this.mouseDownTime_, time);
   }
 };
 
@@ -629,6 +689,7 @@ five.EventsTimeline.prototype.handleMouseOut_ = function(e) {
 
 five.EventsTimeline.prototype.clearMouseDown_ = function() {
   delete this.mouseDownTime_;
+  delete this.mouseDownCard_;
   if (this.globalMouseUpListenerKey_) {
     goog.events.unlistenByKey(this.globalMouseUpListenerKey_);
     delete this.globalMouseUpListenerKey_;
@@ -636,13 +697,15 @@ five.EventsTimeline.prototype.clearMouseDown_ = function() {
 };
 
 five.EventsTimeline.prototype.commitDragCreateEvent_ = function() {
+  this.dragCreatingEvent_ = false;
   this.owner_.commitDragCreateEvent();
   this.layoutManager_.allowLayoutCondensing(true);
   this.layout_();
 };
 
-five.EventsTimeline.prototype.clearDragCreateEvent_ = function() {
-  if (this.owner_.clearDragCreateEvent()) {
+five.EventsTimeline.prototype.cancelDragCreateEvent_ = function() {
+  this.dragCreatingEvent_ = false;
+  if (this.owner_.cancelDragCreateEvent()) {
     this.layoutManager_.allowLayoutCondensing(true);
     this.layout_();
   }
@@ -650,6 +713,7 @@ five.EventsTimeline.prototype.clearDragCreateEvent_ = function() {
 
 five.EventsTimeline.prototype.updateDragCreateEventTimeRange_ = function(time1,
     time2) {
+  goog.asserts.assert(this.dragCreatingEvent_);
   var timeCompare = goog.date.Date.compare(time1, time2); 
   if (!timeCompare) {
     return;
@@ -658,6 +722,33 @@ five.EventsTimeline.prototype.updateDragCreateEventTimeRange_ = function(time1,
   var startTime = timeCompare < 0 ? time1 : time2;
   var endTime = timeCompare < 0 ? time2 : time1;
   this.owner_.createOrUpdateDragCreateEvent(startTime, endTime);
+};
+
+five.EventsTimeline.prototype.commitDragEvents_ = function() {
+  this.draggingEvents_ = false;
+  delete this.dragCard_;
+  this.owner_.commitDragEvents();
+  this.layoutManager_.allowLayoutCondensing(true);
+  this.layout_();
+};
+
+five.EventsTimeline.prototype.cancelDragEvents_ = function() {
+  delete this.dragCard_;
+  this.draggingEvents_ = false;
+  if (this.owner_.cancelDragEvents()) {
+    this.layoutManager_.allowLayoutCondensing(true);
+    this.layout_();
+  }
+};
+
+five.EventsTimeline.prototype.updateDragEventsTimeRange_ = function(
+    dragStartTime, dragEndTime) {
+  goog.asserts.assert(this.draggingEvents_);
+  var timeCompare = goog.date.Date.compare(dragStartTime, dragEndTime); 
+  if (timeCompare && !this.dragCard_.getEvent().isSelected()) {
+    this.owner_.selectEvent(this.dragCard_.getEvent());
+  }
+  this.owner_.startOrUpdateDragEvents(dragStartTime, dragEndTime);
 };
 
 /**
