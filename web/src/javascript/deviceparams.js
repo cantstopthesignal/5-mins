@@ -18,6 +18,7 @@ five.deviceParams.DeviceParams = function() {
   this.eventCardMinShortHeight = isHighDensity ? 46 : 26;
   this.eventCardMinNormalHeight = isHighDensity ? 50 : 30;
   this.eventCardMinLargeHeight = isHighDensity ? 74 : 44;
+  this.eventCardHitBoxMargin = isHighDensity ? 8 : 5;
 
   this.timelineMinWidth = isHighDensity ? 600 : 400;
   this.timelineMaxWidth = isHighDensity ? 850 : 600;
@@ -30,6 +31,7 @@ five.deviceParams.DeviceParams = function() {
   this.enableCursorTimeMarker = !isTouch;
   this.enableDragCreateEvent = !isTouch;
   this.enableDragEvents = !isTouch;
+  this.enableDragMoveControls = !isTouch;
 };
 goog.addSingletonGetter(five.deviceParams.DeviceParams);
 
@@ -69,6 +71,11 @@ goog.scope(function() {
   /** @return {number} */
   five.deviceParams.getEventCardMinLargeHeight = function() {
     return getInstance().eventCardMinLargeHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getEventCardHitBoxMargin = function() {
+    return getInstance().eventCardHitBoxMargin;
   };
 
   /** @return {number} */
@@ -114,5 +121,10 @@ goog.scope(function() {
   /** @return {boolean} */
   five.deviceParams.getEnableDragEvents = function() {
     return getInstance().enableDragEvents;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableDragMoveControls = function() {
+    return getInstance().enableDragMoveControls;
   };
 });

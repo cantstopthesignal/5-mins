@@ -58,8 +58,6 @@ five.InlineEventsEditor.prototype.createDom = function() {
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
       listen(this.el, goog.events.EventType.MOUSEOVER, this.handleMouseOver_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
-      listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.bothEarlier)).
       listen(moveDownButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.bothLater)).
       listen(moveStartUpButton, goog.events.EventType.CLICK, goog.partial(
@@ -69,7 +67,15 @@ five.InlineEventsEditor.prototype.createDom = function() {
       listen(moveEndUpButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.endEarlier)).
       listen(moveEndDownButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.endLater));
+          this.handleButtonClick_, five.EventMoveEvent.endLater)).
+      listen(moveStartUpButton, goog.events.EventType.MOUSEDOWN, goog.partial(
+          this.handleMoveStartMouseDown_)).
+      listen(moveStartDownButton, goog.events.EventType.MOUSEDOWN, goog.partial(
+          this.handleMoveStartMouseDown_)).
+      listen(moveEndUpButton, goog.events.EventType.MOUSEDOWN, goog.partial(
+          this.handleMoveEndMouseDown_)).
+      listen(moveEndDownButton, goog.events.EventType.MOUSEDOWN, goog.partial(
+          this.handleMoveEndMouseDown_));
 };
 
 /**
@@ -88,9 +94,7 @@ five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
   return button;
 };
 
-/**
- * @param {Element} parentEl
- */
+/** @param {Element} parentEl */
 five.InlineEventsEditor.prototype.createSpacer_ = function(parentEl) {
   var spacer = document.createElement('div');
   goog.dom.classes.add(spacer, 'spacer');
@@ -163,17 +167,13 @@ five.InlineEventsEditor.prototype.getScrollAnchorDeltaY = function(oldData) {
   return data['pos'] - oldData['pos'];
 };
 
-/**
- * @param {goog.events.Event} e
- */
+/** @param {goog.events.Event} e */
 five.InlineEventsEditor.prototype.handleClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
 };
 
-/**
- * @param {goog.events.BrowserEvent} e
- */
+/** @param {goog.events.BrowserEvent} e */
 five.InlineEventsEditor.prototype.handleMouseOver_ = function(e) {
   if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
     return;
@@ -182,14 +182,26 @@ five.InlineEventsEditor.prototype.handleMouseOver_ = function(e) {
   this.mouseHoverTop_ = goog.dom.contains(this.topButtonBar_, e.target);
 };
 
-/**
- * @param {goog.events.BrowserEvent} e
- */
+/** @param {goog.events.BrowserEvent} e */
 five.InlineEventsEditor.prototype.handleMouseOut_ = function(e) {
   if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
     return;
   }
   this.mouseHover_ = false;
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.InlineEventsEditor.prototype.handleMoveStartMouseDown_ = function(e) {
+  var event = new goog.events.Event(
+      five.EventsEditor.EventType.MOUSEDOWN_MOVE_START_CONTROL);
+  this.dispatchEvent(event);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.InlineEventsEditor.prototype.handleMoveEndMouseDown_ = function(e) {
+  var event = new goog.events.Event(
+      five.EventsEditor.EventType.MOUSEDOWN_MOVE_END_CONTROL);
+  this.dispatchEvent(event);
 };
 
 /**

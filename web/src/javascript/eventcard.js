@@ -27,6 +27,11 @@ five.EventCard = function(event) {
 };
 goog.inherits(five.EventCard, five.Component);
 
+/** @enum {string} */
+five.EventCard.EventType = {
+  MOUSEDOWN_INSIDE: goog.events.getUniqueId('mousedown_inside')
+};
+
 five.EventCard.toTimeString_ = function(date) {
   var str = date.toUsTimeString(false, false, true);
   if (date.getHours() >= 12) {
@@ -182,14 +187,23 @@ five.EventCard.prototype.timeAxisPatchUpdated = function() {
       !!this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent());
 };
 
+/**
+ * @param {boolean} select
+ * @param {boolean} shiftKey
+ */
+five.EventCard.prototype.dispatchSelectionEvent = function(select, shiftKey) {
+  var event = new goog.events.Event(select ?
+      five.Event.EventType.SELECT : five.Event.EventType.DESELECT);
+  event.shiftKey = shiftKey;
+  this.dispatchEvent(event);
+};
+
 /** @param {goog.events.BrowserEvent} e */
 five.EventCard.prototype.handleClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
-  var event = new goog.events.Event(goog.dom.classes.has(this.el, 'selected') ?
-      five.Event.EventType.DESELECT : five.Event.EventType.SELECT);
-  event.shiftKey = e.shiftKey;
-  this.dispatchEvent(event);
+  this.dispatchSelectionEvent(!goog.dom.classes.has(this.el, 'selected'),
+      e.shiftKey);
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -202,6 +216,13 @@ five.EventCard.prototype.handleDblClick_ = function(e) {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventCard.prototype.handleMouseDown_ = function(e) {
-  var event = new goog.events.Event(goog.events.EventType.MOUSEDOWN);
+  var pos = goog.style.getRelativePosition(e, this.el);
+  var size = goog.style.getSize(this.el);
+  var hitBoxMargin = five.deviceParams.getEventCardHitBoxMargin();
+  if (pos.x < hitBoxMargin || pos.y < hitBoxMargin ||
+      pos.x > size.width - hitBoxMargin || pos.y > size.height - hitBoxMargin) {
+    return;
+  }
+  var event = new goog.events.Event(five.EventCard.EventType.MOUSEDOWN_INSIDE);
   this.dispatchEvent(event);
 };
