@@ -185,18 +185,20 @@ goog.inherits(five.Auth.ConnectDialog_, five.Dialog);
 five.Auth.ConnectDialog_.prototype.createDom = function() {
   goog.base(this, 'createDom');
 
+  var contentEl = this.getContentEl();
+
   var headerEl = document.createElement('div');
   goog.dom.classes.add(headerEl, 'title');
   headerEl.appendChild(document.createTextNode(
       '5 mins needs your authorization to read your calendar'));
-  this.el.appendChild(headerEl);
+  contentEl.appendChild(headerEl);
 
   var connectButtonEl = document.createElement('div');
   goog.dom.classes.add(connectButtonEl, 'button');
   this.eventHandler.listen(connectButtonEl, goog.events.EventType.CLICK,
       this.handleConnectClick_);
   connectButtonEl.appendChild(document.createTextNode('Connect'));
-  this.el.appendChild(connectButtonEl);
+  contentEl.appendChild(connectButtonEl);
 };
 
 five.Auth.ConnectDialog_.prototype.handleConnectClick_ = function() {

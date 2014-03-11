@@ -7,6 +7,7 @@ goog.require('five.EventMoveEvent');
 goog.require('five.EventMutation');
 goog.require('five.EventTheme');
 goog.require('goog.array');
+goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventType');
@@ -46,7 +47,7 @@ five.Event.EventType = {
   SELECT: goog.events.getUniqueId('select'),
   DESELECT: goog.events.getUniqueId('deselect'),
   DUPLICATE: goog.events.getUniqueId('duplicate'),
-  EDIT_SUMMARY: goog.events.getUniqueId('edit_summary'),
+  EDIT: goog.events.getUniqueId('edit'),
   MOVE: five.EventMoveEvent.EventType.MOVE,
   MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),
   DATA_CHANGED: goog.events.getUniqueId('data_changed')
@@ -132,8 +133,7 @@ five.Event.prototype.attachDisplay = function(display) {
   display.setTheme(this.theme_);
   var EventType = five.Event.EventType;
   this.eventHandler_.
-      listen(display, [EventType.SELECT, EventType.DESELECT,
-          EventType.EDIT_SUMMARY],
+      listen(display, [EventType.SELECT, EventType.DESELECT, EventType.EDIT],
           this.dispatchDisplayEvent_);
 };
 
@@ -386,18 +386,31 @@ five.Event.prototype.calcMutations_ = function(collapse) {
   this.mutatedEndTime_ = this.endTime_.clone();
   var newMutations = [];
   goog.array.forEach(this.mutations_, function(mutation) {
-    if (mutation instanceof five.EventMutation.IntervalMutation &&
-        mutation.getInterval().isZero()) {
-      return;
-    }
     if (mutation instanceof five.EventMutation.MoveBy) {
+      if (mutation.getInterval().isZero()) {
+        return;
+      }
       this.mutatedStartTime_.add(mutation.getInterval());
       this.mutatedEndTime_.add(mutation.getInterval());
     } else if (mutation instanceof five.EventMutation.MoveStartBy) {
+      if (mutation.getInterval().isZero()) {
+        return;
+      }
       this.mutatedStartTime_.add(mutation.getInterval());
     } else if (mutation instanceof five.EventMutation.MoveEndBy) {
+      if (mutation.getInterval().isZero()) {
+        return;
+      }
       this.mutatedEndTime_.add(mutation.getInterval());
     } else if (mutation instanceof five.EventMutation.SetTimeRange) {
+      if (!goog.date.Date.compare(
+              goog.asserts.assertObject(this.mutatedStartTime_),
+              mutation.getStartTime()) &&
+          !goog.date.Date.compare(
+              goog.asserts.assertObject(this.mutatedEndTime_),
+              mutation.getEndTime())) {
+        return;
+      }
       this.mutatedStartTime_ = mutation.getStartTime().clone();
       this.mutatedEndTime_ = mutation.getEndTime().clone();
     } else if (mutation instanceof five.EventMutation.ChangeSummary) {

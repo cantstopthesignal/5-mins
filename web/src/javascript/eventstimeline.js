@@ -54,6 +54,7 @@ five.EventsTimeline.EventType = {
   EVENTS_MOVE: goog.events.getUniqueId('events_move'),
   EVENTS_DUPLICATE: goog.events.getUniqueId('events_duplicate'),
   EVENTS_DELETE: goog.events.getUniqueId('events_delete'),
+  EVENTS_EDIT: goog.events.getUniqueId('events_edit'),
   EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
   EVENTS_SAVE: goog.events.getUniqueId('events_save')
 };
@@ -594,6 +595,8 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.D) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
+  } else if (e.keyCode == goog.events.KeyCodes.E) {
+    event = five.EventsTimeline.EventType.EVENTS_EDIT;
   } else if (e.keyCode == goog.events.KeyCodes.S) {
     if (e.ctrlKey) {
       event = five.EventsTimeline.EventType.EVENTS_SAVE;

@@ -23,7 +23,7 @@ five.EdgeEventsEditor = function() {
 goog.inherits(five.EdgeEventsEditor, five.EventsEditor);
 
 /** @type {Element} */
-five.EdgeEventsEditor.prototype.editSummaryButton_;
+five.EdgeEventsEditor.prototype.editButton_;
 
 five.EdgeEventsEditor.prototype.createDom = function() {
   goog.base(this, 'createDom');
@@ -47,8 +47,8 @@ five.EdgeEventsEditor.prototype.createDom = function() {
 
   var dupButton = this.createIconButton_(topButtonBar, true);
   dupButton.appendChild(document.createTextNode('D'));
-  this.editSummaryButton_ = this.createIconButton_(topButtonBar, true);
-  this.editSummaryButton_.appendChild(document.createTextNode('ES'));
+  this.editButton_ = this.createIconButton_(topButtonBar, true);
+  this.editButton_.appendChild(document.createTextNode('E'));
 
   var moveUpButton = this.createArrowButton_(true, topButtonBar);
   var moveDownButton = this.createArrowButton_(false, topButtonBar);
@@ -61,8 +61,8 @@ five.EdgeEventsEditor.prototype.createDom = function() {
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
       listen(dupButton, goog.events.EventType.CLICK,
           this.handleDupButtonClick_).
-      listen(this.editSummaryButton_, goog.events.EventType.CLICK,
-          this.handleEditSummaryButtonClick_).
+      listen(this.editButton_, goog.events.EventType.CLICK,
+          this.handleEditButtonClick_).
       listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.bothEarlier)).
       listen(moveDownButton, goog.events.EventType.CLICK, goog.partial(
@@ -117,7 +117,7 @@ five.EdgeEventsEditor.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner);
   goog.style.showElement(this.el, this.events.length > 0);
-  goog.style.showElement(this.editSummaryButton_, this.events.length == 1);
+  goog.style.showElement(this.editButton_, this.events.length == 1);
   if (!this.events.length) {
     return;
   }
@@ -152,9 +152,9 @@ five.EdgeEventsEditor.prototype.handleDupButtonClick_ = function(e) {
 /**
  * @param {goog.events.Event} e
  */
-five.EdgeEventsEditor.prototype.handleEditSummaryButtonClick_ = function(e) {
+five.EdgeEventsEditor.prototype.handleEditButtonClick_ = function(e) {
   goog.asserts.assert(this.events.length == 1);
-  this.events[0].dispatchEvent(five.Event.EventType.EDIT_SUMMARY);
+  this.events[0].dispatchEvent(five.Event.EventType.EDIT);
 };
 
 /**

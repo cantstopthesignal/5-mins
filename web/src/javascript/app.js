@@ -106,7 +106,8 @@ five.App.prototype.showEventsView_ = function() {
   var calendarManager = new five.CalendarManager(this.appContext_,
       this.calendarData_);
   this.registerDisposable(calendarManager);
-  this.eventsView_ = new five.EventsView(calendarManager, this.appBar_);
+  this.eventsView_ = new five.EventsView(this.appContext_, calendarManager,
+      this.appBar_);
   this.registerDisposable(this.eventsView_);
   this.eventsView_.render(this.appEl_);
   this.appBar_.getMainMenu().setTitle(this.calendarData_['summary']);

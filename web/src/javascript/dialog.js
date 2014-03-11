@@ -14,12 +14,35 @@ goog.require('goog.style');
  */
 five.Dialog = function() {
   goog.base(this);
+
+  /** @type {Element} */
+  this.contentEl_;
+
+  /** @type {Element} */
+  this.backgroundEl_;
 };
 goog.inherits(five.Dialog, five.Component);
 
 five.Dialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'dialog');
+  this.el.tabIndex = '0';
+  goog.dom.classes.add(this.el, 'dialog-container');
+
+  this.backgroundEl_ = document.createElement('div');
+  goog.dom.classes.add(this.backgroundEl_, 'dialog-background');
+  this.el.appendChild(this.backgroundEl_);
+
+  this.contentEl_ = document.createElement('div');
+  goog.dom.classes.add(this.contentEl_, 'dialog');
+  this.el.appendChild(this.contentEl_);
+};
+
+five.Dialog.prototype.getContentEl = function() {
+  return this.contentEl_;
+};
+
+five.Dialog.prototype.getBackgroundEl = function() {
+  return this.backgroundEl_;
 };
 
 /** @param {Element=} opt_parentEl */
@@ -38,6 +61,6 @@ five.Dialog.prototype.hide = function() {
 };
 
 five.Dialog.prototype.reposition = function() {
-  this.el.style.marginLeft = -(this.el.offsetWidth/2) + 'px';
-  this.el.style.marginTop = -(this.el.offsetHeight/2) + 'px';
+  this.contentEl_.style.marginLeft = -(this.contentEl_.offsetWidth/2) + 'px';
+  this.contentEl_.style.marginTop = -(this.contentEl_.offsetHeight/2) + 'px';
 };

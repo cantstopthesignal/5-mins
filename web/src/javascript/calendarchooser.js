@@ -77,7 +77,7 @@ five.CalendarChooser.prototype.showChooserUi_ = function() {
     calendarEl.appendChild(calendarNameEl);
     this.containerEl_.appendChild(calendarEl);
   }
-  this.el.appendChild(this.containerEl_);
+  this.getContentEl().appendChild(this.containerEl_);
   this.show();
 };
 

@@ -43,6 +43,9 @@ body {
   font-size: 14px;
   padding: 5px 10px;
 }
+.dialog .title {
+  font-size: 20px;
+}
 .notification {
   border-radius: 4px;
   padding: 3px 8px;

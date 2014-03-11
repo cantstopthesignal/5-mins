@@ -211,7 +211,7 @@ five.EventCard.prototype.handleDblClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
   goog.dom.Range.clearSelection(window);
-  this.dispatchEvent(five.Event.EventType.EDIT_SUMMARY);
+  this.dispatchEvent(five.Event.EventType.EDIT);
 };
 
 /** @param {goog.events.BrowserEvent} e */
