@@ -140,7 +140,7 @@ five.EditEventDialog.prototype.createDom = function() {
   contentEl.appendChild(cancelButtonEl);
 
   this.eventHandler.
-      listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
+      listen(this.el, goog.events.EventType.KEYUP, this.handleKeyUp_).
       listen(this.summaryInputEl_, goog.events.EventType.KEYUP,
           this.handleSummaryChanged_).
       listen(this.startTimePicker_,
@@ -264,7 +264,7 @@ five.EditEventDialog.prototype.handleCancelClick_ = function() {
 };
 
 /** @param {goog.events.BrowserEvent} e */
-five.EditEventDialog.prototype.handleKeyDown_ = function(e) {
+five.EditEventDialog.prototype.handleKeyUp_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.ESC) {
     this.cancel_();
     e.preventDefault();
