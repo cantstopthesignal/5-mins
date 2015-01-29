@@ -15,9 +15,9 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.CalendarContract.Calendars;
-import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -171,7 +171,6 @@ public class NavigationDrawerFragment extends Fragment
         mDrawerToggle = new ActionBarDrawerToggle(
                 getActivity(),
                 mDrawerLayout,
-                R.drawable.ic_drawer,
                 R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close) {
             @Override
@@ -224,7 +223,7 @@ public class NavigationDrawerFragment extends Fragment
     private void selectAccount(String accountName) {
         boolean accountNameChanged = (mCurrentAccountName != null && accountName != null
                 && !mCurrentAccountName.equals(accountName));
-        if (mCurrentAccountName != null) {
+        if (accountName != null) {
             mCurrentAccountName = accountName;
             if (accountNameChanged) {
                 SharedPreferences sp = PreferenceManager
@@ -287,13 +286,13 @@ public class NavigationDrawerFragment extends Fragment
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        List<CalendarInfo> calendarList = new ArrayList<CalendarInfo>();
+        List<CalendarInfo> calendarList = new ArrayList<>();
         while (cursor.moveToNext()) {
             calendarList.add(new CalendarInfo(mCurrentAccountName,
                     cursor.getLong(CALENDARS_PROJECTION_ID_INDEX),
                     cursor.getString(CALENDARS_PROJECTION_DISPLAY_NAME_INDEX)));
         }
-        mCalendars = calendarList.toArray(new CalendarInfo[0]);
+        mCalendars = calendarList.toArray(new CalendarInfo[calendarList.size()]);
         mCalendarListView.setAdapter(new CalendarListAdapter(getActivity(), mCalendars));
         selectCalendar(mCurrentCalendarId);
     }

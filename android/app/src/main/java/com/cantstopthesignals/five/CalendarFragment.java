@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -41,6 +40,7 @@ public class CalendarFragment extends Fragment implements LoaderManager.LoaderCa
     private CalendarInfo mCalendarInfo;
     private Calendar mStartTime;
     private Calendar mEndTime;
+    private CalendarListView mCalendarList;
 
     public static CalendarFragment newInstance(CalendarInfo calendarInfo) {
         CalendarFragment fragment = new CalendarFragment();
@@ -63,10 +63,13 @@ public class CalendarFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-        textView.setText(mCalendarInfo.accountName + "//" + mCalendarInfo.displayName);
-        return rootView;
+        return inflater.inflate(R.layout.fragment_main, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mCalendarList = (CalendarListView) view.findViewById(R.id.calendar_list);
     }
 
     @Override
@@ -114,7 +117,7 @@ public class CalendarFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        List<EventInfo> eventList = new ArrayList<EventInfo>();
+        List<EventInfo> eventList = new ArrayList<>();
         while (cursor.moveToNext()) {
             Calendar startTime = Calendar.getInstance();
             startTime.setTimeInMillis(cursor.getLong(EVENTS_PROJECTION_DTSTART_INDEX));
@@ -125,11 +128,9 @@ public class CalendarFragment extends Fragment implements LoaderManager.LoaderCa
                     cursor.getString(EVENTS_PROJECTION_TITLE_INDEX),
                     startTime, endTime));
         }
-        Log.d(TAG, "" + eventList.size() + " events loaded:");
+        Log.d(TAG, eventList.size() + " events loaded");
         Collections.sort(eventList);
-        for (EventInfo eventInfo : eventList) {
-            Log.d(TAG, "  " + eventInfo);
-        }
+        mCalendarList.setEvents(eventList);
     }
 
     @Override
