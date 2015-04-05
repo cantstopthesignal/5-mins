@@ -2,13 +2,13 @@ package com.cantstopthesignals.five;
 
 import java.util.Calendar;
 
-public class EventInfo implements Comparable<EventInfo> {
+public class Event implements Comparable<Event> {
     public long id;
     public String title;
     public Calendar startTime;
     public Calendar endTime;
 
-    public EventInfo(long id, String title, Calendar startTime, Calendar endTime) {
+    public Event(long id, String title, Calendar startTime, Calendar endTime) {
         this.id = id;
         this.title = title;
         this.startTime = startTime;
@@ -25,7 +25,7 @@ public class EventInfo implements Comparable<EventInfo> {
     }
 
     @Override
-    public int compareTo(EventInfo eventInfo) {
-        return startTime.compareTo(eventInfo.startTime);
+    public int compareTo(Event event) {
+        return startTime.compareTo(event.startTime);
     }
 }

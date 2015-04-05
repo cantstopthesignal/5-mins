@@ -117,13 +117,13 @@ public class CalendarFragment extends Fragment implements LoaderManager.LoaderCa
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        List<EventInfo> eventList = new ArrayList<>();
+        List<Event> eventList = new ArrayList<>();
         while (cursor.moveToNext()) {
             Calendar startTime = Calendar.getInstance();
             startTime.setTimeInMillis(cursor.getLong(EVENTS_PROJECTION_DTSTART_INDEX));
             Calendar endTime = Calendar.getInstance();
             endTime.setTimeInMillis(cursor.getLong(EVENTS_PROJECTION_DTEND_INDEX));
-            eventList.add(new EventInfo(
+            eventList.add(new Event(
                     cursor.getLong(EVENTS_PROJECTION_ID_INDEX),
                     cursor.getString(EVENTS_PROJECTION_TITLE_INDEX),
                     startTime, endTime));
