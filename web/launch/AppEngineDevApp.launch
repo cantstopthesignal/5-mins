@@ -16,5 +16,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.cantstopthesignals.development.DevAppServerWrapperMain"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--addDebugWarSymlink &quot;debug/lib=${workspace_loc:5Mins/lib}&quot; --addDebugWarSymlink &quot;debug/src=${workspace_loc:5Mins/src}&quot; -- --port=8888 &quot;${workspace_loc:5Mins/war}&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="5Mins"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-javaagent:/Applications/Eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.9.2/appengine-java-sdk-1.9.2/lib/agent/appengine-agent.jar -Xmx512m -XstartOnFirstThread -Xbootclasspath/p:/Applications/Eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.6.4.v201203300216r37/appengine-java-sdk-1.6.4/lib/override/appengine-dev-jdk-overrides.jar"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-javaagent:/Applications/Eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.9.18/appengine-java-sdk-1.9.18/lib/agent/appengine-agent.jar -Xmx512m -XstartOnFirstThread -Xbootclasspath/p:/Applications/Eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.6.4.v201203300216r37/appengine-java-sdk-1.6.4/lib/override/appengine-dev-jdk-overrides.jar"/>
 </launchConfiguration>
