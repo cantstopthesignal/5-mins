@@ -152,6 +152,32 @@ function testLongEventWithTwoOverlaps() {
   assertEventRectsDoNotOverlap(events);
 }
 
+function testShortEventsInSeries() {
+  var events = [
+    createEvent(0, 5, 'event1'),
+    createEvent(5, 5, 'event2'),
+    createEvent(10, 10, 'event3')
+  ];
+  calc.distancePerHour = 50;
+  calc.minDistancePerHour = 30;
+  calc.minEventHeight = 15;
+  calc.setEvents(events);
+  calc.calc();
+
+  assertTimePoints(calc.timePoints_, 0, 5, 10, 20);
+
+  assertEventColumn(events[0], 0, 1);
+  assertRectEquals(events[0].rect, 0, 0, 300, 15);
+  assertEventColumn(events[1], 0, 1);
+  assertRectEquals(events[1].rect, 0, 15, 300, 15);
+  assertEventColumn(events[2], 0, 1);
+  assertRectEquals(events[2].rect, 0, 30, 300, 15);
+
+  assertEventRectsDoNotOverlap(events);
+
+  assertTimeMapsHoursYPos(calc, 0, 78);
+}
+
 function testManyShortEventsInSeries() {
   var events = [
     createEvent(0, 5, 'event1'),
@@ -209,14 +235,14 @@ function testComplexGolden1() {
   assertRectEquals(events[0].rect, 0, 0, 300, 50);
   assertEventColumn(events[1], 0, 1);
   assertRectEquals(events[1].rect, 0, 58, 300, 105);
-  assertEventColumn(events[2], 0, 3);
-  assertRectEquals(events[2].rect, 0, 163, 100, 400);
-  assertEventColumn(events[3], 1, 3);
-  assertRectEquals(events[3].rect, 100, 175, 100, 288);
-  assertEventColumn(events[4], 2, 3);
-  assertRectEquals(events[4].rect, 200, 175, 100, 504);
-  assertEventColumn(events[5], 1, 3);
-  assertRectEquals(events[5].rect, 100, 504, 100, 15);
+  assertEventColumn(events[2], 1, 3);
+  assertRectEquals(events[2].rect, 100, 163, 100, 400);
+  assertEventColumn(events[3], 2, 3);
+  assertRectEquals(events[3].rect, 200, 175, 100, 288);
+  assertEventColumn(events[4], 0, 3);
+  assertRectEquals(events[4].rect, 0, 175, 100, 504);
+  assertEventColumn(events[5], 2, 3);
+  assertRectEquals(events[5].rect, 200, 504, 100, 15);
 
   assertEventRectsDoNotOverlap(events);
 

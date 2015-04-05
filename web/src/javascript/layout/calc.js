@@ -90,7 +90,7 @@ five.layout.Calc.prototype.setEvents = function(events) {
   this.eventsByDuration_.sort(function(a, b) {
     var aDuration = a.endTime.getTime() - a.startTime.getTime();
     var bDuration = b.endTime.getTime() - b.startTime.getTime();
-    return a - b;
+    return bDuration - aDuration;
   });
 };
 
