@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.view.ViewGroup;
 
 import com.cantstopthesignals.five.layout.Calc;
+import com.cantstopthesignals.five.layout.EventLayout;
 import com.cantstopthesignals.five.layout.Params;
 
 import java.util.ArrayList;
@@ -28,14 +29,34 @@ public class CalendarListView extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        Params params = new Params();
-        Calc calc = new Calc(params);
-
-        int yPos = 0;
-        int width = right - left;
+        if (mEventCards.isEmpty()) {
+            return;
+        }
+        List<EventLayout> eventLayouts = new ArrayList<>();
         for (EventCardView eventCard : mEventCards) {
-            eventCard.layout(0, yPos, width, yPos + 50);
-            yPos += 50;
+            Event event = eventCard.getEvent();
+            eventLayouts.add(new EventLayout(event.startTime, event.endTime));
+        }
+        int eventCardBorderWidth = getResources().getDimensionPixelSize(R.dimen.event_card_border_width);
+
+        Params params = new Params();
+        params.distancePerHour = getResources().getDimensionPixelSize(R.dimen.distance_per_hour);
+        params.minDistancePerHour = getResources().getDimensionPixelSize(R.dimen.min_distance_per_hour);
+        params.minTimePointSpacing = getResources().getDimensionPixelSize(R.dimen.min_time_point_spacing);
+        params.minEventHeight = getResources().getDimensionPixelSize(R.dimen.min_event_height);
+        params.timeAxisPatchWidth = getResources().getDimensionPixelSize(R.dimen.time_axis_patch_width);
+        params.patchMinYPosDiff = getResources().getDimensionPixelSize(R.dimen.patch_min_y_pos_diff);
+        params.layoutWidth = right - left - eventCardBorderWidth;
+        Calc calc = new Calc(params);
+        calc.setEvents(eventLayouts);
+        calc.calc();
+
+        for (int i = 0, count = mEventCards.size(); i < count; i++) {
+            EventCardView eventCard = mEventCards.get(i);
+            EventLayout eventLayout = eventLayouts.get(i);
+            eventCard.layout(eventLayout.rect.left, eventLayout.rect.top,
+                    eventLayout.rect.getRight() + eventCardBorderWidth,
+                    eventLayout.rect.getBottom() + eventCardBorderWidth);
         }
     }
 

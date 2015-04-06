@@ -166,6 +166,35 @@ public class CalcTest {
     }
 
     @Test
+    public void testColumnExpansion() throws Exception {
+        List<EventLayout> events = new ArrayList<>();
+        events.add(createEvent(0, 30, "event1"));
+        events.add(createEvent(0, 30, "event2"));
+        events.add(createEvent(30, 30, "event3"));
+        calc.setEvents(events);
+        calc.calc();
+
+        assertEventColumn(events.get(0), 0, 2);
+        assertRectEquals(events.get(0).rect, 0, 0, 150, 25);
+        assertTimePoints(events.get(0).timePoints, 0);
+
+        assertEventColumn(events.get(1), 1, 2);
+        assertRectEquals(events.get(1).rect, 150, 0, 150, 25);
+        assertTimePoints(events.get(1).timePoints, 0);
+
+        assertEventColumn(events.get(2), 0, 1);
+        assertRectEquals(events.get(2).rect, 0, 25, 300, 25);
+        assertTimePoints(events.get(2).timePoints, 30);
+
+        assertTimePoints(calc.getTimePoints(), 0, 30, 60);
+        assertEvents(calc.getTimePoints().get(0).openEvents, events.get(0), events.get(1));
+        assertEvents(calc.getTimePoints().get(1).openEvents, events.get(2));
+        assertEvents(calc.getTimePoints().get(2).openEvents);
+
+        assertEventRectsDoNotOverlap(events);
+    }
+
+    @Test
     public void testShortEventsInSeries() throws Exception {
         List<EventLayout> events = new ArrayList<>();
         events.add(createEvent(0, 5, "event1"));

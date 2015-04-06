@@ -13,6 +13,14 @@ public class Rect {
         this.height = height;
     }
 
+    public int getRight() {
+        return left + width;
+    }
+
+    public int getBottom() {
+        return top + height;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Rect)) {

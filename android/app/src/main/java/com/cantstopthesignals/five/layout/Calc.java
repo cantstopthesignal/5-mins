@@ -278,7 +278,7 @@ public class Calc {
         while (!done) {
             done = true;
             for (EventLayout event : mEvents) {
-                for (TimePoint timePoint : mTimePoints) {
+                for (TimePoint timePoint : event.timePoints) {
                     int columnCount = Math.max(event.columnCount, timePoint.columnCount);
                     if (columnCount != event.columnCount || columnCount != timePoint.columnCount) {
                         event.columnCount = timePoint.columnCount = columnCount;

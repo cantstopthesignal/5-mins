@@ -152,6 +152,35 @@ function testLongEventWithTwoOverlaps() {
   assertEventRectsDoNotOverlap(events);
 }
 
+function testColumnExpansion() {
+  var events = [
+    createEvent(0, 30, 'event1'),
+    createEvent(0, 30, 'event2'),
+    createEvent(30, 30, 'event3')
+  ];
+  calc.setEvents(events);
+  calc.calc();
+
+  assertEventColumn(events[0], 0, 2);
+  assertRectEquals(events[0].rect, 0, 0, 150, 25);
+  assertTimePoints(events[0].timePoints, 0);
+
+  assertEventColumn(events[1], 1, 2);
+  assertRectEquals(events[1].rect, 150, 0, 150, 25);
+  assertTimePoints(events[1].timePoints, 0);
+
+  assertEventColumn(events[2], 0, 1);
+  assertRectEquals(events[2].rect, 0, 25, 300, 25);
+  assertTimePoints(events[2].timePoints, 30);
+
+  assertTimePoints(calc.timePoints_, 0, 30, 60);
+  assertEvents(calc.timePoints_[0].openEvents, events[0], events[1]);
+  assertEvents(calc.timePoints_[1].openEvents, events[2]);
+  assertEvents(calc.timePoints_[2].openEvents);
+
+  assertEventRectsDoNotOverlap(events);
+}
+
 function testShortEventsInSeries() {
   var events = [
     createEvent(0, 5, 'event1'),

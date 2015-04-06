@@ -6,4 +6,12 @@
     <!-- Per the design guidelines, navigation drawers should be between 240dp and 320dp:
         https://developer.android.com/design/patterns/navigation-drawer.html -->
     <dimen name="navigation_drawer_width">240dp</dimen>
+
+    <dimen name="distance_per_hour">75dp</dimen>
+    <dimen name="min_distance_per_hour">30dp</dimen>
+    <dimen name="min_time_point_spacing">2dp</dimen>
+    <dimen name="min_event_height">20dp</dimen>
+    <dimen name="time_axis_patch_width">15dp</dimen>
+    <dimen name="patch_min_y_pos_diff">3dp</dimen>
+    <dimen name="event_card_border_width">1dp</dimen>
 </resources>

@@ -9,11 +9,11 @@ public class Util {
     private static final SimpleDateFormat ISO_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
 
     public static int round(float in) {
-        return Math.round(in);
+        return Math.round(in + 0.0001f);
     }
 
     public static long roundLong(float in) {
-        return Math.round((double) in);
+        return Math.round((double) in + 0.0001d);
     }
 
     public static long hourToMs(long hour) {
@@ -70,7 +70,7 @@ public class Util {
 
     public static Calendar dayFloor(Calendar date) {
         Calendar dayFloor = (Calendar) date.clone();
-        dayFloor.set(Calendar.HOUR, 0);
+        dayFloor.set(Calendar.HOUR_OF_DAY, 0);
         dayFloor.set(Calendar.MINUTE, 0);
         dayFloor.set(Calendar.SECOND, 0);
         dayFloor.set(Calendar.MILLISECOND, 0);
@@ -78,10 +78,10 @@ public class Util {
     }
 
     public static Calendar roundToFiveMinutes(Calendar date) {
-        Calendar hourBase = hourAddSafe(date, -1);
+        Calendar hourBase = hourAddSafe(hourFloor(date), -1);
         int factor = 1000 * 60 * 5;
         long newTime = Util.roundLong((date.getTimeInMillis() - hourBase.getTimeInMillis()) /
-                factor) * factor + hourBase.getTimeInMillis();
+                (float) factor) * factor + hourBase.getTimeInMillis();
         Calendar newDate = Calendar.getInstance();
         newDate.setTimeInMillis(newTime);
         return newDate;
@@ -135,5 +135,9 @@ public class Util {
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String dateToIsoString(Calendar date) {
+        return ISO_DATE_FORMAT.format(date.getTime());
     }
 }

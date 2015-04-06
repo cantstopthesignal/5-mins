@@ -194,8 +194,9 @@ public class UtilTest {
     public void testRoundToFiveMinutes() throws Exception {
         class Helper {
             public void doTest(String expected, String input) {
-                assertEquals(Util.dateFromIsoString(expected),
-                        Util.roundToFiveMinutes(Util.dateFromIsoString(input)));
+                assertEquals(Util.dateToIsoString(Util.dateFromIsoString(expected)),
+                        Util.dateToIsoString(Util.roundToFiveMinutes(
+                                Util.dateFromIsoString(input))));
             }
         }
         Helper helper = new Helper();
@@ -231,8 +232,8 @@ public class UtilTest {
     public void testDayFloor() throws Exception {
         class Helper {
             public void doTest(String expected, String input) {
-                assertEquals(Util.dateFromIsoString(expected),
-                        Util.dayFloor(Util.dateFromIsoString(input)));
+                assertEquals(Util.dateToIsoString(Util.dateFromIsoString(expected)),
+                        Util.dateToIsoString(Util.dayFloor(Util.dateFromIsoString(input))));
             }
         }
         Helper helper = new Helper();
