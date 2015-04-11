@@ -83,11 +83,11 @@ five.layout.Calc.prototype.maxTime;
 /** @param {!Array.<!five.layout.Event>} events */
 five.layout.Calc.prototype.setEvents = function(events) {
   this.events_ = events;
-  this.events_.sort(function(a, b) {
+  goog.array.stableSort(this.events_, function(a, b) {
     return goog.date.Date.compare(a.startTime, b.startTime);
   });
   this.eventsByDuration_ = goog.array.clone(this.events_);
-  this.eventsByDuration_.sort(function(a, b) {
+  goog.array.stableSort(this.eventsByDuration_, function(a, b) {
     var aDuration = a.endTime.getTime() - a.startTime.getTime();
     var bDuration = b.endTime.getTime() - b.startTime.getTime();
     return bDuration - aDuration;
