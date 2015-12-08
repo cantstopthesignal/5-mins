@@ -182,9 +182,9 @@ five.EventsView.prototype.disposeInternal = function() {
 
 five.EventsView.prototype.reloadEvents_ = function() {
   var startDate = this.viewDate_.clone();
-  startDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -2));
+  startDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -5));
   var endDate = this.viewDate_.clone();
-  endDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 4));
+  endDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 10));
   return this.calendarManager_.loadEvents(startDate, endDate);
 };
 
