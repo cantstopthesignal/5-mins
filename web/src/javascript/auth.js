@@ -126,19 +126,17 @@ five.Auth.prototype.fullAuth_ = function() {
 };
 
 five.Auth.prototype.handleAuthResult_ = function(authResult) {
-  if (authResult) {
+  var authorized = authResult && 'access_token' in authResult;
+  if (authorized) {
     this.logger_.info('handleAuthResult_: authorized');
     this.setAuthRefreshTimer_(parseInt(authResult['expires_in'], 10));
   } else {
-    this.logger_.info('handleAuthResult_: no result');
+    this.logger_.info('handleAuthResult_: not authorized or no result');
   }
   if (this.authDeferred_.hasFired()) {
     return;
   }
-  if (!authResult) {
-    // An empty auth result can happen if the user previously authorized
-    // this service but then de-authorized.  Go immediately to full auth
-    // in this case.
+  if (!authorized) {
     this.fullAuth_();
     return;
   }
