@@ -59,19 +59,31 @@ five.CalendarApi.prototype.loadCalendarList = function() {
  * @param {string} calendarId
  * @param {goog.date.DateTime} startDate
  * @param {goog.date.DateTime} endDate
+ * @param {Object=} opt_prevResp
  * @return {goog.async.Deferred}
  */
 five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
-    endDate) {
+    endDate, opt_prevResp) {
   var params = {
     'calendarId': calendarId,
     'orderBy': 'startTime',
     'singleEvents': true,
     'timeMin': new Date(startDate.valueOf()).toISOString(),
-    'timeMax': new Date(endDate.valueOf()).toISOString()
+    'timeMax': new Date(endDate.valueOf()).toISOString(),
+    'maxResults': 240  // set to be under 250 where the api stops reporting properly
   };
+  if (opt_prevResp) {
+    goog.asserts.assert(opt_prevResp['nextPageToken']);
+    params['pageToken'] = opt_prevResp['nextPageToken'];
+  }
   var callback = function(resp) {
     goog.asserts.assert(resp['kind'] == 'calendar#events');
+    if (opt_prevResp) {
+      resp['items'] = goog.array.concat(opt_prevResp['items'], resp['items']);
+    }
+    if (resp['nextPageToken']) {
+      return this.loadEvents(calendarId, startDate, endDate, resp);
+    }
     this.logger_.info('Loaded ' + (resp['items'] || []).length + ' events');
   };
   var errback = function(error) {
