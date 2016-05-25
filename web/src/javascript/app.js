@@ -112,6 +112,7 @@ five.App.prototype.showEventsView_ = function() {
   this.eventsView_.render(this.appEl_);
   this.appBar_.getMainMenu().setTitle(this.calendarData_['summary']);
   this.resize();
+  this.eventsView_.focus();
 };
 
 five.App.prototype.handleWindowResize_ = function() {

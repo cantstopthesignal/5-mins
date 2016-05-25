@@ -169,6 +169,12 @@ five.EventsView.prototype.resize = function(opt_width, opt_height) {
   this.updateVisibleRegion_();
 };
 
+five.EventsView.prototype.focus = function() {
+  if (this.columns_.length) {
+    this.columns_[0].timeline.focus();
+  }
+};
+
 /** @override */
 five.EventsView.prototype.disposeInternal = function() {
   if (this.nowTrackerIntervalId_) {
@@ -327,6 +333,8 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
   this.eventHandler.
       listen(timeline, EventType.DESELECT,
           this.handleEventsTimelineDeselect_).
+      listen(timeline, EventType.EVENT_CREATE,
+          this.handleEventsTimelineEventCreate_).
       listen(timeline, EventType.EVENTS_MOVE,
           this.handleEventsTimelineEventsMove_).
       listen(timeline, EventType.EVENTS_DUPLICATE,
@@ -343,6 +351,22 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
   this.replaceSelectedEvents_([]);
+};
+
+five.EventsView.prototype.handleEventsTimelineEventCreate_ = function() {
+  var now = new goog.date.DateTime();
+  var startTime = five.util.roundToFiveMinutes(now);
+  var endTime = startTime.clone();
+  endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+  var newEvent = five.Event.createNew(startTime, endTime, '<new>');
+  this.addEvent_(newEvent);
+  this.replaceSelectedEvents_([newEvent]);
+  var dialog = this.openEditEventDialog_(newEvent, true);
+  this.eventHandler.listen(dialog, five.EditEventDialog.EventType.CANCEL,
+      function() {
+        this.replaceSelectedEvents_([]);
+        this.removeEvent_(newEvent);
+      });
 };
 
 /** @param {five.EventMoveEvent} e */
