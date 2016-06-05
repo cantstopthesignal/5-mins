@@ -17,6 +17,7 @@ public class EventLayout {
     public int column;
     public boolean columnAssigned;
     public int columnCount;
+    public int columnSpan;
 
     public boolean hasTimeAxisPatch;
     public boolean neighborHasTimeAxisPatch;

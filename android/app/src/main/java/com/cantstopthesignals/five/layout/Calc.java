@@ -84,6 +84,7 @@ public class Calc {
         calcTimePoints();
         assignEventsToColumns();
         calcColumnCounts();
+        calcColumnSpans();
         positionTimePoints();
         calcInitialTimePointConstraints();
         enforceHorzSplitHeights();
@@ -285,6 +286,22 @@ public class Calc {
                         done = false;
                     }
                 }
+            }
+        }
+    }
+
+    private void calcColumnSpans() {
+        for (EventLayout event : mEventsByDuration) {
+            Set<Integer> usedColumns = new HashSet<>();
+            for (TimePoint timePoint : event.timePoints) {
+                for (EventLayout neighborEvent : timePoint.openEvents) {
+                    usedColumns.add(neighborEvent.column);
+                }
+            }
+            event.columnSpan = 1;
+            while (event.column + event.columnSpan < event.columnCount
+                    && !usedColumns.contains(event.column + event.columnSpan)) {
+                event.columnSpan += 1;
             }
         }
     }
@@ -503,9 +520,9 @@ public class Calc {
             if (shiftForTimeAxisPatch) {
                 x += mParams.timeAxisPatchWidth;
             }
-            int width = columnWidth;
-            if (event.column == event.columnCount - 1) {
-                width = layoutWidth - (columnWidth * (event.columnCount - 1));
+            int width = columnWidth * event.columnSpan;
+            if (event.column + event.columnSpan == event.columnCount) {
+                width = layoutWidth - (columnWidth * event.column);
             }
             int height = event.endTimePoint.yPos - event.startTimePoint.yPos;
             event.rect = new Rect(x, event.startTimePoint.yPos, width, height);

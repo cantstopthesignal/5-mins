@@ -115,6 +115,7 @@ five.layout.Calc.prototype.calc = function() {
   this.calcTimePoints_();
   this.assignEventsToColumns_();
   this.calcColumnCounts_();
+  this.calcColumnSpans_();
   this.positionTimePoints_();
   this.calcInitialTimePointConstraints_();
   this.enforceHorzSplitHeights_();
@@ -330,6 +331,22 @@ five.layout.Calc.prototype.calcColumnCounts_ = function() {
   }
 };
 
+five.layout.Calc.prototype.calcColumnSpans_ = function() {
+  goog.array.forEach(this.eventsByDuration_, function(event) {
+    var usedColumns = {};
+    goog.array.forEach(event.timePoints, function(timePoint) {
+      goog.array.forEach(timePoint.openEvents, function(neighborEvent) {
+        usedColumns[neighborEvent.column] = true;
+      });
+    });
+    event.columnSpan = 1;
+    while (event.column + event.columnSpan < event.columnCount
+        && !usedColumns[event.column + event.columnSpan]) {
+      event.columnSpan += 1;
+    }
+  });
+}
+
 five.layout.Calc.prototype.positionTimePoints_ = function() {
   goog.array.forEach(this.timePoints_, function(timePoint) {
     timePoint.yPos = five.util.round(five.util.msToHourFloat(
@@ -536,9 +553,9 @@ five.layout.Calc.prototype.positionEvents_ = function() {
     if (shiftForTimeAxisPatch) {
       x += this.timeAxisPatchWidth;
     }
-    var width = columnWidth;
-    if (event.column == event.columnCount - 1) {
-      width = layoutWidth - (columnWidth * (event.columnCount - 1));
+    var width = columnWidth * event.columnSpan;
+    if (event.column + event.columnSpan == event.columnCount) {
+      width = layoutWidth - (columnWidth * event.column);
     }
     var height = event.endTimePoint.yPos - event.startTimePoint.yPos;
     event.rect = new goog.math.Rect(x, event.startTimePoint.yPos,

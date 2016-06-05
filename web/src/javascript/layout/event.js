@@ -27,6 +27,7 @@ five.layout.Event = function(startTime, endTime) {
   this.column = null;
   this.columnAssigned = false;
   this.columnCount = null;
+  this.columnSpan = null;
 
   this.hasTimeAxisPatch = false;
   this.neighborHasTimeAxisPatch = false;

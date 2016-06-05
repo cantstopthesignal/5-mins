@@ -47,7 +47,7 @@ public class CalcTest {
         calc.setEvents(event);
         calc.calc();
 
-        assertEventColumn(event, 0, 1);
+        assertEventColumn(event, 0, 1, 1);
         assertRectEquals(event.rect, 0, 0, 300, 25);
         assertTimePoint(60, event.startTimePoint);
         assertTimePoint(60 + 30, event.endTimePoint);
@@ -67,11 +67,11 @@ public class CalcTest {
         calc.setEvents(events);
         calc.calc();
 
-        assertEventColumn(event1, 0, 1);
+        assertEventColumn(event1, 0, 1, 1);
         assertRectEquals(event1.rect, 0, 0, 300, 25);
         assertTimePoints(event1.timePoints, 60);
 
-        assertEventColumn(event2, 0, 1);
+        assertEventColumn(event2, 0, 1, 1);
         assertRectEquals(event2.rect, 0, 50, 300, 25);
         assertTimePoints(event2.timePoints, 120);
 
@@ -94,11 +94,11 @@ public class CalcTest {
         calc.setEvents(events);
         calc.calc();
 
-        assertEventColumn(event1, 0, 1);
+        assertEventColumn(event1, 0, 1, 1);
         assertRectEquals(event1.rect, 0, 0, 300, 25);
         assertTimePoints(event1.timePoints, 60);
 
-        assertEventColumn(event2, 0, 1);
+        assertEventColumn(event2, 0, 1, 1);
         assertRectEquals(event2.rect, 0, 25, 300, 25);
         assertTimePoints(event2.timePoints, 90);
 
@@ -120,11 +120,11 @@ public class CalcTest {
         calc.setEvents(events);
         calc.calc();
 
-        assertEventColumn(event1, 0, 2);
+        assertEventColumn(event1, 0, 1, 2);
         assertRectEquals(event1.rect, 0, 0, 150, 25);
         assertTimePoints(event1.timePoints, 60);
 
-        assertEventColumn(event2, 1, 2);
+        assertEventColumn(event2, 1, 1, 2);
         assertRectEquals(event2.rect, 150, 0, 150, 25);
         assertTimePoints(event2.timePoints, 60);
 
@@ -144,15 +144,15 @@ public class CalcTest {
         calc.setEvents(events);
         calc.calc();
 
-        assertEventColumn(events.get(0), 0, 2);
+        assertEventColumn(events.get(0), 0, 1, 2);
         assertRectEquals(events.get(0).rect, 0, 0, 150, 150);
         assertTimePoints(events.get(0).timePoints, 0, 60, 120);
 
-        assertEventColumn(events.get(1), 1, 2);
+        assertEventColumn(events.get(1), 1, 1, 2);
         assertRectEquals(events.get(1).rect, 150, 0, 150, 50);
         assertTimePoints(events.get(1).timePoints, 0);
 
-        assertEventColumn(events.get(2), 1, 2);
+        assertEventColumn(events.get(2), 1, 1, 2);
         assertRectEquals(events.get(2).rect, 150, 100, 150, 50);
         assertTimePoints(events.get(2).timePoints, 120);
 
@@ -174,15 +174,15 @@ public class CalcTest {
         calc.setEvents(events);
         calc.calc();
 
-        assertEventColumn(events.get(0), 0, 2);
+        assertEventColumn(events.get(0), 0, 1, 2);
         assertRectEquals(events.get(0).rect, 0, 0, 150, 25);
         assertTimePoints(events.get(0).timePoints, 0);
 
-        assertEventColumn(events.get(1), 1, 2);
+        assertEventColumn(events.get(1), 1, 1, 2);
         assertRectEquals(events.get(1).rect, 150, 0, 150, 25);
         assertTimePoints(events.get(1).timePoints, 0);
 
-        assertEventColumn(events.get(2), 0, 1);
+        assertEventColumn(events.get(2), 0, 1, 1);
         assertRectEquals(events.get(2).rect, 0, 25, 300, 25);
         assertTimePoints(events.get(2).timePoints, 30);
 
@@ -209,11 +209,11 @@ public class CalcTest {
 
         assertTimePoints(calc.getTimePoints(), 0, 5, 10, 20);
 
-        assertEventColumn(events.get(0), 0, 1);
+        assertEventColumn(events.get(0), 0, 1, 1);
         assertRectEquals(events.get(0).rect, 0, 0, 300, 15);
-        assertEventColumn(events.get(1), 0, 1);
+        assertEventColumn(events.get(1), 0, 1, 1);
         assertRectEquals(events.get(1).rect, 0, 15, 300, 15);
-        assertEventColumn(events.get(2), 0, 1);
+        assertEventColumn(events.get(2), 0, 1, 1);
         assertRectEquals(events.get(2).rect, 0, 30, 300, 15);
 
         assertEventRectsDoNotOverlap(events);
@@ -239,22 +239,52 @@ public class CalcTest {
 
         assertTimePoints(calc.getTimePoints(), 0, 5, 10, 20, 30, 45, 60 + 45);
 
-        assertEventColumn(events.get(0), 0, 1);
+        assertEventColumn(events.get(0), 0, 1, 1);
         assertRectEquals(events.get(0).rect, 0, 0, 300, 15);
-        assertEventColumn(events.get(1), 0, 1);
+        assertEventColumn(events.get(1), 0, 1, 1);
         assertRectEquals(events.get(1).rect, 0, 15, 300, 15);
-        assertEventColumn(events.get(2), 0, 1);
+        assertEventColumn(events.get(2), 0, 1, 1);
         assertRectEquals(events.get(2).rect, 0, 30, 300, 15);
-        assertEventColumn(events.get(3), 0, 1);
+        assertEventColumn(events.get(3), 0, 1, 1);
         assertRectEquals(events.get(3).rect, 0, 45, 300, 15);
-        assertEventColumn(events.get(4), 0, 1);
+        assertEventColumn(events.get(4), 0, 1, 1);
         assertRectEquals(events.get(4).rect, 0, 60, 300, 15);
-        assertEventColumn(events.get(5), 0, 1);
+        assertEventColumn(events.get(5), 0, 1, 1);
         assertRectEquals(events.get(5).rect, 0, 75, 300, 30);
 
         assertEventRectsDoNotOverlap(events);
 
         assertTimeMapsHoursYPos(calc, 0, 83, 118);
+    }
+
+    @Test
+    public void testColumnSpan() throws Exception {
+        List<EventLayout> events = new ArrayList<>();
+        events.add(createEvent(0, 180, "event1"));
+        events.add(createEvent(0, 60, "event2"));
+        events.add(createEvent(40, 20, "event3"));
+        events.add(createEvent(60, 30, "event4"));
+        calc = new Calc(params);
+        calc.setEvents(events);
+        calc.calc();
+
+        assertEventColumn(events.get(0), 0, 1, 3);
+        assertRectEquals(events.get(0).rect, 0, 0, 100, 150);
+        assertTimePoints(events.get(0).timePoints, 0, 40, 60, 90);
+
+        assertEventColumn(events.get(1), 1, 1, 3);
+        assertRectEquals(events.get(1).rect, 100, 0, 100, 50);
+        assertTimePoints(events.get(1).timePoints, 0, 40);
+
+        assertEventColumn(events.get(2), 2, 1, 3);
+        assertRectEquals(events.get(2).rect, 200, 33, 100, 17);
+        assertTimePoints(events.get(2).timePoints, 40);
+
+        assertEventColumn(events.get(3), 1, 2, 3);
+        assertRectEquals(events.get(3).rect, 100, 50, 200, 25);
+        assertTimePoints(events.get(3).timePoints, 60);
+
+        assertEventRectsDoNotOverlap(events);
     }
 
     @Test
@@ -276,17 +306,17 @@ public class CalcTest {
         assertTimePoints(calc.getTimePoints(), -15, 45, 55, 180, 195, 540, 590, 600,
                 660, 800);
 
-        assertEventColumn(events.get(0), 0, 1);
+        assertEventColumn(events.get(0), 0, 1, 1);
         assertRectEquals(events.get(0).rect, 0, 0, 300, 50);
-        assertEventColumn(events.get(1), 0, 1);
+        assertEventColumn(events.get(1), 0, 1, 1);
         assertRectEquals(events.get(1).rect, 0, 58, 300, 105);
-        assertEventColumn(events.get(2), 1, 3);
+        assertEventColumn(events.get(2), 1, 1, 3);
         assertRectEquals(events.get(2).rect, 100, 163, 100, 400);
-        assertEventColumn(events.get(3), 2, 3);
+        assertEventColumn(events.get(3), 2, 1, 3);
         assertRectEquals(events.get(3).rect, 200, 175, 100, 288);
-        assertEventColumn(events.get(4), 0, 3);
+        assertEventColumn(events.get(4), 0, 1, 3);
         assertRectEquals(events.get(4).rect, 0, 175, 100, 504);
-        assertEventColumn(events.get(5), 2, 3);
+        assertEventColumn(events.get(5), 2, 1, 3);
         assertRectEquals(events.get(5).rect, 200, 504, 100, 15);
 
         assertEventRectsDoNotOverlap(events);
@@ -310,8 +340,9 @@ public class CalcTest {
                 " but was " + rect.toString(), expectedRect, rect);
     }
 
-    private void assertEventColumn(EventLayout event, int column, int columnCount) {
+    private void assertEventColumn(EventLayout event, int column, int columnSpan, int columnCount) {
         assertEquals(column, event.column);
+        assertEquals(columnSpan, event.columnSpan);
         assertEquals(columnCount, event.columnCount);
         assertEquals(true, event.columnAssigned);
     }
