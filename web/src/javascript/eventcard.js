@@ -3,6 +3,7 @@
 goog.provide('five.EventCard');
 
 goog.require('five.Component');
+goog.require('five.EventTheme');
 goog.require('five.deviceParams');
 goog.require('five.util');
 goog.require('goog.asserts');
@@ -44,7 +45,7 @@ five.EventCard.toTimeString_ = function(date) {
 five.EventCard.prototype.timeAxisPatch_;
 
 /** @type {five.EventTheme} */
-five.EventCard.prototype.theme_;
+five.EventCard.prototype.theme_ = five.EventTheme.DEFAULT;
 
 /** @type {boolean} */
 five.EventCard.prototype.selected_ = false;
@@ -90,7 +91,10 @@ five.EventCard.prototype.getTimeAxisPatch = function() {
 };
 
 /** @param {five.EventTheme} theme */
-five.EventCard.prototype.setTheme = function(theme) {
+five.EventCard.prototype.maybeSetTheme_ = function(theme) {
+  if (this.theme_ == theme) {
+    return;
+  }
   this.theme_ = theme;
   if (this.timeAxisPatch_) {
     this.timeAxisPatch_.setEventTheme(this.theme_);
@@ -98,6 +102,28 @@ five.EventCard.prototype.setTheme = function(theme) {
   if (this.el) {
     this.updateThemeDisplay_();
   }
+};
+
+/**
+ * @param {string} summary
+ * @return {five.EventTheme}
+ */
+five.EventCard.prototype.getThemeForSummary_ = function(summary) {
+  if (summary.indexOf("[todo] ") == 0) {
+    return five.EventTheme.TODO;
+  }
+  return five.EventTheme.DEFAULT;
+};
+
+/**
+ * @param {string} summary
+ * @return {string}
+ */
+five.EventCard.prototype.getShortenedSummary_ = function(summary) {
+  if (summary.indexOf("[todo] ") == 0) {
+    return summary.substr("[todo] ".length);
+  }
+  return summary;
 };
 
 five.EventCard.prototype.createDom = function() {
@@ -133,7 +159,12 @@ five.EventCard.prototype.updateDisplay = function() {
     dateRangeText += ' - ' + five.EventCard.toTimeString_(this.getEndTime());
   }
   goog.dom.setTextContent(this.dateRangeEl_, dateRangeText);
-  goog.dom.setTextContent(this.summaryEl_, this.event_.getSummary());
+
+  var newTheme = this.getThemeForSummary_(this.event_.getSummary());
+  this.maybeSetTheme_(newTheme);
+  var shortenedSummary = this.getShortenedSummary_(this.event_.getSummary());
+
+  goog.dom.setTextContent(this.summaryEl_, shortenedSummary);
   this.el.setAttribute('title', this.event_.getSummary());
 };
 

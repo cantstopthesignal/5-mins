@@ -26,8 +26,11 @@ five.EventTheme.BLUE = new five.EventTheme('rgba(200, 200, 255, 0.8)', '#88f',
     'rgba(150, 150, 220, 0.8)', '#66d');
 
 /** @type {!five.EventTheme} */
-five.EventTheme.ORANGE = new five.EventTheme('#FFAD46', '#CB7403', '#dF8D26',
-    '#aB5400');
+five.EventTheme.ORANGE = new five.EventTheme('rgba(255, 173, 70, 0.8)', '#CB7403',
+    'rgba(225, 141, 38, 0.8)', '#aB5400');
 
 /** @type {!five.EventTheme} */
 five.EventTheme.DEFAULT = five.EventTheme.BLUE;
+
+/** @type {!five.EventTheme} */
+five.EventTheme.TODO = five.EventTheme.ORANGE;

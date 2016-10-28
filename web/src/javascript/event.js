@@ -5,7 +5,6 @@ goog.provide('five.Event.EventType');
 
 goog.require('five.EventMoveEvent');
 goog.require('five.EventMutation');
-goog.require('five.EventTheme');
 goog.require('goog.array');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
@@ -84,9 +83,6 @@ five.Event.parseEventDataDate = function(dateData) {
   throw Error('Unexpected date data');
 };
 
-/** @type {!five.EventTheme} */
-five.Event.prototype.theme_ = five.EventTheme.DEFAULT;
-
 /** @type {boolean} */
 five.Event.prototype.selected_ = false;
 
@@ -130,7 +126,6 @@ five.Event.prototype.getSummary = function() {
 five.Event.prototype.attachDisplay = function(display) {
   this.displays_.push(display);
   display.setSelected(this.selected_);
-  display.setTheme(this.theme_);
   var EventType = five.Event.EventType;
   this.eventHandler_.
       listen(display, [EventType.SELECT, EventType.DESELECT, EventType.EDIT],
