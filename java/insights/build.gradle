@@ -1,0 +1,22 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+version = '1.0'
+
+mainClassName = 'com.cantstopthesignals.five.InsightsMain'
+
+dependencies {
+    compile project(':common')
+    compile 'org.apache.commons:commons-csv:1.4'
+}
+
+import org.apache.commons.exec.CommandLine;
+
+task executeInsights (type:JavaExec) {
+    main = 'com.cantstopthesignals.five.InsightsMain'
+    classpath = sourceSets.main.runtimeClasspath
+
+    if (System.getProperty("exec.args") != null) {
+        args CommandLine.translateCommandline(System.getProperty("exec.args"))
+    }
+}

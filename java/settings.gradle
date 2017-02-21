@@ -8,5 +8,6 @@
 
 include 'common'
 include 'curate'
+include 'insights'
 
 rootProject.name = '5-mins-java'
