@@ -32,6 +32,8 @@ class CalendarApi {
     private static final java.io.File DATA_STORE_DIR = new java.io.File(
             System.getProperty("user.home"), ".credentials/5mins-calendar");
 
+    private static final int MAX_REQUEST_RETRIES = 2;
+
     /** Global instance of the {@link FileDataStoreFactory}. */
     private static FileDataStoreFactory DATA_STORE_FACTORY;
 
@@ -126,14 +128,25 @@ class CalendarApi {
             }
 
             private void loadBatch() throws IOException {
-                Events eventsResult = service.events().list(calendarId)
-                        .setMaxResults(250)
-                        .setTimeMin(new DateTime(startTime.getTimeInMillis()))
-                        .setTimeMax(new DateTime(endTime.getTimeInMillis()))
-                        .setOrderBy("startTime")
-                        .setSingleEvents(true)
-                        .setPageToken(nextPageToken)
-                        .execute();
+                int retriesLeft = MAX_REQUEST_RETRIES;
+                Events eventsResult;
+                while (true) {
+                    try {
+                        eventsResult = service.events().list(calendarId)
+                                .setMaxResults(250)
+                                .setTimeMin(new DateTime(startTime.getTimeInMillis()))
+                                .setTimeMax(new DateTime(endTime.getTimeInMillis()))
+                                .setOrderBy("startTime")
+                                .setSingleEvents(true)
+                                .setPageToken(nextPageToken)
+                                .execute();
+                        break;
+                    } catch (IOException e) {
+                        if ((retriesLeft--) < 0) {
+                            throw e;
+                        }
+                    }
+                }
                 batch = eventsResult.getItems().iterator();
                 nextPageToken = eventsResult.getNextPageToken();
             }
