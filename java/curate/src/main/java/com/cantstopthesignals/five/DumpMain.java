@@ -11,13 +11,15 @@ import java.util.Date;
 
 public class DumpMain {
     private static void usage() {
-        System.out.println("Usage: dump [--calendar CALENDAR_ID] [--output-csv-file CSV_FILE]");
+        System.out.println("Usage: dump [--calendar CALENDAR_ID] [--output-csv-file CSV_FILE] ");
+        System.out.println("    [--years YEARS] [--months MONTHS]");
         System.exit(1);
     }
 
     public static void main(String[] args) throws IOException {
         String calendarIdArg = null;
         String outputCsvFilename = null;
+        int startMonthsAgo = 0;
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--calendar":
@@ -27,6 +29,14 @@ public class DumpMain {
                 case "--output-csv-file":
                     i++;
                     outputCsvFilename = args[i];
+                    break;
+                case "--years":
+                    i++;
+                    startMonthsAgo += 12 * Integer.valueOf(args[i]);
+                    break;
+                case "--months":
+                    i++;
+                    startMonthsAgo += Integer.valueOf(args[i]);
                     break;
                 default:
                     usage();
@@ -41,6 +51,9 @@ public class DumpMain {
             CalendarApi.printAvailableCalendars(service);
             System.exit(1);
         }
+        if (startMonthsAgo == 0) {
+            startMonthsAgo = 5 * 12;
+        }
 
         CSVPrinter csvPrinter = null;
         if (outputCsvFilename != null) {
@@ -53,7 +66,7 @@ public class DumpMain {
 
         Calendar endTime = Calendar.getInstance();
         Calendar startTime = (Calendar) endTime.clone();
-        startTime.add(Calendar.YEAR, -5);
+        startTime.add(Calendar.MONTH, -startMonthsAgo);
         CheckedIterator<Event, IOException> eventIterator = CalendarApi.loadEvents(service, calendarIdArg, startTime, endTime);
         int totalEvents = 0;
         while (eventIterator.hasNext()) {
