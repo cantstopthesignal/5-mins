@@ -3,9 +3,10 @@ apply plugin: 'application'
 
 version = '1.0'
 
-mainClassName = 'com.cantstopthesignals.five.InsightsMain'
+mainClassName = 'com.cantstopthesignals.five.insights.InsightsMain'
 
 dependencies {
     compile project(':common')
     compile 'org.apache.commons:commons-csv:1.4'
+    testCompile "junit:junit:4.12"
 }
