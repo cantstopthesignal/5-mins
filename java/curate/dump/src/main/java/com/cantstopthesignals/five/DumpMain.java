@@ -2,8 +2,6 @@ package com.cantstopthesignals.five;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Calendar;
@@ -57,9 +55,6 @@ public class DumpMain {
 
         CSVPrinter csvPrinter = null;
         if (outputCsvFilename != null) {
-            if (!new File(outputCsvFilename).isAbsolute()) {
-                throw new IllegalArgumentException("output csv file path should be absolute");
-            }
             csvPrinter = new CSVPrinter(new FileWriter(outputCsvFilename), CSVFormat.DEFAULT);
             csvPrinter.printRecord("id", "summary", "startTime", "endTime");
         }

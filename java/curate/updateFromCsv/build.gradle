@@ -3,7 +3,7 @@ apply plugin: 'application'
 
 version = '1.0'
 
-mainClassName = 'com.cantstopthesignals.five.InsightsMain'
+mainClassName = 'com.cantstopthesignals.five.UpdateFromCsvMain'
 
 dependencies {
     compile project(':common')

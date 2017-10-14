@@ -7,7 +7,8 @@
  */
 
 include 'common'
-include 'curate'
+include 'curate:dump'
+include 'curate:updateFromCsv'
 include 'insights'
 
 rootProject.name = '5-mins-java'

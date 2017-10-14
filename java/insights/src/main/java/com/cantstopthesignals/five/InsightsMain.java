@@ -3,14 +3,12 @@ package com.cantstopthesignals.five;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,9 +45,6 @@ public class InsightsMain {
         if (inputCsvFilename == null) {
             usage();
             return;
-        }
-        if (!new File(inputCsvFilename).isAbsolute()) {
-            throw new IllegalArgumentException("input csv file path should be absolute");
         }
 
         List<Event> events = readEventsFromCsv(new FileReader(inputCsvFilename));

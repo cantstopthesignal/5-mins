@@ -4,8 +4,6 @@ import com.google.api.services.calendar.model.Event;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
@@ -43,9 +41,6 @@ public class UpdateFromCsvMain {
         if (inputCsvFilename == null) {
             usage();
             return;
-        }
-        if (!new File(inputCsvFilename).isAbsolute()) {
-            throw new IllegalArgumentException("input csv file path should be absolute");
         }
 
         com.google.api.services.calendar.Calendar service = CalendarApi.getCalendarService();
