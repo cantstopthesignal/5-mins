@@ -25,6 +25,10 @@ public class Event {
         return start.getValue();
     }
 
+    public String getStartTimeZone() {
+        return modelEvent.getStart().getTimeZone();
+    }
+
     public long getEndTime() {
         DateTime end = modelEvent.getEnd().getDateTime();
         if (end == null) {
@@ -35,5 +39,9 @@ public class Event {
                     + getSummary() + ", startTime: " + getStartTime());
         }
         return end.getValue();
+    }
+
+    public String getEndTimeZone() {
+        return modelEvent.getEnd().getTimeZone();
     }
 }

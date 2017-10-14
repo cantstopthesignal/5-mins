@@ -56,7 +56,7 @@ public class DumpMain {
         CSVPrinter csvPrinter = null;
         if (outputCsvFilename != null) {
             csvPrinter = new CSVPrinter(new FileWriter(outputCsvFilename), CSVFormat.DEFAULT);
-            csvPrinter.printRecord("id", "summary", "startTime", "endTime");
+            csvPrinter.printRecord("id", "summary", "startTime", "endTime", "startTimeZone", "endTimeZone");
         }
 
         Calendar endTime = Calendar.getInstance();
@@ -69,7 +69,8 @@ public class DumpMain {
             totalEvents++;
             System.out.printf("%s (%s)\n", event.getSummary(), new Date(event.getStartTime()));
             if (csvPrinter != null) {
-                csvPrinter.printRecord(event.getId(), event.getSummary(), event.getStartTime(), event.getEndTime());
+                csvPrinter.printRecord(event.getId(), event.getSummary(), event.getStartTime(), event.getEndTime(),
+                    event.getStartTimeZone(), event.getEndTimeZone());
             }
         }
         eventIterator.checkException();
