@@ -595,7 +595,7 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.UP) {
     if (e.shiftKey) {
       event = five.EventMoveEvent.startEarlier();
-    } else if (e.metaKey) {
+    } else if (e.metaKey || e.ctrlKey) {
       event = five.EventMoveEvent.endEarlier();
     } else {
       event = five.EventMoveEvent.bothEarlier();
@@ -604,7 +604,7 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.DOWN) {
     if (e.shiftKey) {
       event = five.EventMoveEvent.startLater();
-    } else if (e.metaKey) {
+    } else if (e.metaKey || e.ctrlKey) {
       event = five.EventMoveEvent.endLater();
     } else {
       event = five.EventMoveEvent.bothLater();
