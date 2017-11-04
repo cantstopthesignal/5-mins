@@ -1,0 +1,47 @@
+/* Copyright cantstopthesignals@gmail.com */
+body {
+  font-family: Arial;
+  font-size: 13px;
+}
+.event-area {
+  border: 1px solid black;
+  display: inline-block;
+  padding: 25px;
+  margin-bottom: 50px;
+}
+.event-container {
+  width: 500px;
+  position: relative;
+}
+.event {
+  padding: 5px;
+  position: absolute;
+  border: 1px solid #88f;
+  background-color: rgba(200, 200, 255, 0.8);
+}
+.event > .title {
+  font-weight: bold;
+  margin-right: 10px;
+}
+.time-axis {
+  position: absolute;
+  border-bottom: 1px solid black;
+}
+.time-axis > .time-box {
+  border-right: 1px solid black;
+  text-align: right;
+  padding: 2px;
+  width: 41px;
+  height: 100%;
+  box-sizing: border-box;
+}
+.time-axis-patch-canvas {
+  position: absolute;
+}
+.cursor-popup {
+  position: absolute;
+  border: 1px solid #bbb;
+  background-color: #ddd;
+  min-width: 100px;
+  padding: 10px;
+}

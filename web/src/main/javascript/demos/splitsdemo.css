@@ -1,0 +1,19 @@
+/* Copyright cantstopthesignals@gmail.com */
+body {
+  font-family: Arial;
+  font-size: 13px;
+}
+.box {
+  position: relative;
+  background-color: #ddd;
+  margin-bottom: 100px;
+  margin-top: 100px;
+}
+.grid {
+  border-top: 1px solid #bbb;
+  position: absolute;
+}
+.split {
+  background-color: #333;
+  position: absolute;
+}

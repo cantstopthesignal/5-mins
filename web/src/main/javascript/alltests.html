@@ -1,0 +1,34 @@
+<!-- Copyright cantstopthesignals@gmail.com -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>five.AllTests</title>
+  <script src="../../lib/closure-library/closure/goog/base.js"></script>
+  <script src="../../src/javascript/deps.js"></script>
+  <script>
+    goog.require('five.AllTests');
+    goog.require('goog.testing.MultiTestRunner');
+  </script>
+  <script>
+    goog.events.listen(window, goog.events.EventType.LOAD, function() {
+      new five.AllTests().start();
+    });
+  </script>
+  <link rel="stylesheet" type="text/css" href="alltests.css">
+</head>
+<body>
+  <h1>five.AllTests</h1>
+  <div id="runner"></div>
+  <!-- Use a form so browser persists input values -->
+  <form id="footer" onsubmit="return false">
+    Settings:<br>
+    <input type="checkbox" name="hidepasses" id="hidepasses" checked>
+    <label for="hidepasses">Hide passes</label><br>
+    <input type="checkbox" name="parallel" id="parallel" checked>
+    <label for="parallel">Run in parallel</label>
+    <small>(timing stats not available if enabled)</small><br>
+    <input type="text" name="filter" id="filter" value="">
+    <label for="filter">Run only tests for path</label>
+  </form>
+</body>
+</html>

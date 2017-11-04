@@ -1,0 +1,46 @@
+<!-- Copyright cantstopthesignals@gmail.com -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>five.demos.SpinnerDemo</title>
+  <script src="../../../lib/closure-library/closure/goog/base.js"></script>
+  <script src="../../../src/javascript/deps.js"></script>
+  <script>
+    goog.require('five.demos.SpinnerDemo');
+    goog.require('goog.events');
+    goog.require('goog.events.EventType');
+  </script>
+  <script>
+    goog.events.listen(window, goog.events.EventType.LOAD, function() {
+      new five.demos.SpinnerDemo().start();
+    });
+  </script>
+  <style>
+    @import '/css/main.css';
+    .spinner {
+      vertical-align: middle;
+      margin-left: 20px;
+    }
+    .region {
+      width: 600px;
+      height: 300px;
+      text-align: center;
+      line-height: 300px;
+    }
+    .region.black {
+      background-color: black;
+    }
+    .region.gray {
+      background-color: gray;
+    }
+    .region.white {
+      background-color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="region black"></div>
+  <div class="region gray"></div>
+  <div class="region white"></div>
+</body>
+</html>

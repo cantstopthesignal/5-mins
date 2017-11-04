@@ -1,0 +1,117 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.google.cloud.tools:appengine-gradle-plugin:1.3.4'
+    }
+}
+
+repositories {
+    jcenter()
+}
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'com.google.cloud.tools.appengine'
+
+dependencies {
+    providedCompile group: 'javax.servlet', name: 'servlet-api', version:'2.5'
+    compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.59'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+appengine {
+    run {
+        port = 8888
+    }
+
+    deploy {
+        // make this deploy the current version
+        promote = true
+        project 'five-minutes-cssignal'
+        version '1'
+    }
+}
+
+ext.javascriptSourceDir = file('src/main/javascript')
+ext.javascriptOutputDir = file("${buildDir}/js")
+ext.closureLibraryDir = file('lib/closure-library')
+ext.closureCompilerJar = file("lib/closure-compiler/compiler.jar")
+ext.closureBuilderBin = file("${closureLibraryDir}/closure/bin/build/closurebuilder.py")
+
+class ClosureBuilderCompileTask extends DefaultTask {
+    String compilationLevel
+    String namespace
+    String warningLevel
+    File destFile
+
+    @TaskAction
+    void run() {
+        destFile.getParentFile().mkdirs();
+        project.exec {
+            commandLine project.closureBuilderBin,
+                    "--root=${project.closureLibraryDir}",
+                    "--root=${project.javascriptSourceDir}",
+                    "--namespace=${namespace}",
+                    "--output_mode=compiled",
+                    "--compiler_jar=${project.closureCompilerJar}",
+                    "--compiler_flags=--compilation_level=${compilationLevel}",
+                    "--compiler_flags=--warning_level=${warningLevel}",
+                    "--compiler_flags=--jscomp_error=accessControls",
+                    "--compiler_flags=--jscomp_error=ambiguousFunctionDecl",
+                    "--compiler_flags=--jscomp_error=checkDebuggerStatement",
+                    "--compiler_flags=--jscomp_error=checkRegExp",
+                    "--compiler_flags=--jscomp_error=checkTypes",
+                    "--compiler_flags=--jscomp_error=checkVars",
+                    "--compiler_flags=--jscomp_error=const",
+                    "--compiler_flags=--jscomp_error=constantProperty",
+                    "--compiler_flags=--jscomp_error=deprecated",
+                    "--compiler_flags=--jscomp_error=duplicate",
+                    // es5strict
+                    "--compiler_flags=--jscomp_error=externsValidation",
+                    "--compiler_flags=--jscomp_error=fileoverviewTags",
+                    "--compiler_flags=--jscomp_error=globalThis",
+                    "--compiler_flags=--jscomp_error=internetExplorerChecks",
+                    "--compiler_flags=--jscomp_error=invalidCasts",
+                    "--compiler_flags=--jscomp_error=missingProperties",
+                    "--compiler_flags=--jscomp_error=nonStandardJsDocs",
+                    "--compiler_flags=--jscomp_error=strictModuleDepCheck",
+                    "--compiler_flags=--jscomp_error=undefinedNames",
+                    "--compiler_flags=--jscomp_error=undefinedVars",
+                    "--compiler_flags=--jscomp_error=unknownDefines",
+                    "--compiler_flags=--jscomp_error=uselessCode",
+                    "--compiler_flags=--jscomp_error=visibility"
+            standardOutput destFile.newOutputStream()
+        }
+    }
+}
+
+task compileJavascriptDebug(type: ClosureBuilderCompileTask) {
+    compilationLevel "WHITESPACE_ONLY"
+    namespace "five.main"
+    warningLevel "VERBOSE"
+    destFile file("${javascriptOutputDir}/maindebug.js")
+}
+
+task compileJavascriptOptimized(type: ClosureBuilderCompileTask) {
+    compilationLevel "ADVANCED_OPTIMIZATIONS"
+    namespace "five.main"
+    warningLevel "VERBOSE"
+    destFile file("${javascriptOutputDir}/mainoptimized.js")
+}
+
+war {
+    dependsOn compileJavascriptDebug
+    dependsOn compileJavascriptOptimized
+    exclude "js"
+    from( "${buildDir}/js", {
+        into 'js'
+    })
+}
+
+group = 'com.cantstopthesignals.five'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.7  // App Engine Standard uses Java 7
+targetCompatibility = 1.7  // App Engine Standard uses Java 7

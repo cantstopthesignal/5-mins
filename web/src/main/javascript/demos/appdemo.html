@@ -1,0 +1,78 @@
+<!-- Copyright cantstopthesignals@gmail.com -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>five.demos.AppDemo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0,
+      user-scalable=yes, target-densitydpi=device-dpi">
+  <script src="../../../lib/closure-library/closure/goog/base.js"></script>
+  <script src="../../../src/javascript/deps.js"></script>
+  <script>
+    goog.require('five.demos.AppDemo');
+    goog.require('goog.events');
+    goog.require('goog.events.EventType');
+  </script>
+  <script>
+    five.demos.AppDemo.loadCss();
+    goog.events.listen(window, goog.events.EventType.LOAD, function() {
+      new five.demos.AppDemo().start();
+    });
+  </script>
+</head>
+<body>
+  <div class="app-bar">
+    <div class="app-icon app-bar-icon"><div class="inner"></div></div>
+    <div class="app-bar-main-menu calendar-chooser">
+      <div class="menu-arrow"><div class="inner"></div></div>
+      <div class="menu-text">Choose a calendar</div>
+    </div>
+  </div>
+  <div class="event-area">
+    <div class="time-axis">
+      <div class="time-box">5<div class="ampm">AM</div></div>
+    </div>
+    <div class="time-axis"><div class="time-box">6</div></div>
+    <div class="time-axis"><div class="time-box">7</div></div>
+    <div class="time-axis"><div class="time-box">8</div></div>
+    <div class="time-axis"><div class="time-box">9</div></div>
+    <div class="time-axis"><div class="time-box">10</div></div>
+    <div class="inline-editor">
+      <div class="shadow"></div>
+      <div class="button"></div>
+      <div class="button"></div>
+    </div>
+    <div class="time-axis"><div class="time-box">11</div></div>
+    <div class="day-banner inline">
+      Thursday, April 11th
+    </div>
+    <div class="time-axis">
+      <div class="time-box">12<div class="ampm">PM</div></div>
+    </div>
+    <div class="time-axis"><div class="time-box">1</div></div>
+    <div class="time-axis"><div class="time-box">2</div></div>
+    <div class="time-axis"><div class="time-box">3</div></div>
+    <div class="time-axis"><div class="time-box">4</div></div>
+    <div class="time-axis"><div class="time-box">5</div></div>
+    <div class="time-axis"><div class="time-box">6</div></div>
+    <div class="time-axis"><div class="time-box">7</div></div>
+    <div class="time-axis"><div class="time-box">8</div></div>
+    <div class="time-axis"><div class="time-box">9</div></div>
+    <div class="time-axis"><div class="time-box">10</div></div>
+    <div class="event-card" style="top:50px; height: 200px;">
+      Event1
+    </div>
+    <div class="event-card" style="top:486px; height: 50px;">
+      Event2
+    </div>
+    <div class="event-card" style="top:506px; height: 150px; left: 255px">
+      Event3
+    </div>
+  </div>
+  <div class="day-banner">
+    Wednesday, April 10th
+  </div>
+  <script>
+    five.demos.AppDemo.stripDomWhitespace();
+  </script>
+</body>
+</html>

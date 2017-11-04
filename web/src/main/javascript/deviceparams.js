@@ -1,0 +1,130 @@
+// Copyright cantstopthesignals@gmail.com
+
+goog.provide('five.deviceParams');
+
+goog.require('five.device');
+
+
+/** @constructor */
+five.deviceParams.DeviceParams = function() {
+  var isHighDensity = five.device.getDensity() == five.device.Density.HIGH;
+  var isTouch = five.device.isTouch();
+
+  this.timeAxisWidth = isHighDensity ? 48 : 40;
+  this.timeAxisPatchWidth = isHighDensity ? 25 : 15;
+  this.defaultHourHeight = isHighDensity ? 64 : 45;
+  this.minEventHeight = isHighDensity ? 25 : 17;
+
+  this.eventCardMinShortHeight = isHighDensity ? 46 : 26;
+  this.eventCardMinNormalHeight = isHighDensity ? 50 : 30;
+  this.eventCardMinLargeHeight = isHighDensity ? 74 : 44;
+  this.eventCardHitBoxMargin = isHighDensity ? 8 : 5;
+
+  this.timelineMinWidth = isHighDensity ? 600 : 400;
+  this.timelineMaxWidth = isHighDensity ? 850 : 600;
+  this.timelineRightGutterWidth = !isTouch ? (isHighDensity ? 48 : 24) : 0;
+
+  this.enableInlineEventsEditor = !isTouch;
+  this.inlineEventsEditorHeight = isHighDensity ? 96 : 48;
+
+  this.showTimeMarkerLabels = !isHighDensity;
+  this.enableCursorTimeMarker = !isTouch;
+  this.enableDragCreateEvent = !isTouch;
+  this.enableDragEvents = !isTouch;
+  this.enableDragMoveControls = !isTouch;
+};
+goog.addSingletonGetter(five.deviceParams.DeviceParams);
+
+goog.scope(function() {
+  var getInstance = five.deviceParams.DeviceParams.getInstance;
+
+  /** @return {number} */
+  five.deviceParams.getTimeAxisWidth = function() {
+    return getInstance().timeAxisWidth;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getTimeAxisPatchWidth = function() {
+    return getInstance().timeAxisPatchWidth;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getDefaultHourHeight = function() {
+    return getInstance().defaultHourHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getMinEventHeight = function() {
+    return getInstance().minEventHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getEventCardMinShortHeight = function() {
+    return getInstance().eventCardMinShortHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getEventCardMinNormalHeight = function() {
+    return getInstance().eventCardMinNormalHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getEventCardMinLargeHeight = function() {
+    return getInstance().eventCardMinLargeHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getEventCardHitBoxMargin = function() {
+    return getInstance().eventCardHitBoxMargin;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getTimelineMinWidth = function() {
+    return getInstance().timelineMinWidth;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getTimelineMaxWidth = function() {
+    return getInstance().timelineMaxWidth;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getTimelineRightGutterWidth = function() {
+    return getInstance().timelineRightGutterWidth;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableInlineEventsEditor = function() {
+    return getInstance().enableInlineEventsEditor;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getInlineEventsEditorHeight = function() {
+    return getInstance().inlineEventsEditorHeight;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getShowTimeMarkerLabels = function() {
+    return getInstance().showTimeMarkerLabels;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableCursorTimeMarker = function() {
+    return getInstance().enableCursorTimeMarker;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableDragCreateEvent = function() {
+    return getInstance().enableDragCreateEvent;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableDragEvents = function() {
+    return getInstance().enableDragEvents;
+  };
+
+  /** @return {boolean} */
+  five.deviceParams.getEnableDragMoveControls = function() {
+    return getInstance().enableDragMoveControls;
+  };
+});
