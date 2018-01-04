@@ -610,6 +610,18 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
       event = five.EventMoveEvent.bothLater();
     }
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
+  } else if (e.keyCode == goog.events.KeyCodes.OPEN_SQUARE_BRACKET) {
+    event = five.EventMoveEvent.startEarlier();
+    event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
+  } else if (e.keyCode == goog.events.KeyCodes.CLOSE_SQUARE_BRACKET) {
+    event = five.EventMoveEvent.startLater();
+    event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
+  } else if (e.keyCode == goog.events.KeyCodes.COMMA) {
+    event = five.EventMoveEvent.endEarlier();
+    event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
+  } else if (e.keyCode == goog.events.KeyCodes.PERIOD) {
+    event = five.EventMoveEvent.endLater();
+    event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.C) {
     event = five.EventsTimeline.EventType.EVENT_CREATE;
   } else if (e.keyCode == goog.events.KeyCodes.D) {
