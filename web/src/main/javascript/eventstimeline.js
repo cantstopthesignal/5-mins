@@ -57,11 +57,15 @@ five.EventsTimeline.EventType = {
   EVENTS_DELETE: goog.events.getUniqueId('events_delete'),
   EVENTS_EDIT: goog.events.getUniqueId('events_edit'),
   EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
-  EVENTS_SAVE: goog.events.getUniqueId('events_save')
+  EVENTS_SAVE: goog.events.getUniqueId('events_save'),
+  EVENTS_REFRESH: goog.events.getUniqueId('events_refresh')
 };
 
 /** @type {number} */
 five.EventsTimeline.PATCH_MIN_YPOS_DIFF = 2;
+
+/** @type {number} */
+five.EventsTimeline.SHIFT_EVENTS_MOVE_BY_MINUTES = 30;
 
 /** @type {goog.date.DateTime} */
 five.EventsTimeline.prototype.startDate_;
@@ -591,36 +595,49 @@ five.EventsTimeline.prototype.handleClick_ = function(e) {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
+  var SHIFT_EVENTS_MOVE_BY_MINUTES = five.EventsTimeline.SHIFT_EVENTS_MOVE_BY_MINUTES;
   var event;
   if (e.keyCode == goog.events.KeyCodes.UP) {
     if (e.shiftKey) {
-      event = five.EventMoveEvent.startEarlier();
-    } else if (e.metaKey || e.ctrlKey) {
-      event = five.EventMoveEvent.endEarlier();
+      event = five.EventMoveEvent.bothEarlier(SHIFT_EVENTS_MOVE_BY_MINUTES);
     } else {
       event = five.EventMoveEvent.bothEarlier();
     }
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.DOWN) {
     if (e.shiftKey) {
-      event = five.EventMoveEvent.startLater();
-    } else if (e.metaKey || e.ctrlKey) {
-      event = five.EventMoveEvent.endLater();
+      event = five.EventMoveEvent.bothLater(SHIFT_EVENTS_MOVE_BY_MINUTES);
     } else {
       event = five.EventMoveEvent.bothLater();
     }
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.OPEN_SQUARE_BRACKET) {
-    event = five.EventMoveEvent.startEarlier();
+    if (e.shiftKey) {
+      event = five.EventMoveEvent.startEarlier(SHIFT_EVENTS_MOVE_BY_MINUTES);
+    } else {
+      event = five.EventMoveEvent.startEarlier();
+    }
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.CLOSE_SQUARE_BRACKET) {
-    event = five.EventMoveEvent.startLater();
+    if (e.shiftKey) {
+      event = five.EventMoveEvent.startLater(SHIFT_EVENTS_MOVE_BY_MINUTES);
+    } else {
+      event = five.EventMoveEvent.startLater();
+    }
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.COMMA) {
-    event = five.EventMoveEvent.endEarlier();
+    if (e.shiftKey) {
+      event = five.EventMoveEvent.endEarlier(SHIFT_EVENTS_MOVE_BY_MINUTES);
+    } else {
+      event = five.EventMoveEvent.endEarlier();
+    }
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.PERIOD) {
-    event = five.EventMoveEvent.endLater();
+    if (e.shiftKey) {
+      event = five.EventMoveEvent.endLater(SHIFT_EVENTS_MOVE_BY_MINUTES);
+    } else {
+      event = five.EventMoveEvent.endLater();
+    }
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.C) {
     event = five.EventsTimeline.EventType.EVENT_CREATE;
@@ -634,6 +651,8 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     } else {
       event = five.EventsTimeline.EventType.EVENTS_SPLIT;
     }
+  } else if (e.keyCode == goog.events.KeyCodes.R && e.ctrlKey) {
+    event = five.EventsTimeline.EventType.EVENTS_REFRESH;
   } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;

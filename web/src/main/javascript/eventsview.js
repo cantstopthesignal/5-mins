@@ -186,7 +186,14 @@ five.EventsView.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
-five.EventsView.prototype.reloadEvents_ = function() {
+/** @param {boolean=} opt_confirmMutations */
+five.EventsView.prototype.reloadEvents_ = function(opt_confirmMutations) {
+  if (opt_confirmMutations) {
+    if (this.calendarManager_.hasMutations() && !window.confirm(
+        'Some events have been modified, are you sure you want to refresh?')) {
+      return null;
+    }
+  }
   var startDate = this.viewDate_.clone();
   startDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -5));
   var endDate = this.viewDate_.clone();
@@ -346,7 +353,9 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
       listen(timeline, EventType.EVENTS_SPLIT,
           this.handleEventsTimelineEventsSplit_).
       listen(timeline, EventType.EVENTS_SAVE,
-          this.handleEventsTimelineEventsSave_);
+          this.handleEventsTimelineEventsSave_).
+      listen(timeline, EventType.EVENTS_REFRESH,
+          this.handleEventsTimelineEventsRefresh_);
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
@@ -427,6 +436,10 @@ five.EventsView.prototype.handleEventsTimelineEventsSplit_ = function() {
 
 five.EventsView.prototype.handleEventsTimelineEventsSave_ = function() {
   this.calendarManager_.saveMutations();
+};
+
+five.EventsView.prototype.handleEventsTimelineEventsRefresh_ = function() {
+  this.reloadEvents_(true /* opt_confirmMutations */);
 };
 
 five.EventsView.prototype.registerListenersForScrollElement_ = function() {
@@ -602,35 +615,32 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   this.scrollAnchorPreCheck_();
   var mutation;
   if (e.anchor == five.EventMoveEvent.Anchor.BOTH) {
-    goog.asserts.assert(e.dir);
     if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
       mutation = new five.EventMutation.MoveBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+          new goog.date.Interval(goog.date.Interval.MINUTES, -e.minutes));
     } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
       mutation = new five.EventMutation.MoveBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+          new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
     } else {
       goog.asserts.fail('Unexpected dir: ' + e.dir);
     }
   } else if (e.anchor == five.EventMoveEvent.Anchor.START) {
-    goog.asserts.assert(e.dir);
     if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
       mutation = new five.EventMutation.MoveStartBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+          new goog.date.Interval(goog.date.Interval.MINUTES, -e.minutes));
     } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
       mutation = new five.EventMutation.MoveStartBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+          new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
     } else {
       goog.asserts.fail('Unexpected dir: ' + e.dir);
     }
   } else if (e.anchor == five.EventMoveEvent.Anchor.END) {
-    goog.asserts.assert(e.dir);
     if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
       mutation = new five.EventMutation.MoveEndBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+          new goog.date.Interval(goog.date.Interval.MINUTES, -e.minutes));
     } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
       mutation = new five.EventMutation.MoveEndBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+          new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
     } else {
       goog.asserts.fail('Unexpected dir: ' + e.dir);
     }
@@ -901,11 +911,7 @@ five.EventsView.prototype.updateViewDate_ = function() {
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleRefreshClick_ = function(e) {
   e.preventDefault();
-  if (this.calendarManager_.hasMutations() && !window.confirm(
-      'Some events have been modified, are you sure you want to refresh?')) {
-    return;
-  }
-  this.reloadEvents_();
+  this.reloadEvents_(true /* opt_confirmMutations */);
 };
 
 /** @param {goog.events.Event} e */
