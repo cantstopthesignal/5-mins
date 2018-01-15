@@ -5,6 +5,7 @@ goog.provide('five.EventsTimeline');
 goog.require('five.Component');
 goog.require('five.EdgeEventsEditor');
 goog.require('five.EventCard');
+goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventsEditor');
 goog.require('five.InlineEventsEditor');
 goog.require('five.TimeAxis');
@@ -52,13 +53,14 @@ goog.inherits(five.EventsTimeline, five.Component);
 five.EventsTimeline.EventType = {
   DESELECT: goog.events.getUniqueId('deselect'),
   EVENT_CREATE: goog.events.getUniqueId('event_create'),
-  EVENTS_MOVE: goog.events.getUniqueId('events_move'),
-  EVENTS_DUPLICATE: goog.events.getUniqueId('events_duplicate'),
+  EVENT_SELECT_NEIGHBOR: goog.events.getUniqueId('event_select_neighbor'),
   EVENTS_DELETE: goog.events.getUniqueId('events_delete'),
+  EVENTS_DUPLICATE: goog.events.getUniqueId('events_duplicate'),
   EVENTS_EDIT: goog.events.getUniqueId('events_edit'),
-  EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
+  EVENTS_MOVE: goog.events.getUniqueId('events_move'),
+  EVENTS_REFRESH: goog.events.getUniqueId('events_refresh'),
   EVENTS_SAVE: goog.events.getUniqueId('events_save'),
-  EVENTS_REFRESH: goog.events.getUniqueId('events_refresh')
+  EVENTS_SPLIT: goog.events.getUniqueId('events_split')
 };
 
 /** @type {number} */
@@ -645,6 +647,13 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
   } else if (e.keyCode == goog.events.KeyCodes.E) {
     event = five.EventsTimeline.EventType.EVENTS_EDIT;
+  } else if (e.keyCode == goog.events.KeyCodes.TAB) {
+    if (e.shiftKey) {
+      event = five.EventSelectNeighborEvent.previous();
+    } else {
+      event = five.EventSelectNeighborEvent.next();
+    }
+    event.type = five.EventsTimeline.EventType.EVENT_SELECT_NEIGHBOR;
   } else if (e.keyCode == goog.events.KeyCodes.S) {
     if (e.ctrlKey) {
       event = five.EventsTimeline.EventType.EVENTS_SAVE;

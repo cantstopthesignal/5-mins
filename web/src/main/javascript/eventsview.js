@@ -8,6 +8,7 @@ goog.require('five.DayBanner');
 goog.require('five.EditEventDialog');
 goog.require('five.Event');
 goog.require('five.EventMutation');
+goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventsSplitter');
 goog.require('five.EventsTimeline');
 goog.require('five.TimeMarker');
@@ -342,6 +343,8 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
           this.handleEventsTimelineDeselect_).
       listen(timeline, EventType.EVENT_CREATE,
           this.handleEventsTimelineEventCreate_).
+      listen(timeline, EventType.EVENT_SELECT_NEIGHBOR,
+          this.handleEventsTimelineEventSelectNeighborEvent_).
       listen(timeline, EventType.EVENTS_MOVE,
           this.handleEventsTimelineEventsMove_).
       listen(timeline, EventType.EVENTS_DUPLICATE,
@@ -376,6 +379,49 @@ five.EventsView.prototype.handleEventsTimelineEventCreate_ = function() {
         this.replaceSelectedEvents_([]);
         this.removeEvent_(newEvent);
       });
+};
+
+/** @param {five.EventSelectNeighborEvent} e */
+five.EventsView.prototype.handleEventsTimelineEventSelectNeighborEvent_ = function(e) {
+  var existingTime;
+  var existingEvent;
+  if (this.selectedEvents_.length) {
+    existingEvent = this.selectedEvents_[0];
+  } else {
+    existingTime = new goog.date.DateTime();
+  }
+  var normCompare = function(compareResult) { return compareResult; };
+  if (e.dir == five.EventSelectNeighborEvent.Dir.PREVIOUS) {
+    normCompare = function(compareResult) { return -compareResult; }
+  }
+  var compareEvents = function(a, b) {
+    var res = goog.date.Date.compare(
+        goog.asserts.assertObject(a.getStartTime()),
+        goog.asserts.assertObject(b.getStartTime()));
+    if (res != 0) {
+      return res;
+    }
+    return b.getDuration() - a.getDuration();
+  };
+  var bestEvent = null;
+  goog.array.forEach(this.events_, function(event) {
+    if (existingEvent) {
+      if (normCompare(compareEvents(existingEvent, event)) >= 0) {
+        return;
+      }
+    } else {
+      if (normCompare(goog.date.Date.compare(
+          existingTime, goog.asserts.assertObject(event.getStartTime()))) > 0) {
+        return;
+      }
+    }
+    if (bestEvent == null || normCompare(compareEvents(bestEvent, event)) > 0) {
+      bestEvent = event;
+    }
+  });
+  if (bestEvent) {
+    this.replaceSelectedEvents_([bestEvent]);
+  }
 };
 
 /** @param {five.EventMoveEvent} e */

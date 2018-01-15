@@ -122,6 +122,11 @@ five.Event.prototype.getSummary = function() {
   return this.eventData_['summary'] || '';
 };
 
+/** @return {number} */
+five.Event.prototype.getDuration = function() {
+  return this.getEndTime().getTime() - this.getStartTime().getTime();
+};
+
 /** @param {five.EventCard} display */
 five.Event.prototype.attachDisplay = function(display) {
   this.displays_.push(display);
