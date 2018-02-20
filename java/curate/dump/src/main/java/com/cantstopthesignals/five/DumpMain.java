@@ -49,9 +49,6 @@ public class DumpMain {
             CalendarApi.printAvailableCalendars(service);
             System.exit(1);
         }
-        if (startMonthsAgo == 0) {
-            startMonthsAgo = 5 * 12;
-        }
 
         CSVPrinter csvPrinter = null;
         if (outputCsvFilename != null) {
@@ -61,7 +58,12 @@ public class DumpMain {
 
         Calendar endTime = Calendar.getInstance();
         Calendar startTime = (Calendar) endTime.clone();
-        startTime.add(Calendar.MONTH, -startMonthsAgo);
+        if (startMonthsAgo != 0) {
+            startTime.add(Calendar.MONTH, -startMonthsAgo);
+        } else {
+            startTime.set(Calendar.YEAR, 1980);
+            startTime.set(Calendar.DAY_OF_YEAR, 1);
+        }
         CheckedIterator<Event, IOException> eventIterator = CalendarApi.loadEvents(service, calendarIdArg, startTime, endTime);
         int totalEvents = 0;
         while (eventIterator.hasNext()) {
