@@ -355,6 +355,8 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
           this.handleEventsTimelineEventsDelete_).
       listen(timeline, EventType.EVENTS_SPLIT,
           this.handleEventsTimelineEventsSplit_).
+      listen(timeline, EventType.EVENTS_TOGGLE_TODO,
+          this.handleEventsTimelineEventsToggleTodo_).
       listen(timeline, EventType.EVENTS_SAVE,
           this.handleEventsTimelineEventsSave_).
       listen(timeline, EventType.EVENTS_REFRESH,
@@ -479,6 +481,21 @@ five.EventsView.prototype.handleEventsTimelineEventsSplit_ = function() {
   this.finishBatchRenderUpdate_();
   this.replaceSelectedEvents_(newSelectedEvents);
 };
+
+five.EventsView.prototype.handleEventsTimelineEventsToggleTodo_ = function() {
+  if (!this.selectedEvents_.length) {
+    return;
+  }
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    var summaryInfo = five.Event.SummaryInfo.fromSummary(selectedEvent.getSummary());
+    var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
+    var newSummary = newSummaryInfo.getSummary();
+    selectedEvent.addMutation(new five.EventMutation.ChangeSummary(newSummary));
+  });
+  goog.array.forEach(this.columns_, function(column) {
+    column.timeline.eventsChanged(this.selectedEvents_);
+  }, this);
+}
 
 five.EventsView.prototype.handleEventsTimelineEventsSave_ = function() {
   this.calendarManager_.saveMutations();

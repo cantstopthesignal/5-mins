@@ -105,25 +105,14 @@ five.EventCard.prototype.maybeSetTheme_ = function(theme) {
 };
 
 /**
- * @param {string} summary
+ * @param {five.Event.SummaryType} summaryType
  * @return {five.EventTheme}
  */
-five.EventCard.prototype.getThemeForSummary_ = function(summary) {
-  if (summary.indexOf("[todo] ") == 0) {
+five.EventCard.prototype.getThemeForSummaryType_ = function(summaryType) {
+  if (summaryType == five.Event.SummaryType.TODO) {
     return five.EventTheme.TODO;
   }
   return five.EventTheme.DEFAULT;
-};
-
-/**
- * @param {string} summary
- * @return {string}
- */
-five.EventCard.prototype.getShortenedSummary_ = function(summary) {
-  if (summary.indexOf("[todo] ") == 0) {
-    return summary.substr("[todo] ".length);
-  }
-  return summary;
 };
 
 five.EventCard.prototype.createDom = function() {
@@ -160,11 +149,12 @@ five.EventCard.prototype.updateDisplay = function() {
   }
   goog.dom.setTextContent(this.dateRangeEl_, dateRangeText);
 
-  var newTheme = this.getThemeForSummary_(this.event_.getSummary());
-  this.maybeSetTheme_(newTheme);
-  var shortenedSummary = this.getShortenedSummary_(this.event_.getSummary());
+  var summaryInfo = five.Event.SummaryInfo.fromSummary(this.event_.getSummary());
 
-  goog.dom.setTextContent(this.summaryEl_, shortenedSummary);
+  var newTheme = this.getThemeForSummaryType_(summaryInfo.getType());
+  this.maybeSetTheme_(newTheme);
+
+  goog.dom.setTextContent(this.summaryEl_, summaryInfo.getShortenedSummary());
   this.el.setAttribute('title', this.event_.getSummary());
 };
 

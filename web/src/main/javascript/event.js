@@ -52,6 +52,12 @@ five.Event.EventType = {
   DATA_CHANGED: goog.events.getUniqueId('data_changed')
 };
 
+/** @enum {string} */
+five.Event.SummaryType = {
+  DEFAULT: 'default',
+  TODO: 'todo'
+};
+
 /**
  * @param {!goog.date.DateTime} startTime
  * @param {!goog.date.DateTime} endTime
@@ -81,6 +87,78 @@ five.Event.parseEventDataDate = function(dateData) {
     return new goog.date.DateTime(new Date(dateStr));
   }
   throw Error('Unexpected date data');
+};
+
+/**
+ * @constructor
+ * @param summary {string}
+ * @param shortenedSummary {string}
+ * @param type {five.Event.SummaryType}
+ */
+five.Event.SummaryInfo = function(summary, shortenedSummary, type) {
+  /** @type {string} */
+  this.summary_ = summary;
+
+  /** @type {string} */
+  this.shortenedSummary_ = shortenedSummary;
+
+  /** @type {five.Event.SummaryType} */
+  this.type_ = type;
+};
+
+/**
+ * @param summary {string}
+ * @return {five.Event.SummaryInfo}
+ */
+five.Event.SummaryInfo.fromSummary = function(summary) {
+  var type = five.Event.SummaryType.DEFAULT;
+  var shortenedSummary = summary;
+  if (summary.indexOf('[todo] ') == 0) {
+    shortenedSummary = summary.substr('[todo] '.length);
+    type = five.Event.SummaryType.TODO;
+  }
+  return new five.Event.SummaryInfo(summary, shortenedSummary, type);
+};
+
+/**
+ * @param shortenedSummary {string}
+ * @param type {five.Event.SummaryType}
+ * @return {five.Event.SummaryInfo}
+ */
+five.Event.SummaryInfo.fromShortenedSummary = function(shortenedSummary, type) {
+  var summary = shortenedSummary;
+  if (type == five.Event.SummaryType.TODO) {
+    summary = '[todo] ' + shortenedSummary;
+  }
+  return new five.Event.SummaryInfo(summary, shortenedSummary, type);
+};
+
+/**
+ * @param summaryInfo {five.Event.SummaryInfo}
+ * @return {five.Event.SummaryInfo}
+ */
+five.Event.SummaryInfo.toggleTodo = function(summaryInfo) {
+  var newType = five.Event.SummaryType.DEFAULT;
+  if (summaryInfo.getType() == five.Event.SummaryType.DEFAULT) {
+    newType = five.Event.SummaryType.TODO;
+  }
+  return five.Event.SummaryInfo.fromShortenedSummary(
+    summaryInfo.getShortenedSummary(), newType);
+};
+
+/** @return {string} */
+five.Event.SummaryInfo.prototype.getSummary = function() {
+  return this.summary_;
+};
+
+/** @return {string} */
+five.Event.SummaryInfo.prototype.getShortenedSummary = function() {
+  return this.shortenedSummary_;
+};
+
+/** @return {five.Event.SummaryType} */
+five.Event.SummaryInfo.prototype.getType = function() {
+  return this.type_;
 };
 
 /** @type {boolean} */

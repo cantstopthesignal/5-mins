@@ -60,7 +60,8 @@ five.EventsTimeline.EventType = {
   EVENTS_MOVE: goog.events.getUniqueId('events_move'),
   EVENTS_REFRESH: goog.events.getUniqueId('events_refresh'),
   EVENTS_SAVE: goog.events.getUniqueId('events_save'),
-  EVENTS_SPLIT: goog.events.getUniqueId('events_split')
+  EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
+  EVENTS_TOGGLE_TODO: goog.events.getUniqueId('events_toggle_todo')
 };
 
 /** @type {number} */
@@ -665,6 +666,8 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;
+  } else if (e.keyCode == goog.events.KeyCodes.T && e.ctrlKey) {
+    event = five.EventsTimeline.EventType.EVENTS_TOGGLE_TODO;
   } else if (e.keyCode == goog.events.KeyCodes.ESC) {
     this.clearMouseDown_();
     this.cancelDragCreateEvent_();

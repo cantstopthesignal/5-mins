@@ -140,6 +140,7 @@ five.EditEventDialog.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.KEYUP, this.handleKeyUp_).
+      listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
       listen(this.summaryInputEl_, goog.events.EventType.KEYUP,
           this.handleSummaryChanged_).
       listen(this.startTimePicker_,
@@ -263,12 +264,25 @@ five.EditEventDialog.prototype.handleCancelClick_ = function() {
 };
 
 /** @param {goog.events.BrowserEvent} e */
+five.EditEventDialog.prototype.handleKeyDown_ = function(e) {
+  if (e.keyCode == goog.events.KeyCodes.T && e.ctrlKey) {
+    e.preventDefault();
+  }
+};
+
+/** @param {goog.events.BrowserEvent} e */
 five.EditEventDialog.prototype.handleKeyUp_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.ESC) {
     this.cancel_();
     e.preventDefault();
   } else if (e.keyCode == goog.events.KeyCodes.ENTER) {
     this.done_();
+    e.preventDefault();
+  } else if (e.keyCode == goog.events.KeyCodes.T && e.ctrlKey) {
+    var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
+    var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
+    this.summaryInputEl_.value = newSummaryInfo.getSummary();
+    this.handleSummaryChanged_();
     e.preventDefault();
   }
 };
