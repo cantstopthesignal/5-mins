@@ -57,15 +57,20 @@ five.EventsTimeline.EventType = {
   EVENTS_DELETE: goog.events.getUniqueId('events_delete'),
   EVENTS_DUPLICATE: goog.events.getUniqueId('events_duplicate'),
   EVENTS_EDIT: goog.events.getUniqueId('events_edit'),
+  EVENTS_ESCAPE: goog.events.getUniqueId('events_escape'),
   EVENTS_MOVE: goog.events.getUniqueId('events_move'),
   EVENTS_REFRESH: goog.events.getUniqueId('events_refresh'),
   EVENTS_SAVE: goog.events.getUniqueId('events_save'),
+  EVENTS_SNAP_TO_NOW: goog.events.getUniqueId('events_snap_to_now'),
   EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
   EVENTS_TOGGLE_TODO: goog.events.getUniqueId('events_toggle_todo')
 };
 
 /** @type {number} */
 five.EventsTimeline.PATCH_MIN_YPOS_DIFF = 2;
+
+/** @type {number} */
+five.EventsTimeline.EVENTS_MOVE_BY_MINUTES = 5;
 
 /** @type {number} */
 five.EventsTimeline.SHIFT_EVENTS_MOVE_BY_MINUTES = 30;
@@ -598,52 +603,30 @@ five.EventsTimeline.prototype.handleClick_ = function(e) {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
-  var SHIFT_EVENTS_MOVE_BY_MINUTES = five.EventsTimeline.SHIFT_EVENTS_MOVE_BY_MINUTES;
+  var moveByMinutes = e.shiftKey ? five.EventsTimeline.SHIFT_EVENTS_MOVE_BY_MINUTES :
+      five.EventsTimeline.EVENTS_MOVE_BY_MINUTES;
   var event;
   if (e.keyCode == goog.events.KeyCodes.UP) {
-    if (e.shiftKey) {
-      event = five.EventMoveEvent.bothEarlier(SHIFT_EVENTS_MOVE_BY_MINUTES);
-    } else {
-      event = five.EventMoveEvent.bothEarlier();
-    }
+    event = five.EventMoveEvent.both(-moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.DOWN) {
-    if (e.shiftKey) {
-      event = five.EventMoveEvent.bothLater(SHIFT_EVENTS_MOVE_BY_MINUTES);
-    } else {
-      event = five.EventMoveEvent.bothLater();
-    }
+    event = five.EventMoveEvent.both(moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.OPEN_SQUARE_BRACKET) {
-    if (e.shiftKey) {
-      event = five.EventMoveEvent.startEarlier(SHIFT_EVENTS_MOVE_BY_MINUTES);
-    } else {
-      event = five.EventMoveEvent.startEarlier();
-    }
+    event = five.EventMoveEvent.start(-moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.CLOSE_SQUARE_BRACKET) {
-    if (e.shiftKey) {
-      event = five.EventMoveEvent.startLater(SHIFT_EVENTS_MOVE_BY_MINUTES);
-    } else {
-      event = five.EventMoveEvent.startLater();
-    }
+    event = five.EventMoveEvent.start(moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.COMMA) {
-    if (e.shiftKey) {
-      event = five.EventMoveEvent.endEarlier(SHIFT_EVENTS_MOVE_BY_MINUTES);
-    } else {
-      event = five.EventMoveEvent.endEarlier();
-    }
+    event = five.EventMoveEvent.end(-moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.PERIOD) {
-    if (e.shiftKey) {
-      event = five.EventMoveEvent.endLater(SHIFT_EVENTS_MOVE_BY_MINUTES);
-    } else {
-      event = five.EventMoveEvent.endLater();
-    }
+    event = five.EventMoveEvent.end(moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.C) {
-    event = five.EventsTimeline.EventType.EVENT_CREATE;
+    event = new goog.events.Event(five.EventsTimeline.EventType.EVENT_CREATE);
+    event.shiftKey = e.shiftKey;
   } else if (e.keyCode == goog.events.KeyCodes.D) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
   } else if (e.keyCode == goog.events.KeyCodes.E) {
@@ -663,16 +646,19 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     }
   } else if (e.keyCode == goog.events.KeyCodes.R && e.ctrlKey) {
     event = five.EventsTimeline.EventType.EVENTS_REFRESH;
+  } else if (e.keyCode == goog.events.KeyCodes.N) {
+    event = five.EventsTimeline.EventType.EVENTS_SNAP_TO_NOW;
   } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;
-  } else if (e.keyCode == goog.events.KeyCodes.T && e.ctrlKey) {
+  } else if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
     event = five.EventsTimeline.EventType.EVENTS_TOGGLE_TODO;
   } else if (e.keyCode == goog.events.KeyCodes.ESC) {
     this.clearMouseDown_();
     this.cancelDragCreateEvent_();
     this.cancelDragEvents_();
     this.cancelDragMoveControls_();
+    event = five.EventsTimeline.EventType.EVENTS_ESCAPE;
   }
   if (event && this.dispatchEvent(event)) {
     e.preventDefault();

@@ -113,7 +113,7 @@ five.Event.SummaryInfo = function(summary, shortenedSummary, type) {
 five.Event.SummaryInfo.fromSummary = function(summary) {
   var type = five.Event.SummaryType.DEFAULT;
   var shortenedSummary = summary;
-  if (summary.indexOf('[todo] ') == 0) {
+  if (summary.toLowerCase().indexOf('[todo] ') == 0) {
     shortenedSummary = summary.substr('[todo] '.length);
     type = five.Event.SummaryType.TODO;
   }

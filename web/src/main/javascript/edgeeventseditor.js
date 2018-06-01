@@ -64,17 +64,17 @@ five.EdgeEventsEditor.prototype.createDom = function() {
       listen(this.editButton_, goog.events.EventType.CLICK,
           this.handleEditButtonClick_).
       listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.bothEarlier)).
+          this.handleButtonClick_, five.EventMoveEvent.both, -5)).
       listen(moveDownButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.bothLater)).
+          this.handleButtonClick_, five.EventMoveEvent.both, 5)).
       listen(moveStartUpButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.startEarlier)).
+          this.handleButtonClick_, five.EventMoveEvent.start, -5)).
       listen(moveStartDownButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.startLater)).
+          this.handleButtonClick_, five.EventMoveEvent.start, 5)).
       listen(moveEndUpButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.endEarlier)).
+          this.handleButtonClick_, five.EventMoveEvent.end, -5)).
       listen(moveEndDownButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.endLater));
+          this.handleButtonClick_, five.EventMoveEvent.end, 5));
 };
 
 /**
@@ -159,10 +159,11 @@ five.EdgeEventsEditor.prototype.handleEditButtonClick_ = function(e) {
 
 /**
  * @param {!Function} eventConstructor
+ * @param {!number} minutes
  * @param {goog.events.Event} e
  */
 five.EdgeEventsEditor.prototype.handleButtonClick_ = function(
-    eventConstructor, e) {
+    eventConstructor, minutes, e) {
   e.preventDefault();
-  this.dispatchEvent(new eventConstructor());
+  this.dispatchEvent(new eventConstructor(minutes));
 };

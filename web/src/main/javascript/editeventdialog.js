@@ -265,7 +265,7 @@ five.EditEventDialog.prototype.handleCancelClick_ = function() {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EditEventDialog.prototype.handleKeyDown_ = function(e) {
-  if (e.keyCode == goog.events.KeyCodes.T && e.ctrlKey) {
+  if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
     e.preventDefault();
   }
 };
@@ -278,7 +278,7 @@ five.EditEventDialog.prototype.handleKeyUp_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.ENTER) {
     this.done_();
     e.preventDefault();
-  } else if (e.keyCode == goog.events.KeyCodes.T && e.ctrlKey) {
+  } else if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
     var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
     var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
     this.summaryInputEl_.value = newSummaryInfo.getSummary();

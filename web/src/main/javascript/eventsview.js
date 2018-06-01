@@ -345,33 +345,42 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
           this.handleEventsTimelineEventCreate_).
       listen(timeline, EventType.EVENT_SELECT_NEIGHBOR,
           this.handleEventsTimelineEventSelectNeighborEvent_).
-      listen(timeline, EventType.EVENTS_MOVE,
-          this.handleEventsTimelineEventsMove_).
+      listen(timeline, EventType.EVENTS_DELETE,
+          this.handleEventsTimelineEventsDelete_).
       listen(timeline, EventType.EVENTS_DUPLICATE,
           this.handleEventsTimelineEventsDuplicate_).
       listen(timeline, EventType.EVENTS_EDIT,
           this.handleEventsTimelineEventsEdit_).
-      listen(timeline, EventType.EVENTS_DELETE,
-          this.handleEventsTimelineEventsDelete_).
+      listen(timeline, EventType.EVENTS_ESCAPE,
+          this.handleEventsTimelineEventsEscape_).
+      listen(timeline, EventType.EVENTS_MOVE,
+          this.handleEventsTimelineEventsMove_).
+      listen(timeline, EventType.EVENTS_REFRESH,
+          this.handleEventsTimelineEventsRefresh_).
+      listen(timeline, EventType.EVENTS_SAVE,
+          this.handleEventsTimelineEventsSave_).
+      listen(timeline, EventType.EVENTS_SNAP_TO_NOW,
+          this.handleEventsTimelineEventsSnapToNow_).
       listen(timeline, EventType.EVENTS_SPLIT,
           this.handleEventsTimelineEventsSplit_).
       listen(timeline, EventType.EVENTS_TOGGLE_TODO,
-          this.handleEventsTimelineEventsToggleTodo_).
-      listen(timeline, EventType.EVENTS_SAVE,
-          this.handleEventsTimelineEventsSave_).
-      listen(timeline, EventType.EVENTS_REFRESH,
-          this.handleEventsTimelineEventsRefresh_);
+          this.handleEventsTimelineEventsToggleTodo_);
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
   this.replaceSelectedEvents_([]);
 };
 
-five.EventsView.prototype.handleEventsTimelineEventCreate_ = function() {
+/** @param {goog.events.Event} e */
+five.EventsView.prototype.handleEventsTimelineEventCreate_ = function(e) {
   var now = new goog.date.DateTime();
   var startTime = five.util.roundToFiveMinutes(now);
   var endTime = startTime.clone();
-  endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+  if (e.shiftKey) {
+    startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+  } else {
+    endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+  }
   var newEvent = five.Event.createNew(startTime, endTime, '<new>');
   this.addEvent_(newEvent);
   this.replaceSelectedEvents_([newEvent]);
@@ -482,7 +491,8 @@ five.EventsView.prototype.handleEventsTimelineEventsSplit_ = function() {
   this.replaceSelectedEvents_(newSelectedEvents);
 };
 
-five.EventsView.prototype.handleEventsTimelineEventsToggleTodo_ = function() {
+/** @param {goog.events.BrowserEvent} e */
+five.EventsView.prototype.handleEventsTimelineEventsToggleTodo_ = function(e) {
   if (!this.selectedEvents_.length) {
     return;
   }
@@ -495,10 +505,34 @@ five.EventsView.prototype.handleEventsTimelineEventsToggleTodo_ = function() {
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.eventsChanged(this.selectedEvents_);
   }, this);
+  e.preventDefault();
+}
+
+five.EventsView.prototype.handleEventsTimelineEventsEscape_ = function() {
+  this.replaceSelectedEvents_([]);
 }
 
 five.EventsView.prototype.handleEventsTimelineEventsSave_ = function() {
   this.calendarManager_.saveMutations();
+};
+
+five.EventsView.prototype.handleEventsTimelineEventsSnapToNow_ = function() {
+  if (!this.selectedEvents_.length) {
+    return;
+  }
+  var snapTime = five.util.roundToFiveMinutes(new goog.date.DateTime());
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    var startTime = goog.asserts.assertObject(selectedEvent.getStartTime());
+    var endTime = goog.asserts.assertObject(selectedEvent.getEndTime());
+    if (goog.date.Date.compare(startTime, snapTime) < 0) {
+      selectedEvent.addMutation(new five.EventMutation.SetTimeRange(startTime, snapTime));
+    } else {
+      selectedEvent.addMutation(new five.EventMutation.SetTimeRange(snapTime, endTime));
+    }
+  });
+  goog.array.forEach(this.columns_, function(column) {
+    column.timeline.eventsChanged(this.selectedEvents_);
+  }, this);
 };
 
 five.EventsView.prototype.handleEventsTimelineEventsRefresh_ = function() {
@@ -678,35 +712,14 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   this.scrollAnchorPreCheck_();
   var mutation;
   if (e.anchor == five.EventMoveEvent.Anchor.BOTH) {
-    if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
-      mutation = new five.EventMutation.MoveBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, -e.minutes));
-    } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
-      mutation = new five.EventMutation.MoveBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
-    } else {
-      goog.asserts.fail('Unexpected dir: ' + e.dir);
-    }
+    mutation = new five.EventMutation.MoveBy(
+        new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
   } else if (e.anchor == five.EventMoveEvent.Anchor.START) {
-    if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
-      mutation = new five.EventMutation.MoveStartBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, -e.minutes));
-    } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
-      mutation = new five.EventMutation.MoveStartBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
-    } else {
-      goog.asserts.fail('Unexpected dir: ' + e.dir);
-    }
+    mutation = new five.EventMutation.MoveStartBy(
+        new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
   } else if (e.anchor == five.EventMoveEvent.Anchor.END) {
-    if (e.dir == five.EventMoveEvent.Dir.EARLIER) {
-      mutation = new five.EventMutation.MoveEndBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, -e.minutes));
-    } else if (e.dir == five.EventMoveEvent.Dir.LATER) {
-      mutation = new five.EventMutation.MoveEndBy(
-          new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
-    } else {
-      goog.asserts.fail('Unexpected dir: ' + e.dir);
-    }
+    mutation = new five.EventMutation.MoveEndBy(
+        new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
   } else {
     goog.asserts.fail('Unexpected anchor: ' + e.anchor);
   }
