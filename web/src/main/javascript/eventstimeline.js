@@ -62,6 +62,7 @@ five.EventsTimeline.EventType = {
   EVENTS_REFRESH: goog.events.getUniqueId('events_refresh'),
   EVENTS_SAVE: goog.events.getUniqueId('events_save'),
   EVENTS_SNAP_TO_NOW: goog.events.getUniqueId('events_snap_to_now'),
+  EVENTS_SNAP_TO_PREVIOUS: goog.events.getUniqueId('events_snap_to_previous'),
   EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
   EVENTS_TOGGLE_TODO: goog.events.getUniqueId('events_toggle_todo')
 };
@@ -647,7 +648,11 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.R && e.ctrlKey) {
     event = five.EventsTimeline.EventType.EVENTS_REFRESH;
   } else if (e.keyCode == goog.events.KeyCodes.N) {
-    event = five.EventsTimeline.EventType.EVENTS_SNAP_TO_NOW;
+    if (e.shiftKey) {
+      event = five.EventsTimeline.EventType.EVENTS_SNAP_TO_PREVIOUS;
+    } else {
+      event = five.EventsTimeline.EventType.EVENTS_SNAP_TO_NOW;
+    }
   } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;

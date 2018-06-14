@@ -361,6 +361,8 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
           this.handleEventsTimelineEventsSave_).
       listen(timeline, EventType.EVENTS_SNAP_TO_NOW,
           this.handleEventsTimelineEventsSnapToNow_).
+      listen(timeline, EventType.EVENTS_SNAP_TO_PREVIOUS,
+          this.handleEventsTimelineEventsSnapToPrevious_).
       listen(timeline, EventType.EVENTS_SPLIT,
           this.handleEventsTimelineEventsSplit_).
       listen(timeline, EventType.EVENTS_TOGGLE_TODO,
@@ -530,6 +532,34 @@ five.EventsView.prototype.handleEventsTimelineEventsSnapToNow_ = function() {
       selectedEvent.addMutation(new five.EventMutation.SetTimeRange(snapTime, endTime));
     }
   });
+  goog.array.forEach(this.columns_, function(column) {
+    column.timeline.eventsChanged(this.selectedEvents_);
+  }, this);
+};
+
+five.EventsView.prototype.handleEventsTimelineEventsSnapToPrevious_ = function() {
+  if (!this.selectedEvents_.length) {
+    return;
+  }
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    var compareTime = function(a, b) {
+      return goog.date.Date.compare(goog.asserts.assertObject(a), goog.asserts.assertObject(b));
+    };
+    var bestEvent = null;
+    goog.array.forEach(this.events_, function(event) {
+      var timeDifference = selectedEvent.getStartTime().getTime() - event.getEndTime().getTime();
+      if (timeDifference <= 0 || five.util.msToMin(timeDifference) > 12 * 60) {
+        return;
+      }
+      if (bestEvent == null || compareTime(event.getEndTime(), bestEvent.getEndTime()) > 0) {
+        bestEvent = event;
+      }
+    });
+    if (bestEvent) {
+      selectedEvent.addMutation(new five.EventMutation.SetTimeRange(
+          bestEvent.getEndTime(), goog.asserts.assertObject(selectedEvent.getEndTime())));
+    }
+  }, this);
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.eventsChanged(this.selectedEvents_);
   }, this);
