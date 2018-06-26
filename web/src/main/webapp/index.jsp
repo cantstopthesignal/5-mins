@@ -29,7 +29,7 @@
       if (jsMode == JsMode.UNCOMPILED) {
         %>
         <script type="text/javascript" src="debug/lib/closure-library/closure/goog/base.js"></script>
-        <script type="text/javascript" src="debug/src/javascript/deps.js"></script>
+        <script type="text/javascript" src="debug/src/deps.js"></script>
         <script type="text/javascript">
           goog.require('five.main');
         </script>

@@ -1,3 +1,5 @@
+import java.nio.file.Files
+
 buildscript {
     repositories {
         jcenter()
@@ -36,9 +38,12 @@ appengine {
 
 ext.javascriptSourceDir = file('src/main/javascript')
 ext.javascriptOutputDir = file("${buildDir}/js")
-ext.closureLibraryDir = file('lib/closure-library')
-ext.closureCompilerJar = file("lib/closure-compiler/compiler.jar")
+ext.javascriptDepsFile = file("${buildDir}/deps.js")
+ext.libraryDir = file('lib')
+ext.closureLibraryDir = file("${libraryDir}/closure-library")
+ext.closureCompilerJar = file("${libraryDir}/closure-compiler/compiler.jar")
 ext.closureBuilderBin = file("${closureLibraryDir}/closure/bin/build/closurebuilder.py")
+ext.closureDepsWriterBin = file("${closureLibraryDir}/closure/bin/build/depswriter.py")
 
 class ClosureBuilderCompileTask extends DefaultTask {
     String compilationLevel
@@ -87,6 +92,21 @@ class ClosureBuilderCompileTask extends DefaultTask {
     }
 }
 
+class ClosureGenerateDepsTask extends DefaultTask {
+    String rootRelativeToClosure
+    File destFile
+
+    @TaskAction
+    void run() {
+        destFile.getParentFile().mkdirs();
+        project.exec {
+            commandLine project.closureDepsWriterBin,
+                    "--root_with_prefix=${project.javascriptSourceDir} ${rootRelativeToClosure}"
+            standardOutput destFile.newOutputStream()
+        }
+    }
+}
+
 task compileJavascriptDebug(type: ClosureBuilderCompileTask) {
     compilationLevel "WHITESPACE_ONLY"
     namespace "five.main"
@@ -101,13 +121,69 @@ task compileJavascriptOptimized(type: ClosureBuilderCompileTask) {
     destFile file("${javascriptOutputDir}/mainoptimized.js")
 }
 
+task generateJavascriptDeps(type: ClosureGenerateDepsTask) {
+    rootRelativeToClosure "../../../../src/javascript"
+    destFile javascriptDepsFile
+}
+
+compileJavascriptDebug.dependsOn(generateJavascriptDeps)
+
 war {
     dependsOn compileJavascriptDebug
     dependsOn compileJavascriptOptimized
     exclude "js"
-    from( "${buildDir}/js", {
+    from("${buildDir}/js", {
         into 'js'
     })
+}
+
+static void createSymlink(File destination, File source) {
+    if (!destination.exists()) {
+        throw new IOException("Symlink failed: Expected ${destination} to exist");
+    }
+    if (source.exists()) {
+        throw new IOException("Symlink failed: Expected ${source} to not exist yet");
+    }
+    ['ln', '-s', destination, source].execute().waitFor();
+}
+
+static void deleteIfExists(File file) {
+    if (!file.exists()) {
+        return;
+    }
+    if (file.isDirectory() && !Files.isSymbolicLink(file.toPath())) {
+        ['rmdir', file].execute().waitFor();
+    } else {
+        ['rm', file].execute().waitFor();
+    }
+}
+
+void createOrDestroyDebugTree(boolean create) {
+    File debugDir = file("${explodeWar.destinationDir}/debug");
+    deleteIfExists(file("${debugDir}/src/javascript"));
+    deleteIfExists(file("${debugDir}/src/deps.js"));
+    deleteIfExists(file("${debugDir}/src"));
+    deleteIfExists(file("${debugDir}/lib"));
+    deleteIfExists(debugDir);
+    if (create) {
+        debugDir.mkdir();
+        createSymlink(ext.libraryDir, file("${debugDir}/lib"));
+        file("${debugDir}/src").mkdir();
+        createSymlink(ext.javascriptDepsFile, file("${debugDir}/src/deps.js"));
+        createSymlink(ext.javascriptSourceDir, file("${debugDir}/src/javascript"));
+    }
+}
+
+appengineRun.doFirst {
+    createOrDestroyDebugTree(true);
+}
+
+explodeWar.doFirst {
+    createOrDestroyDebugTree(false);
+}
+
+appengineStage.doFirst {
+    createOrDestroyDebugTree(false);
 }
 
 group = 'com.cantstopthesignals.five'
