@@ -5,7 +5,9 @@ goog.provide('five.EventsTimeline');
 goog.require('five.Component');
 goog.require('five.EdgeEventsEditor');
 goog.require('five.EventCard');
+goog.require('five.EventMoveEvent');
 goog.require('five.EventSelectNeighborEvent');
+goog.require('five.EventSnapToEvent');
 goog.require('five.EventsEditor');
 goog.require('five.InlineEventsEditor');
 goog.require('five.TimeAxis');
@@ -61,8 +63,7 @@ five.EventsTimeline.EventType = {
   EVENTS_MOVE: goog.events.getUniqueId('events_move'),
   EVENTS_REFRESH: goog.events.getUniqueId('events_refresh'),
   EVENTS_SAVE: goog.events.getUniqueId('events_save'),
-  EVENTS_SNAP_TO_NOW: goog.events.getUniqueId('events_snap_to_now'),
-  EVENTS_SNAP_TO_PREVIOUS: goog.events.getUniqueId('events_snap_to_previous'),
+  EVENTS_SNAP_TO: goog.events.getUniqueId('events_snap_to'),
   EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
   EVENTS_TOGGLE_TODO: goog.events.getUniqueId('events_toggle_todo')
 };
@@ -625,6 +626,20 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.PERIOD) {
     event = five.EventMoveEvent.end(moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
+  } else if (e.keyCode == goog.events.KeyCodes.DASH) {
+    if (e.shiftKey) {
+      event = five.EventSnapToEvent.start(five.EventSnapToEvent.Dir.NEXT);
+    } else {
+      event = five.EventSnapToEvent.start(five.EventSnapToEvent.Dir.PREVIOUS);
+    }
+    event.type = five.EventsTimeline.EventType.EVENTS_SNAP_TO;
+  } else if (e.keyCode == goog.events.KeyCodes.EQUALS) {
+    if (e.shiftKey) {
+      event = five.EventSnapToEvent.end(five.EventSnapToEvent.Dir.PREVIOUS);
+    } else {
+      event = five.EventSnapToEvent.end(five.EventSnapToEvent.Dir.NEXT);
+    }
+    event.type = five.EventsTimeline.EventType.EVENTS_SNAP_TO;
   } else if (e.keyCode == goog.events.KeyCodes.C) {
     event = new goog.events.Event(five.EventsTimeline.EventType.EVENT_CREATE);
     event.shiftKey = e.shiftKey;
@@ -649,10 +664,11 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     event = five.EventsTimeline.EventType.EVENTS_REFRESH;
   } else if (e.keyCode == goog.events.KeyCodes.N) {
     if (e.shiftKey) {
-      event = five.EventsTimeline.EventType.EVENTS_SNAP_TO_PREVIOUS;
+      event = five.EventSnapToEvent.now(five.EventSnapToEvent.Anchor.START);
     } else {
-      event = five.EventsTimeline.EventType.EVENTS_SNAP_TO_NOW;
+      event = five.EventSnapToEvent.now(five.EventSnapToEvent.Anchor.AUTO);
     }
+    event.type = five.EventsTimeline.EventType.EVENTS_SNAP_TO;
   } else if (e.keyCode == goog.events.KeyCodes.BACKSPACE ||
       e.keyCode == goog.events.KeyCodes.DELETE) {
     event = five.EventsTimeline.EventType.EVENTS_DELETE;
