@@ -194,15 +194,23 @@ five.EditEventDialog.prototype.handleSummaryChanged_ = function() {
       five.EditEventDialog.EventType.EVENT_CHANGED));
 };
 
+/** @param {!five.Event.SummaryInfo} summaryInfo */
+five.EditEventDialog.prototype.setSummaryInputValueAndSelect_ = function(summaryInfo) {
+  this.summaryInputEl_.value = summaryInfo.getSummary();
+  this.summaryInputEl_.focus();
+  this.summaryInputEl_.setSelectionRange(
+      summaryInfo.getSummary().length - summaryInfo.getShortenedSummary().length,
+      summaryInfo.getSummary().length);
+};
+
 /** @override */
 five.EditEventDialog.prototype.show = function() {
   goog.base(this, 'show');
 
   this.oldFocusEl_ = document.activeElement;
 
-  this.summaryInputEl_.value = this.event_.getSummary();
-  this.summaryInputEl_.focus();
-  this.summaryInputEl_.select();
+  var summaryInfo = five.Event.SummaryInfo.fromSummary(this.event_.getSummary());
+  this.setSummaryInputValueAndSelect_(summaryInfo);
 };
 
 /** @override */
@@ -281,7 +289,7 @@ five.EditEventDialog.prototype.handleKeyUp_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
     var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
     var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
-    this.summaryInputEl_.value = newSummaryInfo.getSummary();
+    this.setSummaryInputValueAndSelect_(newSummaryInfo);
     this.handleSummaryChanged_();
     e.preventDefault();
   }

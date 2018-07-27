@@ -108,7 +108,7 @@ five.Event.SummaryInfo = function(summary, shortenedSummary, type) {
 
 /**
  * @param summary {string}
- * @return {five.Event.SummaryInfo}
+ * @return {!five.Event.SummaryInfo}
  */
 five.Event.SummaryInfo.fromSummary = function(summary) {
   var type = five.Event.SummaryType.DEFAULT;
@@ -123,7 +123,7 @@ five.Event.SummaryInfo.fromSummary = function(summary) {
 /**
  * @param shortenedSummary {string}
  * @param type {five.Event.SummaryType}
- * @return {five.Event.SummaryInfo}
+ * @return {!five.Event.SummaryInfo}
  */
 five.Event.SummaryInfo.fromShortenedSummary = function(shortenedSummary, type) {
   var summary = shortenedSummary;
@@ -135,7 +135,7 @@ five.Event.SummaryInfo.fromShortenedSummary = function(shortenedSummary, type) {
 
 /**
  * @param summaryInfo {five.Event.SummaryInfo}
- * @return {five.Event.SummaryInfo}
+ * @return {!five.Event.SummaryInfo}
  */
 five.Event.SummaryInfo.toggleTodo = function(summaryInfo) {
   var newType = five.Event.SummaryType.DEFAULT;
