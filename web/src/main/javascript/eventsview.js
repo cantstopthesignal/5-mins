@@ -63,7 +63,7 @@ five.EventsView.DragEventsType = {
 };
 
 /** @type {number} */
-five.EventsView.NOW_TRACKER_INTERVAL_ = 15 * 1000;
+five.EventsView.NOW_TRACKER_INTERVAL_MS_ = 15 * 1000;
 
 /** @type {number} */
 five.EventsView.SCROLL_ANIMATION_DURATION_MS = 500;
@@ -153,10 +153,8 @@ five.EventsView.prototype.render = function(parentEl) {
     this.reloadEvents_().addCallback(this.handleInitialEventsLoad_, this);
   }
 
-  if (!this.nowTrackerIntervalId_) {
-    this.nowTrackerIntervalId_ = window.setInterval(goog.bind(
-        this.handleNowTrackerTick_, this),
-        five.EventsView.NOW_TRACKER_INTERVAL_);
+  if (!this.nowTrackerTimeoutId_) {
+    this.handleNowTrackerTick_();
   }
 };
 
@@ -178,9 +176,9 @@ five.EventsView.prototype.focus = function() {
 
 /** @override */
 five.EventsView.prototype.disposeInternal = function() {
-  if (this.nowTrackerIntervalId_) {
-    window.clearInterval(this.nowTrackerIntervalId_);
-    delete this.nowTrackerIntervalId_;
+  if (this.nowTrackerTimeoutId_) {
+    window.clearTimeout(this.nowTrackerTimeoutId_);
+    delete this.nowTrackerTimeoutId_;
   }
   goog.disposeAll(this.events_);
   goog.disposeAll(this.columns_);
@@ -980,6 +978,7 @@ five.EventsView.prototype.isTimeInView = function(date) {
 };
 
 five.EventsView.prototype.handleNowTrackerTick_ = function() {
+  var INTERVAL_MS = five.EventsView.NOW_TRACKER_INTERVAL_MS_;
   var now = new goog.date.DateTime();
   this.nowMarker_.setTime(now);
   if (this.isTimeInView(now)) {
@@ -995,6 +994,13 @@ five.EventsView.prototype.handleNowTrackerTick_ = function() {
   } else {
     delete this.nowTrackerLastTickTime_;
   }
+
+  var nowMs = now.getSeconds() * 1000 + now.getMilliseconds();
+  var msUntilTick = (Math.floor(nowMs / INTERVAL_MS)+1) * INTERVAL_MS - nowMs;
+
+  this.nowTrackerTimeoutId_ = window.setTimeout(goog.bind(
+      this.handleNowTrackerTick_, this),
+      msUntilTick);
 };
 
 five.EventsView.prototype.initDefaultViewDate_ = function() {
