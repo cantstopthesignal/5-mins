@@ -127,27 +127,30 @@ five.InlineEventsEditor.prototype.getType = function() {
 five.InlineEventsEditor.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner);
-  goog.style.showElement(this.el, this.events.length > 0);
-  if (!this.events.length) {
-    return;
-  }
+
   var rect;
   goog.array.forEach(this.events, function(event) {
-    if (rect) {
-      rect.boundingRect(event.getRect());
-    } else {
-      rect = event.getRect().clone();
+    var eventRect = event.getRect();
+    if (eventRect) {
+      if (rect) {
+        rect.boundingRect(eventRect);
+      } else {
+        rect = eventRect.clone();
+      }
     }
   });
-  goog.asserts.assert(rect);
-  if (this.mouseHover_) {
-    var oldPosition = goog.style.getPosition(this.el);
-    var oldSize = goog.style.getBorderBoxSize(this.el);
-    rect.left = oldPosition.x;
-    rect.width = oldSize.width;
+
+  goog.style.showElement(this.el, !!rect);
+  if (rect) {
+    if (this.mouseHover_) {
+      var oldPosition = goog.style.getPosition(this.el);
+      var oldSize = goog.style.getBorderBoxSize(this.el);
+      rect.left = oldPosition.x;
+      rect.width = oldSize.width;
+    }
+    goog.style.setPosition(this.el, rect.left, rect.top);
+    goog.style.setBorderBoxSize(this.el, rect.getSize());
   }
-  goog.style.setPosition(this.el, rect.left, rect.top);
-  goog.style.setBorderBoxSize(this.el, rect.getSize());
 };
 
 /** @override */
