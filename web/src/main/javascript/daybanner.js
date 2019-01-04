@@ -23,6 +23,11 @@ goog.inherits(five.DayBanner, five.Component);
 
 five.DayBanner.DATE_FORMAT = new goog.i18n.DateTimeFormat('EEEE, MMMM d');
 
+/** @enum {string} */
+five.DayBanner.EventType = {
+  CLICK: goog.events.getUniqueId('click')
+};
+
 /** @type {five.EventsTimeline} */
 five.DayBanner.prototype.owner_;
 
@@ -40,6 +45,9 @@ five.DayBanner.prototype.createDom = function() {
 
   this.el.appendChild(document.createTextNode(''));
   this.updateDisplay_();
+
+  this.eventHandler.
+      listen(this.el, goog.events.EventType.CLICK, this.handleClick_);
 };
 
 /** @override */
@@ -48,9 +56,14 @@ five.DayBanner.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
+/** @return {!goog.date.DateTime} */
+five.DayBanner.prototype.getDate = function() {
+  return this.date_;
+};
+
 /** @param {!goog.date.DateTime} date */
 five.DayBanner.prototype.setDate = function(date) {
-  this.date_ = date;
+  this.date_ = date.clone();
   if (this.el) {
     this.updateDisplay_();
   }
@@ -68,4 +81,13 @@ five.DayBanner.prototype.setRect = function(rect) {
 five.DayBanner.prototype.updateDisplay_ = function() {
   var dayText = five.DayBanner.DATE_FORMAT.format(this.date_);
   this.el.firstChild.data = dayText;
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.DayBanner.prototype.handleClick_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  var event = new goog.events.Event(five.DayBanner.EventType.CLICK);
+  this.dispatchEvent(event);
 };

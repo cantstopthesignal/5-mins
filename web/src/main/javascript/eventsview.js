@@ -314,6 +314,7 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     dayBannerDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
     newColumn.dayBanner = new five.DayBanner(dayBannerDate);
     newColumn.dayBanner.render(this.el);
+    this.registerListenersForDayBanner_(newColumn.dayBanner);
     this.columns_.push(newColumn);
     newColumn.timeline.finishBatchUpdate();
   }
@@ -576,6 +577,53 @@ five.EventsView.prototype.handleEventsTimelineEventsSnapTo_ = function(e) {
 
 five.EventsView.prototype.handleEventsTimelineEventsRefresh_ = function() {
   this.reloadEvents_(true /* opt_confirmMutations */);
+};
+
+five.EventsView.prototype.registerListenersForDayBanner_ = function(dayBanner) {
+  var EventType = five.DayBanner.EventType;
+  this.eventHandler.
+      listen(dayBanner, EventType.CLICK,
+          this.handleDayBannerClick_);
+};
+
+/** @param {goog.events.Event} e */
+five.EventsView.prototype.handleDayBannerClick_ = function(e) {
+  var dayStart = five.util.dayFloor(e.target.getDate());
+  var dayEnd = dayStart.clone();
+  dayEnd.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
+
+  window.console.log('\n' + five.DayBanner.DATE_FORMAT.format(dayStart) + ':');
+
+  var summaryDurationMap = {};
+
+  goog.array.forEach(this.events_, function(event) {
+    var startTimeCapped = Math.max(event.getStartTime(), dayStart.getTime());
+    var endTimeCapped = Math.min(event.getEndTime(), dayEnd.getTime());
+
+    var matchedDuration = endTimeCapped - startTimeCapped;
+    if (matchedDuration <= 0) {
+      return;
+    }
+
+    summaryDurationMap[event.getSummary()] = (summaryDurationMap[event.getSummary()] || 0) +
+        matchedDuration;
+  }, this);
+
+  var summaryDurationList = [];
+  for (var summary in summaryDurationMap) {
+    summaryDurationList.push([summary, summaryDurationMap[summary]]);
+  }
+  summaryDurationList.sort(function(a, b) {return b[1] - a[1];});
+
+  goog.array.forEach(summaryDurationList, function(entry) {
+    var summary = entry[0];
+    var duration = entry[1];
+    var durationMins = Math.floor(summaryDurationMap[summary] / 1000 / 60);
+    var hours = Math.floor(durationMins / 60);
+    var mins = durationMins - hours * 60;
+    var durationStr = (hours > 0 ? "" + hours + " hours " : "") + mins + " minutes";
+    window.console.log(summary, durationStr);
+  });
 };
 
 five.EventsView.prototype.registerListenersForScrollElement_ = function() {

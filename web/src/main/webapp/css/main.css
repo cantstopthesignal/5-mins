@@ -178,11 +178,11 @@ a:hover {
 }
 .day-banner {
   color: white;
+  cursor: pointer;
   position: absolute;
   background-color: rgba(40, 40, 40, 0.5);
   width: 100%;
   box-sizing: border-box;
-  pointer-events: none;
   z-index: 1;
 }
 .day-banner.inline {
