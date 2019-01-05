@@ -68,6 +68,9 @@ five.EventsView.NOW_TRACKER_INTERVAL_MS_ = 15 * 1000;
 /** @type {number} */
 five.EventsView.SCROLL_ANIMATION_DURATION_MS = 500;
 
+/** @type {number} */
+five.EventsView.DEFAULT_TIMELINE_Y_OFFSET = 500;
+
 /** @type {goog.date.DateTime} */
 five.EventsView.prototype.viewDate_;
 
@@ -76,9 +79,6 @@ five.EventsView.prototype.events_;
 
 /** @type {Element} */
 five.EventsView.prototype.scrollEl_;
-
-/** @type {number} */
-five.EventsView.prototype.timelineYOffset_ = 500;
 
 /** @type {five.Button} */
 five.EventsView.prototype.saveButton_;
@@ -327,7 +327,7 @@ five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
     if (index == this.columns_.length - 1) {
       timelineWidth = timelinesWidth - xPos;
     }
-    var rect = new goog.math.Rect(xPos, this.timelineYOffset_, timelineWidth,
+    var rect = new goog.math.Rect(xPos, column.yOffset, timelineWidth,
         Math.max(50, timelinesHeight));
     timeline.setRect(rect);
     dayBanner.setRect(new goog.math.Rect(xPos, 0, timelineWidth, 0));
@@ -634,16 +634,30 @@ five.EventsView.prototype.registerListenersForScrollElement_ = function() {
 /** @param {goog.events.BrowserEvent} e */
 five.EventsView.prototype.handleScroll_ = function(e) {
   this.updateViewDate_();
+  this.updateAdditionalTimelineAlignments_();
   this.updateVisibleRegion_();
 };
 
+five.EventsView.prototype.updateAdditionalTimelineAlignments_ = function() {
+  var scrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);
+  for (var i = 1; i < this.columns_.length; i++) {
+    var column = this.columns_[i];
+    var timelineDate = scrollDate.clone();
+    timelineDate.add(new goog.date.Interval(goog.date.Interval.DAYS, i));
+    var topOffset = this.scrollEl_.scrollTop - this.timeToYPos_(timelineDate, i) +
+        column.yOffset - five.EventsView.DEFAULT_TIMELINE_Y_OFFSET;
+    column.yOffset = five.EventsView.DEFAULT_TIMELINE_Y_OFFSET + topOffset;
+    column.timeline.setTop(column.yOffset);
+  }
+}
+
 five.EventsView.prototype.updateVisibleRegion_ = function() {
-  var visibleRect = new goog.math.Rect(this.scrollEl_.scrollLeft,
-      this.scrollEl_.scrollTop - this.timelineYOffset_,
-      this.scrollEl_.offsetWidth, this.scrollEl_.offsetHeight);
   goog.array.forEach(this.columns_, function(column) {
+    var visibleRect = new goog.math.Rect(this.scrollEl_.scrollLeft,
+        this.scrollEl_.scrollTop - column.yOffset + column.dayBanner.getHeight(),
+        this.scrollEl_.offsetWidth, this.scrollEl_.offsetHeight);
     column.timeline.updateVisibleRegion(visibleRect);
-  });
+  }, this);
 };
 
 /** @param {!five.Event} newEvent */
@@ -901,16 +915,17 @@ five.EventsView.prototype.handleCalendarManagerRequestsStateChange_ =
 five.EventsView.prototype.handleInitialEventsLoad_ = function() {
   this.scrollToNow_();
   this.updateViewDate_();
+  this.updateAdditionalTimelineAlignments_();
 };
 
 /**
- * @param {number=} opt_index Optional index of the timeline to get a map for.
- * @return {five.layout.TimeMap}
+ * @param {number=} opt_index
+ * @return {five.EventsView.Column}
  */
-five.EventsView.prototype.getTimeMap_ = function(opt_index) {
+five.EventsView.prototype.getColumn_ = function(opt_index) {
   var index = opt_index || 0;
   goog.asserts.assert(index < this.columns_.length);
-  return this.columns_[index].timeline.getTimeMap();
+  return this.columns_[index];
 };
 
 /**
@@ -919,8 +934,8 @@ five.EventsView.prototype.getTimeMap_ = function(opt_index) {
  * @return {!goog.date.DateTime}
  */
 five.EventsView.prototype.yPosToTime_ = function(yPos, opt_index) {
-  var timeMap = this.getTimeMap_(opt_index);
-  return timeMap.yPosToTime(yPos - this.timelineYOffset_)
+  var column = this.getColumn_(opt_index);
+  return column.timeline.getTimeMap().yPosToTime(yPos - column.yOffset);
 };
 
 /**
@@ -929,8 +944,8 @@ five.EventsView.prototype.yPosToTime_ = function(yPos, opt_index) {
  * @return {number}
  */
 five.EventsView.prototype.timeToYPos_ = function(time, opt_index) {
-  var timeMap = this.getTimeMap_(opt_index);
-  return timeMap.timeToYPos(time) + this.timelineYOffset_;
+  var column = this.getColumn_(opt_index);
+  return column.timeline.getTimeMap().timeToYPos(time) + column.yOffset;
 };
 
 /** @param {boolean=} opt_animate */
@@ -1147,6 +1162,9 @@ five.EventsView.prototype.getUnloadWarning = function() {
 five.EventsView.Column = function() {
   /** @type {five.EventsTimeline} */
   this.timeline;
+
+  /** @type {number} */
+  this.yOffset = five.EventsView.DEFAULT_TIMELINE_Y_OFFSET;
 
   /** @type {five.DayBanner} */
   this.dayBanner;

@@ -281,6 +281,15 @@ five.EventsTimeline.prototype.setRect = function(rect) {
 };
 
 /**
+ * @param {number} top
+ */
+five.EventsTimeline.prototype.setTop = function(top) {
+  var pos = goog.style.getPosition(this.el);
+  pos.y = top;
+  goog.style.setPosition(this.el, pos);
+};
+
+/**
  * @param {number=} opt_width
  * @param {number=} opt_height
  */

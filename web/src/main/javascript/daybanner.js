@@ -78,6 +78,11 @@ five.DayBanner.prototype.setRect = function(rect) {
   goog.style.setWidth(this.el, rect.width);
 };
 
+/** @return {number} */
+five.DayBanner.prototype.getHeight = function() {
+  return (this.el ? this.el.offsetHeight : 0);
+}
+
 five.DayBanner.prototype.updateDisplay_ = function() {
   var dayText = five.DayBanner.DATE_FORMAT.format(this.date_);
   this.el.firstChild.data = dayText;
