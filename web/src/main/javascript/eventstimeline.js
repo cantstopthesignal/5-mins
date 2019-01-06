@@ -635,6 +635,12 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.PERIOD) {
     event = five.EventMoveEvent.end(moveByMinutes);
     event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
+  } else if (e.keyCode == goog.events.KeyCodes.RIGHT && e.shiftKey) {
+    event = five.EventMoveEvent.both(five.util.daysToMin(1));
+    event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
+  } else if (e.keyCode == goog.events.KeyCodes.LEFT && e.shiftKey) {
+    event = five.EventMoveEvent.both(five.util.daysToMin(-1));
+    event.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   } else if (e.keyCode == goog.events.KeyCodes.DASH) {
     if (e.shiftKey) {
       event = five.EventSnapToEvent.start(five.EventSnapToEvent.Dir.NEXT);

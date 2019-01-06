@@ -29,6 +29,10 @@ five.util.msToMin = function(ms) {
   return five.util.round(ms / 1000 / 60);
 };
 
+five.util.daysToMin = function(days) {
+  return days * 1440;
+};
+
 /**
  * @param {!goog.date.DateTime} date
  * @return {!goog.date.DateTime}
