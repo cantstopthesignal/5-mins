@@ -47,7 +47,7 @@ five.DayBanner.prototype.createDom = function() {
   this.updateDisplay_();
 
   this.eventHandler.
-      listen(this.el, goog.events.EventType.CLICK, this.handleClick_);
+      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_);
 };
 
 /** @override */
@@ -89,7 +89,7 @@ five.DayBanner.prototype.updateDisplay_ = function() {
 };
 
 /** @param {goog.events.BrowserEvent} e */
-five.DayBanner.prototype.handleClick_ = function(e) {
+five.DayBanner.prototype.handleMouseDown_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
 

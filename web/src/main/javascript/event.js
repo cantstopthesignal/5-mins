@@ -200,6 +200,11 @@ five.Event.prototype.getSummary = function() {
   return this.eventData_['summary'] || '';
 };
 
+/** @return {!Array.<string>} */
+five.Event.prototype.getSplitSummaries = function() {
+  return this.getSummary().split(new RegExp(";[ ]?"));
+};
+
 /** @return {number} */
 five.Event.prototype.getDuration = function() {
   return this.getEndTime().getTime() - this.getStartTime().getTime();

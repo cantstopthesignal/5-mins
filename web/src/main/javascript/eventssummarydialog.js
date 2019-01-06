@@ -39,6 +39,9 @@ five.EventsSummaryDialog = function(appContext, title, events, startTime, endTim
 
   /** @type {!goog.date.DateTime} */
   this.endTime_ = endTime;
+
+  /** @type {Element} */
+  this.oldFocusEl_;
 };
 goog.inherits(five.EventsSummaryDialog, five.Dialog);
 
@@ -58,6 +61,7 @@ five.EventsSummaryDialog.prototype.createDom = function() {
 
   this.summaryEl_ = document.createElement('div');
   goog.dom.classes.add(this.summaryEl_, 'summary');
+  this.summaryEl_.setAttribute('tabindex', '0');
   contentEl.appendChild(this.summaryEl_);
 
   var doneButtonEl = document.createElement('div');
@@ -68,16 +72,25 @@ five.EventsSummaryDialog.prototype.createDom = function() {
   contentEl.appendChild(doneButtonEl);
 
   this.createSummary_();
+
+  this.eventHandler.
+      listen(this.el, goog.events.EventType.KEYUP, this.handleKeyUp_);
 };
 
 /** @override */
 five.EventsSummaryDialog.prototype.show = function() {
   goog.base(this, 'show');
+
+  this.oldFocusEl_ = document.activeElement;
+  this.summaryEl_.focus();
 };
 
 /** @override */
 five.EventsSummaryDialog.prototype.hide = function() {
   goog.base(this, 'hide');
+  if (this.oldFocusEl_) {
+    this.oldFocusEl_.focus();
+  }
   goog.dispose(this);
 };
 
@@ -93,8 +106,12 @@ five.EventsSummaryDialog.prototype.createSummary_ = function() {
       return;
     }
 
-    summaryDurationMap[event.getSummary()] = (summaryDurationMap[event.getSummary()] || 0) +
-        matchedDuration;
+    var summaries = event.getSplitSummaries();
+    matchedDuration /= summaries.length;
+    for (var i = 0; i < summaries.length; i++) {
+      summaryDurationMap[summaries[i]] = (summaryDurationMap[summaries[i]] || 0) +
+          matchedDuration;
+    }
   }, this);
 
   var summaryDurationList = [];
@@ -111,12 +128,18 @@ five.EventsSummaryDialog.prototype.createSummary_ = function() {
     var durationMins = Math.floor(summaryDurationMap[summary] / 1000 / 60);
     var hours = Math.floor(durationMins / 60);
     var mins = durationMins - hours * 60;
-    var durationStr = (hours > 0 ? "" + hours + " hours " : "") + mins + " minutes";
+    var hoursStr = (hours > 0 ? "" + hours + " hours " : "");
+    var minutesStr = mins + " minutes";
 
     var rowEl = document.createElement('tr');
-    var durationCell = document.createElement('td');
-    durationCell.appendChild(document.createTextNode(durationStr));
-    rowEl.appendChild(durationCell);
+    var hoursCell = document.createElement('td');
+    goog.dom.classes.add(hoursCell, 'hours');
+    hoursCell.appendChild(document.createTextNode(hoursStr));
+    rowEl.appendChild(hoursCell);
+    var minutesCell = document.createElement('td');
+    goog.dom.classes.add(minutesCell, 'minutes');
+    minutesCell.appendChild(document.createTextNode(minutesStr));
+    rowEl.appendChild(minutesCell);
     var summaryCell = document.createElement('td');
     summaryCell.appendChild(document.createTextNode(summary));
     rowEl.appendChild(summaryCell);
@@ -132,4 +155,13 @@ five.EventsSummaryDialog.prototype.done_ = function() {
 
 five.EventsSummaryDialog.prototype.handleDoneClick_ = function() {
   this.done_();
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsSummaryDialog.prototype.handleKeyUp_ = function(e) {
+  if (e.keyCode == goog.events.KeyCodes.ESC ||
+      e.keyCode == goog.events.KeyCodes.ENTER) {
+    this.done_();
+    e.preventDefault();
+  }
 };

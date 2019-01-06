@@ -149,10 +149,24 @@ a:hover {
   padding: 3px;
   width: 80px;
 }
+.events-summary-dialog {
+  width: initial;
+  max-width: 500px;
+}
 .events-summary-dialog .summary {
-  overflow-x: hidden;
-  overflow-y: scroll;
+  overflow: scroll;
   max-height: 400px;
+  outline: 0;
+}
+.events-summary-dialog .summary table {
+  border-spacing: 8px 0px;
+}
+.events-summary-dialog .summary td.hours,
+.events-summary-dialog .summary td.minutes {
+  text-align: right;
+}
+.events-summary-dialog .summary td {
+  white-space: nowrap;
 }
 .notification {
   border: 1px solid #a00;
