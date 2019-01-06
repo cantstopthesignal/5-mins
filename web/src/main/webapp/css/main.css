@@ -149,6 +149,11 @@ a:hover {
   padding: 3px;
   width: 80px;
 }
+.events-summary-dialog .summary {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  max-height: 400px;
+}
 .notification {
   border: 1px solid #a00;
   background-color: #a00;

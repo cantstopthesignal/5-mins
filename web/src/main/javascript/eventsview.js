@@ -10,6 +10,7 @@ goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventsSplitter');
+goog.require('five.EventsSummaryDialog');
 goog.require('five.EventsTimeline');
 goog.require('five.TimeMarker');
 goog.require('five.TimeMarkerTheme');
@@ -592,38 +593,10 @@ five.EventsView.prototype.handleDayBannerClick_ = function(e) {
   var dayEnd = dayStart.clone();
   dayEnd.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
 
-  window.console.log('\n' + five.DayBanner.DATE_FORMAT.format(dayStart) + ':');
-
-  var summaryDurationMap = {};
-
-  goog.array.forEach(this.events_, function(event) {
-    var startTimeCapped = Math.max(event.getStartTime(), dayStart.getTime());
-    var endTimeCapped = Math.min(event.getEndTime(), dayEnd.getTime());
-
-    var matchedDuration = endTimeCapped - startTimeCapped;
-    if (matchedDuration <= 0) {
-      return;
-    }
-
-    summaryDurationMap[event.getSummary()] = (summaryDurationMap[event.getSummary()] || 0) +
-        matchedDuration;
-  }, this);
-
-  var summaryDurationList = [];
-  for (var summary in summaryDurationMap) {
-    summaryDurationList.push([summary, summaryDurationMap[summary]]);
-  }
-  summaryDurationList.sort(function(a, b) {return b[1] - a[1];});
-
-  goog.array.forEach(summaryDurationList, function(entry) {
-    var summary = entry[0];
-    var duration = entry[1];
-    var durationMins = Math.floor(summaryDurationMap[summary] / 1000 / 60);
-    var hours = Math.floor(durationMins / 60);
-    var mins = durationMins - hours * 60;
-    var durationStr = (hours > 0 ? "" + hours + " hours " : "") + mins + " minutes";
-    window.console.log(summary, durationStr);
-  });
+  var title = five.DayBanner.DATE_FORMAT.format(dayStart);
+  var dialog = new five.EventsSummaryDialog(this.appContext_, title, this.events_ || [],
+      dayStart, dayEnd);
+  dialog.show();
 };
 
 five.EventsView.prototype.registerListenersForScrollElement_ = function() {
