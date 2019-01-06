@@ -51,7 +51,7 @@ five.CalendarApi.prototype.loadCalendarList = function() {
   var errback = function(error) {
     this.logger_.severe('Error loading calendars: ' + error, error);
   };
-  return this.callApi_('calendar.calendarList.list', 'v3', {}).
+  return this.callApi_(['users', 'me', 'calendarList'], 'GET').
       addCallbacks(callback, errback, this);
 };
 
@@ -65,7 +65,6 @@ five.CalendarApi.prototype.loadCalendarList = function() {
 five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
     endDate, opt_prevResp) {
   var params = {
-    'calendarId': calendarId,
     'orderBy': 'startTime',
     'singleEvents': true,
     'timeMin': new Date(startDate.valueOf()).toISOString(),
@@ -89,7 +88,7 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
   var errback = function(error) {
     this.logger_.severe('Error loading events: ' + error, error);
   };
-  return this.callApi_('calendar.events.list', 'v3', params).
+  return this.callApi_(['calendars', calendarId, 'events'], 'GET', params).
       addCallbacks(callback, errback, this);
 };
 
@@ -101,10 +100,6 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
 five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
   goog.asserts.assert(!eventData['id']);
   goog.asserts.assert(!eventData['etag']);
-  var params = {
-    'calendarId': calendarId,
-    'resource': eventData
-  };
   var callback = function(resp) {
     goog.asserts.assert(resp['kind'] == 'calendar#event');
     this.logger_.info('Event created');
@@ -112,7 +107,7 @@ five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
   var errback = function(error) {
     this.logger_.severe('Error creating event: ' + error, error);
   };
-  return this.callApi_('calendar.events.insert', 'v3', params).
+  return this.callApi_(['calendars', calendarId, 'events'], 'POST', {}, eventData).
       addCallbacks(callback, errback, this);
 };
 
@@ -126,11 +121,6 @@ five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
     eventPatchData) {
   goog.asserts.assert(eventData['id']);
   goog.asserts.assert(eventPatchData['etag']);
-  var params = {
-    'calendarId': calendarId,
-    'eventId': eventData['id'],
-    'resource': eventPatchData
-  };
   var callback = function(resp) {
     goog.asserts.assert(resp['kind'] == 'calendar#event');
     this.logger_.info('Event saved');
@@ -138,7 +128,8 @@ five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
   var errback = function(error) {
     this.logger_.severe('Error saving event: ' + error, error);
   };
-  return this.callApi_('calendar.events.patch', 'v3', params).
+  return this.callApi_(['calendars', calendarId, 'events', eventData['id']], 'PATCH', {},
+      eventPatchData).
       addCallbacks(callback, errback, this);
 };
 
@@ -150,34 +141,37 @@ five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
 five.CalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
   goog.asserts.assert(eventDeleteData['id']);
   goog.asserts.assert(eventDeleteData['etag']);
-  var params = {
-    'calendarId': calendarId,
-    'eventId': eventDeleteData['id']
-  };
   var callback = function(resp) {
     this.logger_.info('Event deleted');
   };
   var errback = function(error) {
     this.logger_.severe('Error deleting event: ' + error, error);
   };
-  return this.callApi_('calendar.events.delete', 'v3', params, true).
+  return this.callApi_(['calendars', calendarId, 'events', eventDeleteData['id']], 'DELETE',
+      {}, {}, true).
       addCallbacks(callback, errback, this);
 };
 
 /**
- * @param {string} name
- * @param {string} version
- * @param {Object} params
+ * @param {!Array.<!string>} pathParts
+ * @param {string} httpMethod
+ * @param {Object=} opt_params
+ * @param {Object=} opt_body
  * @param {boolean=} opt_expectEmptyResponse
  */
-five.CalendarApi.prototype.callApi_ = function(name, version, params,
+five.CalendarApi.prototype.callApi_ = function(pathParts, httpMethod, opt_params, opt_body,
     opt_expectEmptyResponse) {
   var d = new goog.async.Deferred();
-  this.logger_.info(name);
+  var path = 'https://www.googleapis.com/calendar/v3/' + this.joinPath_(pathParts);
+  this.logger_.info(path);
   var retryOnAuthFailure = true;
   var doRequest = goog.bind(function() {
-    var request = goog.getObjectByName('gapi.client.rpcRequest')(
-        name, version, params);
+    var request = goog.getObjectByName('gapi.client.request')({
+      'path': path,
+      'method': httpMethod,
+      'params': opt_params,
+      'body': opt_body
+    });
     request['execute'](goog.bind(function(resp) {
       if (!resp) {
         if (opt_expectEmptyResponse) {
@@ -208,6 +202,20 @@ five.CalendarApi.prototype.callApi_ = function(name, version, params,
   doRequest();
   return d;
 };
+
+/**
+ * @param {!Array.<!string>} pathParts
+ */
+five.CalendarApi.prototype.joinPath_ = function(pathParts) {
+  var path = '';
+  for (var i = 0; i < pathParts.length; i++) {
+    if (i > 0) {
+      path += '/';
+    }
+    path += encodeURIComponent(pathParts[i]);
+  }
+  return path;
+}
 
 /**
  * @param {Object} error Error response object
