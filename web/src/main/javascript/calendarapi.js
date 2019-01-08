@@ -9,6 +9,10 @@ goog.require('goog.json');
 
 
 /**
+ * Calendar api wrapper.
+ *
+ * Api descriptor: https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest
+ *
  * @constructor
  * @param {five.Auth} auth
  * @extends {goog.events.EventTarget}
