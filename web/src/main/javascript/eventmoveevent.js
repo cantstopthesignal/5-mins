@@ -3,6 +3,7 @@
 goog.provide('five.EventMoveEvent');
 
 goog.require('goog.date.DateTime');
+goog.require('goog.events');
 goog.require('goog.events.Event');
 
 /**

@@ -476,12 +476,13 @@ five.EventsView.prototype.handleEventsTimelineEventsDelete_ = function() {
   this.finishBatchRenderUpdate_();
 };
 
-five.EventsView.prototype.handleEventsTimelineEventsSplit_ = function() {
+/** @param {goog.events.BrowserEvent} e */
+five.EventsView.prototype.handleEventsTimelineEventsSplit_ = function(e) {
   if (this.selectedEvents_.length <= 1) {
     return;
   }
   this.startBatchRenderUpdate_();
-  var eventSplitter = new five.EventsSplitter(this.selectedEvents_);
+  var eventSplitter = new five.EventsSplitter(this.selectedEvents_, e.shiftKey);
   eventSplitter.split();
   goog.array.forEach(eventSplitter.getNewEvents(), function(newEvent) {
     this.addEvent_(newEvent);

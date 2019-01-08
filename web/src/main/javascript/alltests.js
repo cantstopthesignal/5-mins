@@ -27,6 +27,7 @@ five.AllTests.TESTS = [
     'endtoenddebugtest.html',
     'endtoendoptimizedtest.html',
     'endtoenduncompiledtest.html',
+    'eventssplittertest.html',
     'layout/calctest.html',
     'utiltest.html'
     ];

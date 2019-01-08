@@ -673,7 +673,8 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     if (e.ctrlKey) {
       event = five.EventsTimeline.EventType.EVENTS_SAVE;
     } else {
-      event = five.EventsTimeline.EventType.EVENTS_SPLIT;
+      event = new goog.events.Event(five.EventsTimeline.EventType.EVENTS_SPLIT);
+      event.shiftKey = e.shiftKey;
     }
   } else if (e.keyCode == goog.events.KeyCodes.R && e.ctrlKey) {
     event = five.EventsTimeline.EventType.EVENTS_REFRESH;
