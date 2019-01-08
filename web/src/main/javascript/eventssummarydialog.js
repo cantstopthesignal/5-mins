@@ -109,8 +109,8 @@ five.EventsSummaryDialog.prototype.createSummary_ = function() {
     var summaries = event.getSplitSummaries();
     matchedDuration /= summaries.length;
     for (var i = 0; i < summaries.length; i++) {
-      summaryDurationMap[summaries[i]] = (summaryDurationMap[summaries[i]] || 0) +
-          matchedDuration;
+      var summary = summaries[i].toLowerCase();
+      summaryDurationMap[summary] = (summaryDurationMap[summary] || 0) + matchedDuration;
     }
   }, this);
 

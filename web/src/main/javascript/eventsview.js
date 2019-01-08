@@ -195,7 +195,7 @@ five.EventsView.prototype.reloadEvents_ = function(opt_confirmMutations) {
     }
   }
   var startDate = this.viewDate_.clone();
-  startDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -5));
+  startDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -10));
   var endDate = this.viewDate_.clone();
   endDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 10));
   return this.calendarManager_.loadEvents(startDate, endDate);
@@ -589,11 +589,21 @@ five.EventsView.prototype.registerListenersForDayBanner_ = function(dayBanner) {
 
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleDayBannerClick_ = function(e) {
-  var dayStart = five.util.dayFloor(e.target.getDate());
-  var dayEnd = dayStart.clone();
-  dayEnd.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
+  var dayStart;
+  var dayEnd;
+  var title;
+  if (e.shiftKey) {
+    dayEnd = five.util.dayFloor(e.target.getDate());
+    dayStart = dayEnd.clone();
+    dayStart.add(new goog.date.Interval(goog.date.Interval.DAYS, -7));
+    title = 'Week up to ' + five.DayBanner.DATE_FORMAT.format(dayEnd);
+  } else {
+    dayStart = five.util.dayFloor(e.target.getDate());
+    dayEnd = dayStart.clone();
+    dayEnd.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
+    title = five.DayBanner.DATE_FORMAT.format(dayStart);
+  }
 
-  var title = five.DayBanner.DATE_FORMAT.format(dayStart);
   var dialog = new five.EventsSummaryDialog(this.appContext_, title, this.events_ || [],
       dayStart, dayEnd);
   dialog.show();

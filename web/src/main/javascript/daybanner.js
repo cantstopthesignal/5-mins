@@ -94,5 +94,6 @@ five.DayBanner.prototype.handleMouseDown_ = function(e) {
   e.stopPropagation();
 
   var event = new goog.events.Event(five.DayBanner.EventType.CLICK);
+  event.shiftKey = e.shiftKey;
   this.dispatchEvent(event);
 };
