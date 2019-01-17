@@ -96,6 +96,36 @@ five.util.roundToFiveMinutes = function(date) {
 };
 
 /**
+ * @param {!goog.date.DateTime} date
+ * @return {!goog.date.DateTime}
+ */
+five.util.roundToThirtyMinutes = function(date) {
+  var hourBase = five.util.hourAddSafe(five.util.hourFloor(date), -1);
+  var factor = 1000 * 60 * 30;
+  var newTime = five.util.round((date.getTime() - hourBase.getTime()) /
+      factor) * factor + hourBase.getTime();
+  return new goog.date.DateTime(new Date(newTime));
+};
+
+/**
+ * @param {!goog.date.DateTime} anchorTime
+ * @param {!goog.date.DateTime} movingTime
+ * @return {!goog.date.DateTime}
+ */
+five.util.roundDurationToThirtyMinutes = function(anchorTime, movingTime) {
+  var thirtyMins = five.util.msToMin(movingTime.getTime() - anchorTime.getTime()) / 30;
+  if (thirtyMins > -1 && thirtyMins < 0) {
+    thirtyMins = -1;
+  } else if (thirtyMins >= 0 && thirtyMins < 1) {
+    thirtyMins = 1;
+  }
+  var durationMins = five.util.round(thirtyMins) * 30;
+  movingTime = anchorTime.clone();
+  movingTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, durationMins));
+  return movingTime;
+};
+
+/**
  * Call fn for each hour range surrounding startTime and endTime.
  * fn is called with arguments (hour, nextHour, isLast).
  */

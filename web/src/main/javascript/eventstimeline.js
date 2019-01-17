@@ -743,15 +743,15 @@ five.EventsTimeline.prototype.handleGlobalMouseUp_ = function(e) {
   if (goog.dom.contains(this.el, e.target)) {
     var mouseUpTime = this.getMouseEventTime_(e);
     if (this.dragCreatingEvent_) {
-      this.updateDragCreateEventTimeRange_(this.mouseDownTime_, mouseUpTime);
+      this.updateDragCreateEventTimeRange_(this.mouseDownTime_, mouseUpTime, e.shiftKey);
       this.commitDragCreateEvent_();
     }
     if (this.draggingEvents_) {
-      this.updateDragEventsTimeRange_(this.mouseDownTime_, mouseUpTime);
+      this.updateDragEventsTimeRange_(this.mouseDownTime_, mouseUpTime, e.shiftKey);
       this.commitDragEvents_();
     }
     if (this.draggingMoveControls_) {
-      this.updateDragMoveControlsTimeRange_(this.mouseDownTime_, mouseUpTime);
+      this.updateDragMoveControlsTimeRange_(this.mouseDownTime_, mouseUpTime, e.shiftKey);
       this.commitDragMoveControls_();
     }
   } else {
@@ -791,13 +791,13 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
         this.dragCreatingEvent_ = five.deviceParams.getEnableDragCreateEvent();
       }
       if (this.dragCreatingEvent_) {
-        this.updateDragCreateEventTimeRange_(this.mouseDownTime_, time);
+        this.updateDragCreateEventTimeRange_(this.mouseDownTime_, time, e.shiftKey);
       }
       if (this.draggingEvents_) {
-        this.updateDragEventsTimeRange_(this.mouseDownTime_, time);
+        this.updateDragEventsTimeRange_(this.mouseDownTime_, time, e.shiftKey);
       }
       if (this.draggingMoveControls_) {
-        this.updateDragMoveControlsTimeRange_(this.mouseDownTime_, time);
+        this.updateDragMoveControlsTimeRange_(this.mouseDownTime_, time, e.shiftKey);
       }
     }
   }
@@ -870,17 +870,18 @@ five.EventsTimeline.prototype.cancelDragCreateEvent_ = function() {
 };
 
 five.EventsTimeline.prototype.updateDragCreateEventTimeRange_ = function(time1,
-    time2) {
+    time2, shiftKey) {
   goog.asserts.assert(this.dragCreatingEvent_);
-  var timeCompare = goog.date.Date.compare(time1, time2); 
+  if (this.mouseDownShiftKey_) {
+    time1 = five.util.roundToThirtyMinutes(time1);
+  }
+  var timeCompare = goog.date.Date.compare(time1, time2);
   if (!timeCompare) {
     return;
   }
   this.registerGlobalClickCancel_();
   this.layoutManager_.allowLayoutCondensing(false);
-  var startTime = timeCompare < 0 ? time1 : time2;
-  var endTime = timeCompare < 0 ? time2 : time1;
-  this.owner_.createOrUpdateDragCreateEvent(startTime, endTime);
+  this.owner_.createOrUpdateDragCreateEvent(time1, time2, shiftKey);
 };
 
 five.EventsTimeline.prototype.commitDragEvents_ = function() {
@@ -897,7 +898,7 @@ five.EventsTimeline.prototype.cancelDragEvents_ = function() {
 };
 
 five.EventsTimeline.prototype.updateDragEventsTimeRange_ = function(
-    dragStartTime, dragEndTime) {
+    dragStartTime, dragEndTime, shiftKey) {
   goog.asserts.assert(this.draggingEvents_);
   var timeCompare = goog.date.Date.compare(dragStartTime, dragEndTime); 
   if (timeCompare && !this.mouseDownCard_.getEvent().isSelected()) {
@@ -908,7 +909,7 @@ five.EventsTimeline.prototype.updateDragEventsTimeRange_ = function(
     this.registerGlobalClickCancel_();
   }
   this.owner_.startOrUpdateDragEvents(dragStartTime, dragEndTime,
-      five.EventsView.DragEventsType.BOTH);
+      five.EventsView.DragEventsType.BOTH, shiftKey);
 };
 
 five.EventsTimeline.prototype.commitDragMoveControls_ = function() {
@@ -927,7 +928,7 @@ five.EventsTimeline.prototype.cancelDragMoveControls_ = function() {
 };
 
 five.EventsTimeline.prototype.updateDragMoveControlsTimeRange_ = function(
-    dragStartTime, dragEndTime) {
+    dragStartTime, dragEndTime, shiftKey) {
   goog.asserts.assert(this.draggingMoveControls_);
   var timeCompare = goog.date.Date.compare(dragStartTime, dragEndTime); 
   if (timeCompare) {
@@ -937,7 +938,7 @@ five.EventsTimeline.prototype.updateDragMoveControlsTimeRange_ = function(
   this.owner_.startOrUpdateDragEvents(dragStartTime, dragEndTime,
       this.mouseDownMoveControlForStart_ ?
       five.EventsView.DragEventsType.START :
-      five.EventsView.DragEventsType.END);
+      five.EventsView.DragEventsType.END, shiftKey);
 };
 
 /**
