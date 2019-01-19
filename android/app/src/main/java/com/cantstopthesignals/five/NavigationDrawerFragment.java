@@ -1,5 +1,6 @@
 package com.cantstopthesignals.five;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.ActionBar;
@@ -8,8 +9,10 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -18,6 +21,7 @@ import android.provider.CalendarContract.Calendars;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,6 +35,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.AccountPicker;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +47,11 @@ import java.util.List;
  */
 public class NavigationDrawerFragment extends Fragment
         implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final String TAG = "NavigationDrawerFragment";
+
+    private static final int CHOOSE_ACCOUNT_REQUEST_CODE = 1;
+    private static final int CALENDAR_PERMISSIONS_REQUEST_CODE = 2;
+
     private static final String ACCOUNT_TYPE_GOOGLE = "com.google";
 
     /** Remember the user's account name selection */
@@ -104,7 +115,25 @@ public class NavigationDrawerFragment extends Fragment
         AccountManager accountManager = AccountManager.get(getActivity());
         mAccounts = accountManager.getAccountsByType(ACCOUNT_TYPE_GOOGLE);
 
-        selectAccount(mCurrentAccountName);
+        if (mCurrentAccountName == null) {
+            Intent intent = AccountPicker.newChooseAccountIntent(null, null, new String[]{ACCOUNT_TYPE_GOOGLE},
+                    false, null, null, null, null);
+            startActivityForResult(intent, CHOOSE_ACCOUNT_REQUEST_CODE);
+        } else {
+            selectAccount(mCurrentAccountName);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CHOOSE_ACCOUNT_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+            selectAccount(accountName);
+        } else if (requestCode == CALENDAR_PERMISSIONS_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            loadCalendarList();
+        }
     }
 
     @Override
@@ -221,17 +250,26 @@ public class NavigationDrawerFragment extends Fragment
     }
 
     private void selectAccount(String accountName) {
-        boolean accountNameChanged = (mCurrentAccountName != null && accountName != null
-                && !mCurrentAccountName.equals(accountName));
         if (accountName != null) {
-            mCurrentAccountName = accountName;
-            if (accountNameChanged) {
+            if (!accountName.equals(mCurrentAccountName)) {
+                mCurrentAccountName = accountName;
                 SharedPreferences sp = PreferenceManager
                         .getDefaultSharedPreferences(getActivity());
                 sp.edit().putString(PREF_SELECTED_ACCOUNT_NAME, accountName).apply();
                 mCurrentCalendarId = 0;
             }
-            loadCalendarList();
+
+            if (getActivity().checkSelfPermission(Manifest.permission.WRITE_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED
+                || getActivity().checkSelfPermission(Manifest.permission.READ_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                        new String[] { Manifest.permission.READ_CALENDAR,
+                                Manifest.permission.WRITE_CALENDAR},
+                        CALENDAR_PERMISSIONS_REQUEST_CODE);
+            } else {
+                loadCalendarList();
+            }
         }
     }
 
@@ -246,12 +284,12 @@ public class NavigationDrawerFragment extends Fragment
             }
         }
         if (calendarInfo != null) {
-            if (mCurrentCalendarId != 0 && mCurrentCalendarId != calendarId) {
+            if (mCurrentCalendarId != calendarId) {
+                mCurrentCalendarId = calendarId;
                 SharedPreferences sp = PreferenceManager
                         .getDefaultSharedPreferences(getActivity());
                 sp.edit().putLong(PREF_SELECTED_CALENDAR_ID, calendarInfo.id).apply();
             }
-            mCurrentCalendarId = calendarId;
             if (mCalendarListView != null) {
                 mCalendarListView.setItemChecked(position, true);
             }
@@ -373,7 +411,7 @@ public class NavigationDrawerFragment extends Fragment
     /**
      * Callbacks interface that all activities using this fragment must implement.
      */
-    public static interface NavigationDrawerCallbacks {
+    public interface NavigationDrawerCallbacks {
         void onNavigationDrawerCalendarSelected(CalendarInfo calendarInfo);
     }
 

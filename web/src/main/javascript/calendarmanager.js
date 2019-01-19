@@ -27,8 +27,13 @@ five.CalendarManager = function(appContext, calendarData) {
   /** @type {!five.AppContext} */
   this.appContext_ = appContext;
 
-  /** @type {!five.CalendarApi} */
-  this.calendarApi_ = five.CalendarApi.get(this.appContext_);
+  /** @type {!five.BaseCalendarApi} */
+  this.calendarApi_;
+  if (five.device.isWebView()) {
+    this.calendarApi_ = five.AndroidCalendarApi.get(this.appContext_);
+  } else {
+    this.calendarApi_ = five.CalendarApi.get(this.appContext_);
+  }
 
   /** @type {!five.NotificationManager} */
   this.notificationManager_ = five.NotificationManager.get(this.appContext_);

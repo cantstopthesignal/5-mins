@@ -30,9 +30,9 @@ five.device.getDensity = function() {
 /** @return {boolean} */
 five.device.isTouch = function() {
   if (!goog.isDef(five.device.isTouch_)) {
-    var touchParam = five.device.getUriParam_('touch');
-    if (touchParam) {
-      five.device.isTouch_ = touchParam == 'true' || touchParam == '1';
+    var param = five.device.getUriParam_('touch');
+    if (param) {
+      five.device.isTouch_ = param == 'true' || param == '1';
     } else {
       five.device.isTouch_ = !!('ontouchstart' in window);
     }
@@ -43,14 +43,27 @@ five.device.isTouch = function() {
 /** @return {boolean} */
 five.device.isMobile = function() {
   if (!goog.isDef(five.device.isMobile_)) {
-    var mobileParam = five.device.getUriParam_('mobile');
-    if (mobileParam) {
-      five.device.isMobile_ = mobileParam == 'true' || mobileParam == '1';
+    var param = five.device.getUriParam_('mobile');
+    if (param) {
+      five.device.isMobile_ = param == 'true' || param == '1';
     } else {
       five.device.isMobile_ = goog.userAgent.MOBILE;
     }
   }
   return five.device.isMobile_;
+};
+
+/** @return {boolean} */
+five.device.isWebView = function() {
+  if (!goog.isDef(five.device.isWebView_)) {
+    var param = five.device.getUriParam_('webview');
+    if (param) {
+      five.device.isWebView_ = param == 'true' || param == '1';
+    } else {
+      five.device.isWebView_ = !!('Android' in window);
+    }
+  }
+  return five.device.isWebView_;
 };
 
 five.device.getUriParam_ = function(name) {
@@ -68,6 +81,9 @@ five.device.isTouch_;
 
 /** @type {boolean} */
 five.device.isMobile_;
+
+/** @type {boolean} */
+five.device.isWebView_;
 
 /** @type {goog.Uri} */
 five.device.uri_;

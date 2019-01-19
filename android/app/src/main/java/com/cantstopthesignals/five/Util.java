@@ -2,11 +2,18 @@ package com.cantstopthesignals.five;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class Util {
-    private static final SimpleDateFormat ISO_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
+    private static final SimpleDateFormat ISO_DATE_FORMAT = new SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm'Z'");
+    static {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        ISO_DATE_FORMAT.setTimeZone(tz);
+    }
 
     public static int round(float in) {
         return Math.round(in + 0.0001f);

@@ -21,6 +21,17 @@ public class CalendarInfo implements Parcelable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CalendarInfo)) {
+            return false;
+        }
+        CalendarInfo other = (CalendarInfo) obj;
+        return accountName.equals(other.accountName)
+                && id == other.id
+                && displayName.equals(other.displayName);
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }

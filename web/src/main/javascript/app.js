@@ -2,6 +2,7 @@
 
 goog.provide('five.App');
 
+goog.require('five.AndroidCalendarApi');
 goog.require('five.AppBar');
 goog.require('five.Auth');
 goog.require('five.CalendarApi');
@@ -22,13 +23,21 @@ goog.require('goog.events.EventType');
  * @extends {goog.events.EventTarget}
  */
 five.App = function() {
-  this.auth_ = new five.Auth();
-
   this.appContext_ = new five.AppContext();
   this.registerDisposable(this.appContext_);
 
-  /** @type {!five.CalendarApi} */
-  this.calendarApi_ = new five.CalendarApi(this.auth_);
+  if (!five.device.isWebView()) {
+    this.auth_ = new five.Auth();
+  }
+
+  /** @type {!five.BaseCalendarApi} */
+  this.calendarApi_;
+
+  if (five.device.isWebView()) {
+    this.calendarApi_ = new five.AndroidCalendarApi();
+  } else {
+    this.calendarApi_ = new five.CalendarApi(this.auth_);
+  }
   this.calendarApi_.register(this.appContext_);
 
   /** @type {goog.events.EventHandler} */
@@ -70,10 +79,15 @@ five.App.prototype.start = function() {
   var notificationManager = new five.NotificationManager(this.appBar_);
   notificationManager.register(this.appContext_);
 
-  this.auth_.getAuthDeferred().branch().
-      addCallback(this.chooseCalendar_, this).
-      addCallback(this.showEventsView_, this);
-  this.auth_.start();
+  if (five.device.isWebView()) {
+    this.calendarApi_.loadCalendarData().
+        addCallback(this.handleAndroidCalendarData_, this);
+  } else {
+    this.auth_.getAuthDeferred().branch().
+        addCallback(this.chooseCalendar_, this).
+        addCallback(this.showEventsView_, this);
+    this.auth_.start();
+  }
 
   this.eventHandler_.
       listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_).
@@ -98,6 +112,11 @@ five.App.prototype.chooseCalendar_ = function() {
         goog.dispose(this.calendarChooser_);
         delete this.calendarChooser_;
       }, this);
+};
+
+five.App.prototype.handleAndroidCalendarData_ = function(calendarData) {
+  this.calendarData_ = calendarData;
+  this.showEventsView_();
 };
 
 five.App.prototype.showEventsView_ = function() {

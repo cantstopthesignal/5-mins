@@ -17,6 +17,8 @@ public class MainActivity extends Activity
      */
     private NavigationDrawerFragment mNavigationDrawerFragment;
 
+    private CalendarFragment mWebCalendarFragment;
+
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
@@ -41,18 +43,19 @@ public class MainActivity extends Activity
     public void onNavigationDrawerCalendarSelected(CalendarInfo calendarInfo) {
         FragmentManager fragmentManager = getFragmentManager();
         if (calendarInfo != null) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.container, CalendarFragment.newInstance(calendarInfo))
-                    .commitAllowingStateLoss();
+            if (mWebCalendarFragment == null
+                    || !mWebCalendarFragment.matchesCalendar(calendarInfo)) {
+                mWebCalendarFragment = CalendarFragment.newInstance(calendarInfo);
+                fragmentManager.beginTransaction()
+                        .replace(R.id.container, mWebCalendarFragment)
+                        .commitAllowingStateLoss();
+            }
         } else {
+            mWebCalendarFragment = null;
             fragmentManager.beginTransaction()
                     .replace(R.id.container, new Fragment())
                     .commitAllowingStateLoss();
         }
-    }
-
-    public void onCalendarFragmentAttached(CalendarInfo calendarInfo) {
-        mTitle = calendarInfo.displayName;
     }
 
     public void restoreActionBar() {
@@ -82,6 +85,11 @@ public class MainActivity extends Activity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            return true;
+        } else if (id == R.id.action_example) {
+            if (mWebCalendarFragment != null) {
+                mWebCalendarFragment.syncCalendar();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);

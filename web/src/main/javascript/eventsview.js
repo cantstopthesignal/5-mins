@@ -623,6 +623,9 @@ five.EventsView.prototype.handleScroll_ = function(e) {
 };
 
 five.EventsView.prototype.updateAdditionalTimelineAlignments_ = function() {
+  if (this.columns_.length <= 1) {
+    return;
+  }
   var scrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);
   for (var i = 1; i < this.columns_.length; i++) {
     var column = this.columns_[i];

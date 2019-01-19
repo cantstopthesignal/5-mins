@@ -2,6 +2,7 @@
 
 goog.provide('five.CalendarApi');
 
+goog.require('five.BaseCalendarApi');
 goog.require('five.Service');
 goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
@@ -15,7 +16,7 @@ goog.require('goog.json');
  *
  * @constructor
  * @param {five.Auth} auth
- * @extends {goog.events.EventTarget}
+ * @extends {five.BaseCalendarApi}
  * @implements {five.Service}
  */
 five.CalendarApi = function(auth) {
@@ -24,7 +25,7 @@ five.CalendarApi = function(auth) {
   /** @type {five.Auth} */
   this.auth_ = auth;
 };
-goog.inherits(five.CalendarApi, goog.events.EventTarget);
+goog.inherits(five.CalendarApi, five.BaseCalendarApi);
 
 five.CalendarApi.SERVICE_ID = 's' + goog.getUid(five.CalendarApi);
 
