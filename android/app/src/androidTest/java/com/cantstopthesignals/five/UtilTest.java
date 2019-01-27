@@ -2,13 +2,20 @@ package com.cantstopthesignals.five;
 
 import org.junit.Test;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
 
 public class UtilTest {
+
+    private static final SimpleDateFormat LEGACY_ISO_DATE_FORMAT =
+            new SimpleDateFormat("yyyyMMdd'T'HHmmss");
 
     public class HourIterationResult {
         public final Calendar hour;
@@ -23,20 +30,44 @@ public class UtilTest {
     }
 
     @Test
+    public void testConvertFromString() throws Exception {
+        String isoString = "2019-02-27T22:10:00.000Z";
+        Calendar date = Util.dateFromIsoString(isoString);
+        date.setTimeZone(TimeZone.getTimeZone("UTC"));
+        assertEquals("UTC", date.getTimeZone().getID());
+        assertEquals(2019, date.get(Calendar.YEAR));
+        assertEquals(1, date.get(Calendar.MONTH));
+        assertEquals(27, date.get(Calendar.DATE));
+        assertEquals(22, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals(10, date.get(Calendar.MINUTE));
+        assertEquals(0, date.get(Calendar.SECOND));
+        assertEquals(isoString, Util.dateToIsoString(date));
+    }
+
+    @Test
+    public void testConvertToIsoString() throws Exception {
+        Calendar date = Calendar.getInstance();
+        date.setTimeInMillis(1548630246000L);
+        String isoString = Util.dateToIsoString(date);
+        assertEquals("2019-01-27T23:04:06.000Z", isoString);
+        assertEquals(date.getTimeInMillis(), Util.dateFromIsoString(isoString).getTimeInMillis());
+    }
+
+    @Test
     public void testForEachHourRangeWrap_oneInstant() throws Exception {
-        Calendar date = Util.dateFromIsoString("20120526T110000");
+        Calendar date = dateFromIsoStringLegacy("20120526T110000");
         HourIterationResult[] expected = new HourIterationResult[]{
                 new HourIterationResult(date,
-                        Util.dateFromIsoString("20120526T120000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         true)
         };
         assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(date, date));
 
-        date = Util.dateFromIsoString("20120526T111000");
+        date = dateFromIsoStringLegacy("20120526T111000");
         expected = new HourIterationResult[]{
                 new HourIterationResult(
-                        Util.dateFromIsoString("20120526T110000"),
-                        Util.dateFromIsoString("20120526T120000"),
+                        dateFromIsoStringLegacy("20120526T110000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         true)
         };
         assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(date, date));
@@ -44,23 +75,23 @@ public class UtilTest {
 
     @Test
     public void testForEachHourWrap_oneInstant() throws Exception {
-        Calendar date = Util.dateFromIsoString("20120526T110000");
+        Calendar date = dateFromIsoStringLegacy("20120526T110000");
         HourIterationResult[] expected = new HourIterationResult[]{
                 new HourIterationResult(date,
-                        Util.dateFromIsoString("20120526T120000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T120000"),
                         null,
                         true)
         };
         assertForEachHourWrapOutput(expected, doForEachHourWrap(date, date));
 
-        date = Util.dateFromIsoString("20120526T111000");
+        date = dateFromIsoStringLegacy("20120526T111000");
         expected = new HourIterationResult[]{
-                new HourIterationResult(Util.dateFromIsoString("20120526T110000"),
-                        Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T110000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T120000"),
                         null,
                         true)
         };
@@ -69,28 +100,28 @@ public class UtilTest {
 
     @Test
     public void testForEachHourRangeWrap_oneHour() throws Exception {
-        Calendar startDate = Util.dateFromIsoString("20120526T110000");
+        Calendar startDate = dateFromIsoStringLegacy("20120526T110000");
         Calendar endDate = (Calendar) startDate.clone();
         endDate.add(Calendar.HOUR, 1);
 
         HourIterationResult[] expected = new HourIterationResult[]{
-                new HourIterationResult(Util.dateFromIsoString("20120526T110000"),
-                        Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T110000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         true)
         };
         assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(startDate,
                 endDate));
 
-        startDate = Util.dateFromIsoString("20120526T113000");
+        startDate = dateFromIsoStringLegacy("20120526T113000");
         endDate = (Calendar) startDate.clone();
         endDate.add(Calendar.HOUR, 1);
 
         expected = new HourIterationResult[]{
-                new HourIterationResult(Util.dateFromIsoString("20120526T110000"),
-                        Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T110000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T120000"),
-                        Util.dateFromIsoString("20120526T130000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T120000"),
+                        dateFromIsoStringLegacy("20120526T130000"),
                         true)
         };
         assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(startDate,
@@ -99,33 +130,33 @@ public class UtilTest {
 
     @Test
     public void testForEachHourWrap_oneHour() throws Exception {
-        Calendar startDate = Util.dateFromIsoString("20120526T110000");
+        Calendar startDate = dateFromIsoStringLegacy("20120526T110000");
         Calendar endDate = (Calendar) startDate.clone();
         endDate.add(Calendar.HOUR, 1);
 
         HourIterationResult[] expected = new HourIterationResult[]{
-                new HourIterationResult(Util.dateFromIsoString("20120526T110000"),
-                        Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T110000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T120000"),
                         null,
                         true)
         };
         assertForEachHourWrapOutput(expected, doForEachHourWrap(startDate,
                 endDate));
 
-        startDate = Util.dateFromIsoString("20120526T113000");
+        startDate = dateFromIsoStringLegacy("20120526T113000");
         endDate = (Calendar) startDate.clone();
         endDate.add(Calendar.HOUR, 1);
 
         expected = new HourIterationResult[]{
-                new HourIterationResult(Util.dateFromIsoString("20120526T110000"),
-                        Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T110000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T120000"),
-                        Util.dateFromIsoString("20120526T130000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T120000"),
+                        dateFromIsoStringLegacy("20120526T130000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T130000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T130000"),
                         null,
                         true)
         };
@@ -135,19 +166,19 @@ public class UtilTest {
 
     @Test
     public void testForEachHourRangeWrap_aFewHours() throws Exception {
-        Calendar startDate = Util.dateFromIsoString("20120526T110000");
+        Calendar startDate = dateFromIsoStringLegacy("20120526T110000");
         Calendar endDate = (Calendar) startDate.clone();
         endDate.add(Calendar.HOUR, 3);
 
         HourIterationResult[] expected = new HourIterationResult[]{
-                new HourIterationResult(Util.dateFromIsoString("20120526T110000"),
-                        Util.dateFromIsoString("20120526T120000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T110000"),
+                        dateFromIsoStringLegacy("20120526T120000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T120000"),
-                        Util.dateFromIsoString("20120526T130000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T120000"),
+                        dateFromIsoStringLegacy("20120526T130000"),
                         false),
-                new HourIterationResult(Util.dateFromIsoString("20120526T130000"),
-                        Util.dateFromIsoString("20120526T140000"),
+                new HourIterationResult(dateFromIsoStringLegacy("20120526T130000"),
+                        dateFromIsoStringLegacy("20120526T140000"),
                         true)
         };
         assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(startDate,
@@ -194,9 +225,9 @@ public class UtilTest {
     public void testRoundToFiveMinutes() throws Exception {
         class Helper {
             public void doTest(String expected, String input) {
-                assertEquals(Util.dateToIsoString(Util.dateFromIsoString(expected)),
+                assertEquals(Util.dateToIsoString(dateFromIsoStringLegacy(expected)),
                         Util.dateToIsoString(Util.roundToFiveMinutes(
-                                Util.dateFromIsoString(input))));
+                                dateFromIsoStringLegacy(input))));
             }
         }
         Helper helper = new Helper();
@@ -216,8 +247,8 @@ public class UtilTest {
     public void testHourFloor() throws Exception {
         class Helper {
             public void doTest(String expected, String input) {
-                assertEquals(Util.dateFromIsoString(expected),
-                        Util.hourFloor(Util.dateFromIsoString(input)));
+                assertEquals(dateFromIsoStringLegacy(expected),
+                        Util.hourFloor(dateFromIsoStringLegacy(input)));
             }
         }
         Helper helper = new Helper();
@@ -232,8 +263,8 @@ public class UtilTest {
     public void testDayFloor() throws Exception {
         class Helper {
             public void doTest(String expected, String input) {
-                assertEquals(Util.dateToIsoString(Util.dateFromIsoString(expected)),
-                        Util.dateToIsoString(Util.dayFloor(Util.dateFromIsoString(input))));
+                assertEquals(Util.dateToIsoString(dateFromIsoStringLegacy(expected)),
+                        Util.dateToIsoString(Util.dayFloor(dateFromIsoStringLegacy(input))));
             }
         }
         Helper helper = new Helper();
@@ -245,7 +276,7 @@ public class UtilTest {
 
     @Test
     public void testHourAddSafe() throws Exception {
-        Calendar start = Util.dateFromIsoString("20120526T110000");
+        Calendar start = dateFromIsoStringLegacy("20120526T110000");
         Calendar expected = (Calendar) start.clone();
         expected.add(Calendar.HOUR, 1);
         assertTimesEqualOrNull("Should be equal", expected,
@@ -258,5 +289,15 @@ public class UtilTest {
             assertEquals(msg, time1, time2);
         }
     }
-}
 
+    private static Calendar dateFromIsoStringLegacy(String str) {
+        try {
+            Date date = LEGACY_ISO_DATE_FORMAT.parse(str);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            return calendar;
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

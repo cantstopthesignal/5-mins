@@ -2,6 +2,7 @@
 
 goog.provide('five.EventsView');
 
+goog.require('five.AndroidAppApi');
 goog.require('five.Button');
 goog.require('five.Component');
 goog.require('five.DayBanner');
@@ -48,6 +49,13 @@ five.EventsView = function(appContext, calendarManager, appBar) {
 
   /** @type {!Array.<!five.Event>} */
   this.selectedEvents_ = [];
+
+  /** @type {five.AndroidAppApi} */
+  this.androidAppApi_;
+
+  if (five.device.isWebView()) {
+    this.androidAppApi_ = five.AndroidAppApi.get(this.appContext_);
+  }
 
   this.initDefaultViewDate_();
   this.updateViewDate_();
@@ -122,21 +130,33 @@ five.EventsView.prototype.createDom = function() {
   goog.dom.classes.add(this.scrollEl_, 'events-view-scroll');
   this.el.appendChild(this.scrollEl_);
 
-  var refreshButton = new five.Button('Refresh');
-  this.appBar_.getButtonBar().addButton(refreshButton);
-  this.eventHandler.listen(refreshButton.el, goog.events.EventType.CLICK,
-      this.handleRefreshClick_);
+  if (!five.device.isWebView()) {
+    var refreshButton = new five.Button('Refresh');
+    this.appBar_.getButtonBar().addButton(refreshButton);
+    this.eventHandler.listen(refreshButton.el, goog.events.EventType.CLICK,
+        this.handleRefreshClick_);
 
-  var nowButton = new five.Button('Now');
-  this.appBar_.getButtonBar().addButton(nowButton);
-  this.eventHandler.listen(nowButton.el, goog.events.EventType.CLICK,
-      this.handleNowClick_);
+    var nowButton = new five.Button('Now');
+    this.appBar_.getButtonBar().addButton(nowButton);
+    this.eventHandler.listen(nowButton.el, goog.events.EventType.CLICK,
+        this.handleNowClick_);
 
-  this.saveButton_ = new five.Button('Save');
-  this.appBar_.getButtonBar().addButton(this.saveButton_);
-  this.eventHandler.listen(this.saveButton_.el, goog.events.EventType.CLICK,
-      this.handleSaveClick_);
-  goog.style.showElement(this.saveButton_.el, false);
+    this.saveButton_ = new five.Button('Save');
+    this.appBar_.getButtonBar().addButton(this.saveButton_);
+    this.eventHandler.listen(this.saveButton_.el, goog.events.EventType.CLICK,
+        this.handleSaveClick_);
+    goog.style.showElement(this.saveButton_.el, false);
+  } else {
+    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.REFRESH,
+        goog.bind(this.handleRefreshClick_, this));
+
+    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.NOW,
+        goog.bind(this.handleNowClick_, this));
+
+    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.SAVE,
+        goog.bind(this.handleSaveClick_, this));
+    this.androidAppApi_.setButtonVisible(five.AndroidAppApi.ButtonId.SAVE, false);
+  }
 
   this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime(),
       five.TimeMarkerTheme.NOW);
@@ -194,6 +214,8 @@ five.EventsView.prototype.reloadEvents_ = function(opt_confirmMutations) {
       return null;
     }
   }
+  this.replaceSelectedEvents_([]);
+  this.calendarManager_.cancelMutations();
   var startDate = this.viewDate_.clone();
   startDate.add(new goog.date.Interval(goog.date.Interval.DAYS, -10));
   var endDate = this.viewDate_.clone();
@@ -803,6 +825,10 @@ five.EventsView.prototype.commitDragEvents = function() {
   delete this.dragEventsLastUpdateTimes_;
 };
 
+five.EventsView.prototype.setPauseEventsLoading = function(pause) {
+  this.calendarManager_.setPauseEventsLoading(pause);
+};
+
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleEventDataChanged_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
@@ -845,7 +871,13 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
 five.EventsView.prototype.handleEventEdit_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
   var event = /** @type {!five.Event} */ (e.target);
-  this.openEditEventDialog_(event, false);
+  if (!five.device.isWebView()) {
+    this.openEditEventDialog_(event, false);
+  } else {
+    if (!event.hasMutations()) {
+      this.calendarManager_.openEventEditor(event);
+    }
+  }
 };
 
 /**
@@ -857,11 +889,12 @@ five.EventsView.prototype.handleEventEdit_ = function(e) {
 five.EventsView.prototype.openEditEventDialog_ = function(event, newCreate) {
   goog.asserts.assert(this.events_.indexOf(event) >= 0);
   var dialog = new five.EditEventDialog(this.appContext_, event, newCreate);
+  this.calendarManager_.setPauseEventsLoading(true);
   this.eventHandler.
       listen(dialog, five.EditEventDialog.EventType.EVENT_CHANGED,
           this.handleEditEventDialogEventChanged_.bind(this, event)).
       listenOnce(dialog, five.EditEventDialog.EventType.DONE,
-          this.handleEditEventDialogEventChanged_.bind(this, event));
+          this.handleEditEventDialogDone_.bind(this, event));
   dialog.show();
   return dialog;
 };
@@ -872,6 +905,12 @@ five.EventsView.prototype.handleEditEventDialogEventChanged_ = function(event) {
     column.timeline.eventsChanged([event]);
   });
 };
+
+/** @param {!five.Event} event */
+five.EventsView.prototype.handleEditEventDialogDone_ = function(event) {
+  this.handleEditEventDialogEventChanged_(event);
+  this.calendarManager_.setPauseEventsLoading(false);
+}
 
 five.EventsView.prototype.registerListenersForCalendarManager_ = function() {
   this.eventHandler.
@@ -902,8 +941,12 @@ five.EventsView.prototype.handleCalendarManagerEventsChange_ = function(e) {
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleCalendarManagerMutationsStateChange_ =
     function(e) {
-  goog.style.showElement(this.saveButton_.el,
-      this.calendarManager_.hasMutations());
+  var show = this.calendarManager_.hasMutations();
+  if (!five.device.isWebView()) {
+    goog.style.showElement(this.saveButton_.el, show);
+  } else {
+    this.androidAppApi_.setButtonVisible(five.AndroidAppApi.ButtonId.SAVE, show);
+  }
 };
 
 /** @param {goog.events.Event} e */
@@ -1102,21 +1145,27 @@ five.EventsView.prototype.updateViewDate_ = function() {
   this.scrollToTime(scrollDate);
 };
 
-/** @param {goog.events.Event} e */
-five.EventsView.prototype.handleRefreshClick_ = function(e) {
-  e.preventDefault();
+/** @param {goog.events.Event=} opt_e */
+five.EventsView.prototype.handleRefreshClick_ = function(opt_e) {
+  if (opt_e) {
+    opt_e.preventDefault();
+  }
   this.reloadEvents_(true /* opt_confirmMutations */);
 };
 
-/** @param {goog.events.Event} e */
-five.EventsView.prototype.handleNowClick_ = function(e) {
-  e.preventDefault();
+/** @param {goog.events.Event=} opt_e */
+five.EventsView.prototype.handleNowClick_ = function(opt_e) {
+  if (opt_e) {
+    opt_e.preventDefault();
+  }
   this.scrollToNow_(true);
 };
 
-/** @param {goog.events.Event} e */
-five.EventsView.prototype.handleSaveClick_ = function(e) {
-  e.preventDefault();
+/** @param {goog.events.Event=} opt_e */
+five.EventsView.prototype.handleSaveClick_ = function(opt_e) {
+  if (opt_e) {
+    opt_e.preventDefault();
+  }
   this.calendarManager_.saveMutations();
 };
 

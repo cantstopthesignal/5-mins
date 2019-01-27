@@ -277,7 +277,7 @@ a:hover {
 }
 .edge-events-editor > .button-bar {
   pointer-events: auto;
-  background-color: #444;
+  background-color: #44444466;
   box-sizing: border-box;
   overflow: hidden;
   position: absolute;

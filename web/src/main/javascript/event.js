@@ -45,6 +45,7 @@ goog.inherits(five.Event, goog.events.EventTarget);
 five.Event.EventType = {
   SELECT: goog.events.getUniqueId('select'),
   DESELECT: goog.events.getUniqueId('deselect'),
+  DELETE: goog.events.getUniqueId('delete'),
   DUPLICATE: goog.events.getUniqueId('duplicate'),
   EDIT: goog.events.getUniqueId('edit'),
   MOVE: five.EventMoveEvent.EventType.MOVE,
@@ -305,7 +306,10 @@ five.Event.prototype.startMutationPatch = function() {
     return mutation.isLocked();
   }));
   var patchData = {};
-  patchData['etag'] = goog.asserts.assertString(this.eventData_['etag']);
+  if (!five.device.isWebView()) {
+    goog.asserts.assertString(this.eventData_['etag']);
+  }
+  patchData['etag'] = this.eventData_['etag'];
   this.mergeMutationsIntoData_(patchData);
   goog.array.forEach(this.mutations_, function(mutation) {
     mutation.setLocked(true);

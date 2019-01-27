@@ -23,7 +23,7 @@
       if (mobileMode == MobileMode.TRUE) {
         %>
         <meta name="viewport" content="width=device-width, initial-scale=1.0,
-            user-scalable=yes, target-densitydpi=device-dpi">
+            user-scalable=no">
         <%
       }
       if (jsMode == JsMode.UNCOMPILED) {

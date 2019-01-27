@@ -29,36 +29,41 @@ five.EdgeEventsEditor.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'edge-events-editor');
 
-  var topButtonBar = document.createElement('div');
-  goog.dom.classes.add(topButtonBar, 'button-bar');
-  this.el.appendChild(topButtonBar);
+  this.topButtonBar_ = document.createElement('div');
+  goog.dom.classes.add(this.topButtonBar_, 'button-bar');
+  this.el.appendChild(this.topButtonBar_);
 
   var shadow = document.createElement('div');
   goog.dom.classes.add(shadow, 'shadow');
-  topButtonBar.appendChild(shadow);
+  this.topButtonBar_.appendChild(shadow);
 
-  var bottomButtonBar = document.createElement('div');
-  goog.dom.classes.add(bottomButtonBar, 'button-bar');
-  this.el.appendChild(bottomButtonBar);
+  this.bottomButtonBar_ = document.createElement('div');
+  goog.dom.classes.add(this.bottomButtonBar_, 'button-bar');
+  this.el.appendChild(this.bottomButtonBar_);
 
   shadow = document.createElement('div');
   goog.dom.classes.add(shadow, 'shadow');
-  bottomButtonBar.appendChild(shadow);
+  this.bottomButtonBar_.appendChild(shadow);
 
-  var dupButton = this.createIconButton_(topButtonBar, true);
+  var deleteButton = this.createIconButton_(this.topButtonBar_, true);
+  deleteButton.appendChild(document.createTextNode('-'));
+  var dupButton = this.createIconButton_(this.topButtonBar_, true);
   dupButton.appendChild(document.createTextNode('D'));
-  this.editButton_ = this.createIconButton_(topButtonBar, true);
+  this.editButton_ = this.createIconButton_(this.topButtonBar_, true);
   this.editButton_.appendChild(document.createTextNode('E'));
 
-  var moveUpButton = this.createArrowButton_(true, topButtonBar);
-  var moveDownButton = this.createArrowButton_(false, topButtonBar);
-  var moveStartUpButton = this.createArrowButton_(true, topButtonBar);
-  var moveStartDownButton = this.createArrowButton_(false, topButtonBar);
-  var moveEndUpButton = this.createArrowButton_(true, bottomButtonBar);
-  var moveEndDownButton = this.createArrowButton_(false, bottomButtonBar);
+  var moveUpButton = this.createArrowButton_(true, this.topButtonBar_);
+  var moveDownButton = this.createArrowButton_(false, this.topButtonBar_);
+  var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_);
+  var moveStartDownButton = this.createArrowButton_(false, this.topButtonBar_);
+  var moveEndUpButton = this.createArrowButton_(true, this.bottomButtonBar_);
+  var moveEndDownButton = this.createArrowButton_(false, this.bottomButtonBar_);
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_).
+      listen(deleteButton, goog.events.EventType.CLICK,
+          this.handleDeleteButtonClick_).
       listen(dupButton, goog.events.EventType.CLICK,
           this.handleDupButtonClick_).
       listen(this.editButton_, goog.events.EventType.CLICK,
@@ -76,6 +81,9 @@ five.EdgeEventsEditor.prototype.createDom = function() {
       listen(moveEndDownButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.end, 5));
 };
+
+/** @type {boolean} */
+five.EdgeEventsEditor.prototype.mouseDownTop_ = true;
 
 /**
  * @param {boolean} up
@@ -134,12 +142,43 @@ five.EdgeEventsEditor.prototype.layout = function() {
   goog.style.setHeight(this.el, rect.height);
 };
 
+/** @override */
+five.EdgeEventsEditor.prototype.getScrollAnchorData = function() {
+  var pos = goog.style.getPageOffsetTop(this.mouseDownTop_ ? this.topButtonBar_
+      : this.bottomButtonBar_);
+  return {'pos': pos};
+}
+
+/** @override */
+five.EdgeEventsEditor.prototype.getScrollAnchorDeltaY = function(oldData) {
+  var data = this.getScrollAnchorData();
+  if (!data || !oldData || !('pos' in oldData) || !('pos' in data)) {
+    return 0;
+  }
+  return data['pos'] - oldData['pos'];
+};
+
 /**
  * @param {goog.events.Event} e
  */
 five.EdgeEventsEditor.prototype.handleClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EdgeEventsEditor.prototype.handleMouseDown_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
+  this.mouseDownTop_ = goog.dom.contains(this.topButtonBar_, e.target);
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.EdgeEventsEditor.prototype.handleDeleteButtonClick_ = function(e) {
+  this.dispatchEvent(five.Event.EventType.DELETE);
 };
 
 /**

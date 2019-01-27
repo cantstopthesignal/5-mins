@@ -223,6 +223,8 @@ five.EventsTimeline.prototype.createDom = function() {
           this.handleEventsEditorMouseDownMoveControl_).
       listen(this.eventsEditor_, five.Event.EventType.MOVE,
           this.handleEventsEditorMove_).
+      listen(this.eventsEditor_, five.Event.EventType.DELETE,
+          this.handleEventsEditorDelete_).
       listen(this.eventsEditor_, five.Event.EventType.DUPLICATE,
           this.handleEventsEditorDuplicate_);
 
@@ -375,6 +377,7 @@ five.EventsTimeline.prototype.eventsChanged = function(changedEvents) {
 five.EventsTimeline.prototype.setSelectedEvents = function(selectedEvents) {
   var selectedEventCards = this.getEventCardsForEvents_(selectedEvents);
   this.eventsEditor_.setEvents(selectedEventCards);
+  this.owner_.setPauseEventsLoading(this.eventsEditor_.isVisible());
   this.layout_();
 };
 
@@ -982,6 +985,11 @@ five.EventsTimeline.prototype.handleEventsEditorVisibilityChanged_ =
 five.EventsTimeline.prototype.handleEventsEditorMove_ = function(e) {
   e.type = five.EventsTimeline.EventType.EVENTS_MOVE;
   this.dispatchEvent(e);
+};
+
+/** @param {goog.events.Event} e */
+five.EventsTimeline.prototype.handleEventsEditorDelete_ = function(e) {
+  this.dispatchEvent(five.EventsTimeline.EventType.EVENTS_DELETE);
 };
 
 /** @param {goog.events.Event} e */

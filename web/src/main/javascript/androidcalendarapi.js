@@ -10,7 +10,7 @@ goog.require('goog.json');
 
 
 /**
- * Android api wrapper.
+ * Android calendar api wrapper.
  *
  * @constructor
  * @extends {five.BaseCalendarApi}
@@ -46,10 +46,14 @@ five.AndroidCalendarApi.prototype.register = function(appContext) {
 
 /** @return {goog.async.Deferred} */
 five.AndroidCalendarApi.prototype.loadCalendarData = function() {
-  var d = new goog.async.Deferred();
-  var resultJson = this.callApi_('loadCalendarData');
-  d.callback(JSON.parse(resultJson));
-  return d;
+  var callback = function(respJson) {
+    return JSON.parse(respJson);
+  };
+  var errback = function(error) {
+    this.logger_.severe('Error loading calendar data: ' + error, error);
+  };
+  return this.callApi_('loadCalendarData').
+      addCallbacks(callback, errback, this);
 };
 
 /**
@@ -66,26 +70,125 @@ five.AndroidCalendarApi.prototype.loadEvents = function(calendarId, startDate, e
     d.callback(resp);
   }
   goog.exportSymbol(callbackName, goog.bind(callback, this));
-  var resultJson = this.callApi_(
-    'loadEvents', calendarId, startDate.getTime(), endDate.getTime(), callbackName);
-  var result = JSON.parse(resultJson);
-  if (!result['success']) {
-    d.errback(JSON.parse(resultJson));
+  var errback = function(error) {
+    this.logger_.severe('Error loading events: ' + error, error);
+    d.errback(error);
   }
+  this.callApi_(
+    'loadEvents', calendarId, startDate.getTime(), endDate.getTime(), callbackName).
+    addErrback(errback, this);
   return d;
 };
 
 /**
+ * @param {!Function} callback
+ * @return {goog.async.Deferred}
+ */
+five.AndroidCalendarApi.prototype.registerEventsListener = function(callback) {
+  var callbackName = 'callback_' + goog.getUid(callback);
+  goog.exportSymbol(callbackName, callback);
+  var errback = function(error) {
+    this.logger_.severe('Error registering events listener: ' + error, error);
+  };
+  return this.callApi_('registerEventsListener', callbackName).
+      addErrback(errback, this);
+};
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventData
+ * @return {goog.async.Deferred}
+ */
+five.AndroidCalendarApi.prototype.createEvent = function(calendarId, eventData) {
+  this.assertValidCreateData_(eventData);
+  var callback = function(respJson) {
+    var resp = JSON.parse(respJson);
+    goog.asserts.assert(resp['kind'] == 'calendar#event');
+    this.logger_.info('Event created');
+    return resp;
+  };
+  var errback = function(error) {
+    this.logger_.severe('Error creating event: ' + error, error);
+  };
+  return this.callApi_('createEvent', calendarId, JSON.stringify(eventData)).
+      addCallbacks(callback, errback, this);
+};
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventData
+ * @param {Object} eventPatchData
+ * @return {goog.async.Deferred}
+ */
+five.AndroidCalendarApi.prototype.saveEvent = function(calendarId, eventData,
+    eventPatchData) {
+  this.assertValidSaveData_(eventData, eventPatchData);
+  var callback = function(respJson) {
+    var resp = JSON.parse(respJson);
+    goog.asserts.assert(resp['kind'] == 'calendar#event');
+    this.logger_.info('Event saved');
+    return resp;
+  };
+  var errback = function(error) {
+    this.logger_.severe('Error saving event: ' + error, error);
+  };
+  return this.callApi_('saveEvent', calendarId, eventData['id'], JSON.stringify(eventPatchData)).
+      addCallbacks(callback, errback, this);
+};
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventDeleteData
+ * @return {goog.async.Deferred}
+ */
+five.AndroidCalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
+  this.assertValidDeleteData_(eventDeleteData);
+  var callback = function(resp) {
+    this.logger_.info('Event deleted');
+  };
+  var errback = function(error) {
+    this.logger_.severe('Error deleting event: ' + error, error);
+  };
+  return this.callApi_('deleteEvent', calendarId, eventDeleteData['id']).
+      addCallbacks(callback, errback, this);
+};
+
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventData
+ * @return {goog.async.Deferred}
+ */
+five.AndroidCalendarApi.prototype.openEventEditor = function(calendarId, eventData) {
+  goog.asserts.assert(eventData['id']);
+  var callback = function(resp) {
+    this.logger_.info('Event editor opened');
+  };
+  var errback = function(error) {
+    this.logger_.severe('Error opening event editor: ' + error, error);
+  };
+  return this.callApi_('openEventEditor', calendarId, eventData['id']).
+      addCallbacks(callback, errback, this);
+};
+
+
+/**
  * @param {string} methodName
  * @param {...*} var_args
+ * @return {goog.async.Deferred}
  */
 five.AndroidCalendarApi.prototype.callApi_ = function(methodName, var_args) {
   var params = Array.prototype.slice.call(arguments, 1);
   this.logger_.info(methodName);
-
-  var result = this.getInterface_()[methodName].apply(this.getInterface_(), params);
-  this.logger_.info('Result is ' + result);
-  return result;
+  var d = new goog.async.Deferred();
+  try {
+    var resp = this.getInterface_()[methodName].apply(this.getInterface_(), params);
+    this.logger_.info('Response is ' + resp);
+    d.callback(resp);
+  } catch (e) {
+    d.errback(e);
+  }
+  return d;
 };
 
 five.AndroidCalendarApi.prototype.getInterface_ = function() {

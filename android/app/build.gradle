@@ -15,8 +15,8 @@ android {
         applicationId 'com.cssignal.five'
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 1
-        versionName "0.1"
+        versionCode 4
+        versionName "0.4"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.release
     }
@@ -26,11 +26,21 @@ android {
     buildTypes {
         release {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            resValue "string", "app_name", "5 minutes"
         }
+        debug {
+            applicationIdSuffix ".debug"
+            resValue "string", "app_name", "5 debug"
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
 dependencies {
+    implementation 'com.android.support:design:28.0.0'
     implementation 'com.android.support:support-v4:28.0.0'
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.google.android.gms:play-services-auth:16.0.1'

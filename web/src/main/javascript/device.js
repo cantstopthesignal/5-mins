@@ -9,20 +9,7 @@ goog.require('goog.userAgent');
 /** @return {!five.device.Density} */
 five.device.getDensity = function() {
   if (!goog.isDef(five.device.density_)) {
-    if (five.device.isMobile()) {
-      var densityParam = five.device.getUriParam_('density');
-      if (densityParam && goog.object.contains(five.device.Density,
-          densityParam)) {
-        five.device.density_ = /** @type {five.device.Density} */ (
-            densityParam);
-      } else if (window['devicePixelRatio'] >= 1.5) {
-        five.device.density_ = five.device.Density.HIGH;
-      } else {
-        five.device.density_ = five.device.Density.NORMAL;
-      }
-    } else {
-      five.device.density_ = five.device.Density.NORMAL;
-    }
+    five.device.density_ = five.device.Density.NORMAL;
   }
   return five.device.density_;
 };

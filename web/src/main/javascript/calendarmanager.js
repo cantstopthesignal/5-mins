@@ -46,6 +46,8 @@ five.CalendarManager = function(appContext, calendarData) {
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
+
+  this.calendarApi_.registerEventsListener(goog.bind(this.handleEventsChanged_, this));
 };
 goog.inherits(five.CalendarManager, goog.events.EventTarget);
 
@@ -68,6 +70,9 @@ five.CalendarManager.EVENT_CREATE_ERROR_ =
 five.CalendarManager.EVENT_DELETE_ERROR_ =
     'Error deleting event. Please try again.';
 
+five.CalendarManager.OPEN_EVENTS_EDITOR_ERROR_ =
+    'Error editing event. Please try again.';
+
 /** @type {goog.debug.Logger} */
 five.CalendarManager.prototype.logger_ = goog.debug.Logger.getLogger(
     'five.CalendarManager');
@@ -80,6 +85,9 @@ five.CalendarManager.prototype.numRequestsInProgress_ = 0;
 
 /** @type {boolean} */
 five.CalendarManager.prototype.hasMutations_ = false;
+
+/** @type {boolean} */
+five.CalendarManager.prototype.pauseEventsLoading_ = false;
 
 /** @override */
 five.CalendarManager.prototype.disposeInternal = function() {
@@ -103,6 +111,11 @@ five.CalendarManager.prototype.hasMutations = function() {
   return this.hasMutations_;
 };
 
+five.CalendarManager.prototype.cancelMutations = function() {
+  this.hasMutations_ = false;
+  this.dispatchEvent(five.CalendarManager.EventType.MUTATIONS_STATE_CHANGED);
+};
+
 /** @return {boolean} */
 five.CalendarManager.prototype.hasRequestsInProgress = function() {
   return this.numRequestsInProgress_ > 0;
@@ -118,8 +131,7 @@ five.CalendarManager.prototype.loadEvents = function(startDate, endDate) {
   return this.calendarApi_.loadEvents(this.calendarData_['id'], startDate,
       endDate).
       addCallback(function(resp) {
-        goog.asserts.assert(resp['kind'] == 'calendar#events');
-        this.updateEventsData_(resp['items'] || []);
+        this.handleEventsChanged_(resp);
         this.requestEnded_();
         return this.events_;
       }, this).
@@ -166,6 +178,27 @@ five.CalendarManager.prototype.saveMutations = function() {
   goog.array.forEach(this.removedEvents_, function(event) {
     this.deleteEvent_(event);
   }, this);
+};
+
+/** @param {five.Event} event */
+five.CalendarManager.prototype.openEventEditor = function(event) {
+  goog.asserts.assert(!event.isNew());
+  goog.asserts.assert(!event.hasMutations());
+  this.requestStarted_();
+  this.calendarApi_.openEventEditor(this.calendarData_['id'], event.getEventData()).
+      addCallback(function(resp) {
+        this.requestEnded_();
+      }, this).
+      addErrback(function(error) {
+        this.logger_.severe('Error opening event editor: ' + error, error);
+        this.requestEnded_();
+        this.notificationManager_.show(
+            five.CalendarManager.OPEN_EVENTS_EDITOR_ERROR_);
+      }, this);
+};
+
+five.CalendarManager.prototype.setPauseEventsLoading = function(pause) {
+  this.pauseEventsLoading_ = pause;
 };
 
 /** @param {five.Event} event */
@@ -255,6 +288,9 @@ five.CalendarManager.prototype.eventDeleted_ = function(event) {
 
 /** @param {Array.<Object>} eventsData */
 five.CalendarManager.prototype.updateEventsData_ = function(eventsData) {
+  if (this.hasMutations_ || this.pauseEventsLoading_) {
+    return;
+  }
   goog.disposeAll(this.events_);
   var filteredEventsData = goog.array.filter(eventsData, function(eventData) {
     var startTime = five.Event.parseEventDataDate(eventData['start']);
@@ -302,4 +338,9 @@ five.CalendarManager.prototype.registerListenersForEvent_ = function(event) {
 /** @param {goog.events.Event} e */
 five.CalendarManager.prototype.handleEventMutationsChanged_ = function(e) {
   this.updateHasMutations_();
+};
+
+five.CalendarManager.prototype.handleEventsChanged_ = function(resp) {
+  goog.asserts.assert(resp['kind'] == 'calendar#events');
+  this.updateEventsData_(resp['items'] || []);
 };

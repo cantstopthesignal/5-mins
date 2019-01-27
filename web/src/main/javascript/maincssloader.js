@@ -16,6 +16,9 @@ five.mainCssLoader.load = function() {
 
   loadStylesheet('/css/main.css');
   loadStylesheet('/css/main' + five.device.getDensity() + 'density.css');
+  if (five.device.isWebView()) {
+    loadStylesheet('/css/mainwebview.css');
+  }
 
   var uri = new goog.Uri(window.location.href);
   var zoom = parseFloat(uri.getParameterValue('zoom') || '1');

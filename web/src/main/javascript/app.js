@@ -2,6 +2,7 @@
 
 goog.provide('five.App');
 
+goog.require('five.AndroidAppApi');
 goog.require('five.AndroidCalendarApi');
 goog.require('five.AppBar');
 goog.require('five.Auth');
@@ -39,6 +40,11 @@ five.App = function() {
     this.calendarApi_ = new five.CalendarApi(this.auth_);
   }
   this.calendarApi_.register(this.appContext_);
+
+  if (five.device.isWebView()) {
+    var androidAppApi = new five.AndroidAppApi();
+    androidAppApi.register(this.appContext_);
+  }
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
