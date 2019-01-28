@@ -76,7 +76,7 @@ five.EventsView.DragEventsType = {
 five.EventsView.NOW_TRACKER_INTERVAL_MS_ = 15 * 1000;
 
 /** @type {number} */
-five.EventsView.SCROLL_ANIMATION_DURATION_MS = 500;
+five.EventsView.SCROLL_ANIMATION_DURATION_MS = 250;
 
 /** @type {number} */
 five.EventsView.DEFAULT_TIMELINE_Y_OFFSET = 500;
@@ -122,6 +122,9 @@ five.EventsView.prototype.dragEventsLastUpdateTimes_;
 
 /** @type {five.EventsView.DragEventsType} */
 five.EventsView.prototype.dragEventsType_;
+
+/** @type {goog.fx.Animation} */
+five.EventsView.prototype.scrollAnimation_;
 
 five.EventsView.prototype.createDom = function() {
   goog.base(this, 'createDom');
@@ -1016,25 +1019,24 @@ five.EventsView.prototype.scrollToTime = function(date,
 
   if (opt_animate) {
     var lastScrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);
-    var animation = new goog.fx.Animation([lastScrollDate.getTime()],
+    if (this.scrollAnimation_) {
+      goog.dispose(this.scrollAnimation_);
+    }
+    this.scrollAnimation_ = new goog.fx.Animation([lastScrollDate.getTime()],
         [date.getTime()], five.EventsView.SCROLL_ANIMATION_DURATION_MS,
         goog.fx.easing.easeOut);
     var EventType = goog.fx.Animation.EventType;
-    animation.registerDisposable(new goog.events.EventHandler(this).
-        listen(animation, [EventType.END, EventType.ANIMATE], function(e) {
-      if (this.timeToYPos_(lastScrollDate) != this.scrollEl_.scrollTop) {
-        // Detect user intervention.
-        goog.dispose(animation);
-        return;
-      }
+    this.scrollAnimation_.registerDisposable(new goog.events.EventHandler(this).
+        listen(this.scrollAnimation_, [EventType.END, EventType.ANIMATE], function(e) {
       var curTime = new goog.date.DateTime(new Date(Math.round(e.coords[0])));
       this.scrollToTime(curTime);
       lastScrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);
       if (e.type == EventType.END) {
-        goog.dispose(animation);
+        goog.dispose(this.scrollAnimation_);
+        delete this.scrollAnimation_;
       }
     }));
-    animation.play();
+    this.scrollAnimation_.play();
   } else {
     this.scrollEl_.scrollTop = this.timeToYPos_(date);
   }
@@ -1135,7 +1137,9 @@ five.EventsView.prototype.updateViewDate_ = function() {
     column.dayBanner.setDate(timelineDate);
     timelineDate.add(new goog.date.Interval(goog.date.Interval.DAYS, 1));
   }, this);
-  this.scrollToTime(scrollDate);
+  if (!this.scrollAnimation_) {
+    this.scrollToTime(scrollDate);
+  }
 };
 
 /** @param {goog.events.Event=} opt_e */
