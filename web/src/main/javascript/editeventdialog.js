@@ -104,6 +104,7 @@ five.EditEventDialog.prototype.createDom = function() {
   summaryDiv.appendChild(labelEl);
   this.summaryInputEl_ = document.createElement('input');
   this.summaryInputEl_.type = 'text';
+  this.summaryInputEl_.setAttribute('autocapitalize', 'off');
   goog.dom.classes.add(this.summaryInputEl_, 'summary-input');
   summaryDiv.appendChild(this.summaryInputEl_);
   contentEl.appendChild(summaryDiv);
