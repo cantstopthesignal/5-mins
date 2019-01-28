@@ -8,6 +8,7 @@ goog.require('five.Component');
 goog.require('five.DayBanner');
 goog.require('five.EditEventDialog');
 goog.require('five.Event');
+goog.require('five.EventCreateEvent');
 goog.require('five.EventMutation');
 goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventsSplitter');
@@ -393,17 +394,9 @@ five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
   this.replaceSelectedEvents_([]);
 };
 
-/** @param {goog.events.Event} e */
+/** @param {five.EventCreateEvent} e */
 five.EventsView.prototype.handleEventsTimelineEventCreate_ = function(e) {
-  var now = new goog.date.DateTime();
-  var startTime = five.util.roundToFiveMinutes(now);
-  var endTime = startTime.clone();
-  if (e.shiftKey) {
-    startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -5));
-  } else {
-    endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
-  }
-  var newEvent = five.Event.createNew(startTime, endTime, '<new>');
+  var newEvent = five.Event.createNew(e.startTime, e.endTime, '<new>');
   this.addEvent_(newEvent);
   this.replaceSelectedEvents_([newEvent]);
   var dialog = this.openEditEventDialog_(newEvent, true);

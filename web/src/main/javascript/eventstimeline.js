@@ -5,6 +5,7 @@ goog.provide('five.EventsTimeline');
 goog.require('five.Component');
 goog.require('five.EdgeEventsEditor');
 goog.require('five.EventCard');
+goog.require('five.EventCreateEvent');
 goog.require('five.EventMoveEvent');
 goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventSnapToEvent');
@@ -211,6 +212,7 @@ five.EventsTimeline.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.DBLCLICK, this.handleDblClick_).
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
       listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_).
@@ -616,6 +618,18 @@ five.EventsTimeline.prototype.handleClick_ = function(e) {
 };
 
 /** @param {goog.events.BrowserEvent} e */
+five.EventsTimeline.prototype.handleDblClick_ = function(e) {
+  var startTime = this.getMouseEventTime_(e);
+  startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -10));
+  startTime = five.util.roundToThirtyMinutes(startTime);
+  var endTime = startTime.clone();
+  endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 30));
+  var event = new five.EventCreateEvent(startTime, endTime);
+  event.type = five.EventsTimeline.EventType.EVENT_CREATE;
+  this.dispatchEvent(event);
+};
+
+/** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   var moveByMinutes = e.shiftKey ? five.EventsTimeline.SHIFT_EVENTS_MOVE_BY_MINUTES :
       five.EventsTimeline.EVENTS_MOVE_BY_MINUTES;
@@ -659,8 +673,15 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     }
     event.type = five.EventsTimeline.EventType.EVENTS_SNAP_TO;
   } else if (e.keyCode == goog.events.KeyCodes.C) {
-    event = new goog.events.Event(five.EventsTimeline.EventType.EVENT_CREATE);
-    event.shiftKey = e.shiftKey;
+    var startTime = five.util.roundToFiveMinutes(new goog.date.DateTime());
+    var endTime = startTime.clone();
+    if (e.shiftKey) {
+      startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+    } else {
+      endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+    }
+    event = new five.EventCreateEvent(startTime, endTime);
+    event.type = five.EventsTimeline.EventType.EVENT_CREATE;
   } else if (e.keyCode == goog.events.KeyCodes.D) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
   } else if (e.keyCode == goog.events.KeyCodes.E) {

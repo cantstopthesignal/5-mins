@@ -61,6 +61,7 @@ five.EdgeEventsEditor.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.DBLCLICK, this.handleDblClick_).
       listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_).
       listen(deleteButton, goog.events.EventType.CLICK,
           this.handleDeleteButtonClick_).
@@ -162,6 +163,12 @@ five.EdgeEventsEditor.prototype.getScrollAnchorDeltaY = function(oldData) {
  * @param {goog.events.Event} e
  */
 five.EdgeEventsEditor.prototype.handleClick_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+/** @param {goog.events.Event} e */
+five.EdgeEventsEditor.prototype.handleDblClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
 };

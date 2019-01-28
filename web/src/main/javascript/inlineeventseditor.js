@@ -56,6 +56,7 @@ five.InlineEventsEditor.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
+      listen(this.el, goog.events.EventType.DBLCLICK, this.handleDblClick_).
       listen(this.el, goog.events.EventType.MOUSEOVER, this.handleMouseOver_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
       listen(moveUpButton, goog.events.EventType.CLICK, goog.partial(
@@ -174,6 +175,12 @@ five.InlineEventsEditor.prototype.getScrollAnchorDeltaY = function(oldData) {
 
 /** @param {goog.events.Event} e */
 five.InlineEventsEditor.prototype.handleClick_ = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+/** @param {goog.events.Event} e */
+five.InlineEventsEditor.prototype.handleDblClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
 };
