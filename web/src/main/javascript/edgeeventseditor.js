@@ -45,19 +45,20 @@ five.EdgeEventsEditor.prototype.createDom = function() {
   goog.dom.classes.add(shadow, 'shadow');
   this.bottomButtonBar_.appendChild(shadow);
 
-  var deleteButton = this.createIconButton_(this.topButtonBar_, true);
-  deleteButton.appendChild(document.createTextNode('-'));
-  var dupButton = this.createIconButton_(this.topButtonBar_, true);
-  dupButton.appendChild(document.createTextNode('D'));
-  this.editButton_ = this.createIconButton_(this.topButtonBar_, true);
+  this.editButton_ = this.createIconButton_(this.bottomButtonBar_);
   this.editButton_.appendChild(document.createTextNode('E'));
+  var dupButton = this.createIconButton_(this.bottomButtonBar_);
+  dupButton.appendChild(document.createTextNode('D'));
+  var deleteButton = this.createIconButton_(this.bottomButtonBar_);
+  deleteButton.appendChild(document.createTextNode('-'));
 
-  var moveUpButton = this.createArrowButton_(true, this.topButtonBar_);
-  var moveDownButton = this.createArrowButton_(false, this.topButtonBar_);
-  var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_);
-  var moveStartDownButton = this.createArrowButton_(false, this.topButtonBar_);
-  var moveEndUpButton = this.createArrowButton_(true, this.bottomButtonBar_);
-  var moveEndDownButton = this.createArrowButton_(false, this.bottomButtonBar_);
+  var moveStartDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
+  var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
+  var moveDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
+  var moveUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
+
+  var moveEndDownButton = this.createArrowButton_(false, this.bottomButtonBar_, true);
+  var moveEndUpButton = this.createArrowButton_(true, this.bottomButtonBar_, true);
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
@@ -89,15 +90,19 @@ five.EdgeEventsEditor.prototype.mouseDownTop_ = true;
 /**
  * @param {boolean} up
  * @param {Element} parentEl
+ * @param {boolean=} opt_floatRight
  */
 five.EdgeEventsEditor.prototype.createArrowButton_ = function(up,
-    parentEl) {
+    parentEl, opt_floatRight) {
   var button = document.createElement('button');
   goog.dom.classes.add(button, 'button');
   var arrow = document.createElement('div');
   goog.dom.classes.add(arrow, 'arrow');
   goog.dom.classes.add(arrow, up ? 'up' : 'down');
   button.appendChild(arrow);
+  if (opt_floatRight) {
+    button.style.cssFloat = 'right';
+  }
   parentEl.appendChild(button);
   return button;
 };
