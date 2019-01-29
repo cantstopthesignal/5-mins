@@ -54,11 +54,21 @@ five.Dialog.prototype.show = function(opt_parentEl) {
   var parentEl = opt_parentEl || document.body;
   parentEl.appendChild(this.el);
   this.reposition();
+
+  this.eventHandler.
+      listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_);
 };
 
 five.Dialog.prototype.hide = function() {
   goog.dom.removeNode(this.el);
+
+  this.eventHandler.
+      unlisten(window, goog.events.EventType.RESIZE, this.handleWindowResize_);
 };
+
+five.Dialog.prototype.handleWindowResize_ = function() {
+  this.reposition();
+}
 
 five.Dialog.prototype.reposition = function() {
   this.contentEl_.style.marginLeft = -(this.contentEl_.offsetWidth/2) + 'px';

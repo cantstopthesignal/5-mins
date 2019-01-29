@@ -151,11 +151,13 @@ a:hover {
 }
 .events-summary-dialog {
   width: initial;
-  max-width: 500px;
+  max-width: calc(100vw - 20px);
+  min-width: 300px;
+  max-height: calc(100vh - 20px);
 }
 .events-summary-dialog .summary {
   overflow: scroll;
-  max-height: 400px;
+  max-height: calc(100vh - 100px);
   outline: 0;
 }
 .events-summary-dialog .summary table {
@@ -167,6 +169,15 @@ a:hover {
 }
 .events-summary-dialog .summary td {
   white-space: nowrap;
+}
+.events-summary-dialog .filter-div {
+  position: absolute;
+  bottom: 10px;
+  right: 20px;
+}
+.events-summary-dialog .filter-input {
+  margin-left: 5px;
+  font-size: 16px;
 }
 .notification {
   border: 1px solid #a00;
