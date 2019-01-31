@@ -6,6 +6,7 @@ goog.require('five.Component');
 goog.require('five.Event');
 goog.require('five.EventMoveEvent');
 goog.require('five.EventsEditor');
+goog.require('five.PointerDownMoveControlEvent');
 goog.require('five.deviceParams');
 goog.require('goog.array');
 goog.require('goog.asserts');
@@ -204,16 +205,12 @@ five.InlineEventsEditor.prototype.handleMouseOut_ = function(e) {
 
 /** @param {goog.events.BrowserEvent} e */
 five.InlineEventsEditor.prototype.handleMoveStartMouseDown_ = function(e) {
-  var event = new goog.events.Event(
-      five.EventsEditor.EventType.MOUSEDOWN_MOVE_START_CONTROL);
-  this.dispatchEvent(event);
+  this.dispatchEvent(five.PointerDownMoveControlEvent.start());
 };
 
 /** @param {goog.events.BrowserEvent} e */
 five.InlineEventsEditor.prototype.handleMoveEndMouseDown_ = function(e) {
-  var event = new goog.events.Event(
-      five.EventsEditor.EventType.MOUSEDOWN_MOVE_END_CONTROL);
-  this.dispatchEvent(event);
+  this.dispatchEvent(five.PointerDownMoveControlEvent.end());
 };
 
 /**

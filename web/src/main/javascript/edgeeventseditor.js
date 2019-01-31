@@ -6,6 +6,7 @@ goog.require('five.Component');
 goog.require('five.Event');
 goog.require('five.EventMoveEvent');
 goog.require('five.EventsEditor');
+goog.require('five.PointerDownMoveControlEvent');
 goog.require('five.deviceParams');
 goog.require('goog.array');
 goog.require('goog.asserts');
@@ -81,7 +82,31 @@ five.EdgeEventsEditor.prototype.createDom = function() {
       listen(moveEndUpButton, goog.events.EventType.CLICK, goog.partial(
           this.handleButtonClick_, five.EventMoveEvent.end, -5)).
       listen(moveEndDownButton, goog.events.EventType.CLICK, goog.partial(
-          this.handleButtonClick_, five.EventMoveEvent.end, 5));
+          this.handleButtonClick_, five.EventMoveEvent.end, 5)).
+      listen(moveUpButton, goog.events.EventType.TOUCHSTART,
+          this.handleMoveTouchStart_).
+      listen(moveDownButton, goog.events.EventType.TOUCHSTART,
+          this.handleMoveTouchStart_).
+      listen(moveStartUpButton, goog.events.EventType.TOUCHSTART,
+          this.handleMoveStartTouchStart_).
+      listen(moveStartDownButton, goog.events.EventType.TOUCHSTART,
+          this.handleMoveStartTouchStart_).
+      listen(moveEndUpButton, goog.events.EventType.TOUCHSTART,
+          this.handleMoveEndTouchStart_).
+      listen(moveEndDownButton, goog.events.EventType.TOUCHSTART,
+          this.handleMoveEndTouchStart_).
+      listen(moveUpButton, goog.events.EventType.TOUCHMOVE,
+          this.handleTouchMove_).
+      listen(moveDownButton, goog.events.EventType.TOUCHMOVE,
+          this.handleTouchMove_).
+      listen(moveStartUpButton, goog.events.EventType.TOUCHMOVE,
+          this.handleTouchMove_).
+      listen(moveStartDownButton, goog.events.EventType.TOUCHMOVE,
+          this.handleTouchMove_).
+      listen(moveEndUpButton, goog.events.EventType.TOUCHMOVE,
+          this.handleTouchMove_).
+      listen(moveEndDownButton, goog.events.EventType.TOUCHMOVE,
+          this.handleTouchMove_);
 };
 
 /** @type {boolean} */
@@ -217,4 +242,24 @@ five.EdgeEventsEditor.prototype.handleButtonClick_ = function(
     eventConstructor, minutes, e) {
   e.preventDefault();
   this.dispatchEvent(new eventConstructor(minutes));
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EdgeEventsEditor.prototype.handleMoveTouchStart_ = function(e) {
+  this.dispatchEvent(five.PointerDownMoveControlEvent.both());
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EdgeEventsEditor.prototype.handleMoveStartTouchStart_ = function(e) {
+  this.dispatchEvent(five.PointerDownMoveControlEvent.start());
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EdgeEventsEditor.prototype.handleMoveEndTouchStart_ = function(e) {
+  this.dispatchEvent(five.PointerDownMoveControlEvent.end());
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EdgeEventsEditor.prototype.handleTouchMove_ = function(e) {
+  e.preventDefault();
 };

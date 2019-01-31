@@ -31,7 +31,7 @@ five.deviceParams.DeviceParams = function() {
   this.enableCursorTimeMarker = !isTouch;
   this.enableDragCreateEvent = !isTouch;
   this.enableDragEvents = !isTouch;
-  this.enableDragMoveControls = !isTouch;
+  this.enableDragMoveControls = true;
 };
 goog.addSingletonGetter(five.deviceParams.DeviceParams);
 

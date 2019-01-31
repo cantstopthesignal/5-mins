@@ -37,9 +37,7 @@ five.EventsEditor.Type = {
 /** @enum {string} */
 five.EventsEditor.EventType = {
   SHOW: goog.events.getUniqueId('show'),
-  HIDE: goog.events.getUniqueId('hide'),
-  MOUSEDOWN_MOVE_START_CONTROL: goog.events.getUniqueId('mousedown_move_start'),
-  MOUSEDOWN_MOVE_END_CONTROL: goog.events.getUniqueId('mousedown_move_end')
+  HIDE: goog.events.getUniqueId('hide')
 };
 
 /** @type {five.EventsTimeline} */

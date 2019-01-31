@@ -11,6 +11,7 @@ goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventSnapToEvent');
 goog.require('five.EventsEditor');
 goog.require('five.InlineEventsEditor');
+goog.require('five.PointerDownMoveControlEvent');
 goog.require('five.TimeAxis');
 goog.require('five.TimeAxisPatch');
 goog.require('five.TimeAxisPatchCanvas');
@@ -121,7 +122,7 @@ five.EventsTimeline.prototype.timeMap_;
 five.EventsTimeline.prototype.linearTimeMap_;
 
 /** @type {goog.date.DateTime} */
-five.EventsTimeline.prototype.mouseDownTime_;
+five.EventsTimeline.prototype.pointerDownTime_;
 
 /** @type {boolean} */
 five.EventsTimeline.prototype.mouseDownShiftKey_;
@@ -130,10 +131,10 @@ five.EventsTimeline.prototype.mouseDownShiftKey_;
 five.EventsTimeline.prototype.mouseDownCard_;
 
 /** @type {boolean} */
-five.EventsTimeline.prototype.mouseDownMoveControl_;
+five.EventsTimeline.prototype.pointerDownMoveControl_;
 
-/** @type {boolean} */
-five.EventsTimeline.prototype.mouseDownMoveControlForStart_;
+/** @type {five.PointerDownMoveControlEvent.ControlType} */
+five.EventsTimeline.prototype.pointerDownMoveControlType_;
 
 /** @type {boolean} */
 five.EventsTimeline.prototype.draggingEvents_;
@@ -145,7 +146,7 @@ five.EventsTimeline.prototype.dragCreatingEvent_;
 five.EventsTimeline.prototype.draggingMoveControls_;
 
 /** @type {?goog.events.Key} */
-five.EventsTimeline.prototype.globalMouseUpListenerKey_;
+five.EventsTimeline.prototype.globalPointerUpListenerKey_;
 
 /** @type {?goog.events.Key} */
 five.EventsTimeline.prototype.globalClickCancelListenerKey_;
@@ -215,14 +216,13 @@ five.EventsTimeline.prototype.createDom = function() {
       listen(this.el, goog.events.EventType.DBLCLICK, this.handleDblClick_).
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
       listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_).
-      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_).
+      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handlePointerDown_).
+      listen(this.el, goog.events.EventType.TOUCHSTART, this.handlePointerDown_).
       listen(this.eventsEditor_, [five.EventsEditor.EventType.SHOW,
           five.EventsEditor.EventType.HIDE],
           this.handleEventsEditorVisibilityChanged_).
-      listen(this.eventsEditor_, [
-          five.EventsEditor.EventType.MOUSEDOWN_MOVE_START_CONTROL,
-          five.EventsEditor.EventType.MOUSEDOWN_MOVE_END_CONTROL],
-          this.handleEventsEditorMouseDownMoveControl_).
+      listen(this.eventsEditor_, five.PointerDownMoveControlEvent.EventType.POINTER_DOWN,
+          this.handleEventsEditorPointerDownMoveControl_).
       listen(this.eventsEditor_, five.Event.EventType.MOVE,
           this.handleEventsEditorMove_).
       listen(this.eventsEditor_, five.Event.EventType.DELETE,
@@ -232,9 +232,11 @@ five.EventsTimeline.prototype.createDom = function() {
 
   if (five.deviceParams.getEnableCursorTimeMarker() ||
       five.deviceParams.getEnableDragCreateEvent() ||
-      five.deviceParams.getEnableDragEvents()) {
-    this.eventHandler.listen(this.el, goog.events.EventType.MOUSEMOVE,
-        this.handleMouseMove_);
+      five.deviceParams.getEnableDragEvents() ||
+      five.deviceParams.getEnableDragMoveControls()) {
+    this.eventHandler.
+        listen(this.el, goog.events.EventType.MOUSEMOVE, this.handlePointerMove_).
+        listen(this.el, goog.events.EventType.TOUCHMOVE, this.handlePointerMove_);
   }
 
   var params = new five.layout.Params();
@@ -267,9 +269,9 @@ five.EventsTimeline.prototype.focus = function() {
 five.EventsTimeline.prototype.disposeInternal = function() {
   goog.disposeAll(this.eventCards_);
   delete this.owner_;
-  if (this.globalMouseUpListenerKey_) {
-    goog.events.unlistenByKey(this.globalMouseUpListenerKey_);
-    delete this.globalMouseUpListenerKey_;
+  if (this.globalPointerUpListenerKey_) {
+    goog.events.unlistenByKey(this.globalPointerUpListenerKey_);
+    delete this.globalPointerUpListenerKey_;
   }
   goog.base(this, 'disposeInternal');
 };
@@ -619,7 +621,7 @@ five.EventsTimeline.prototype.handleClick_ = function(e) {
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleDblClick_ = function(e) {
-  var startTime = this.getMouseEventTime_(e);
+  var startTime = this.getPointerEventTime_(e);
   startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -10));
   startTime = five.util.roundToThirtyMinutes(startTime);
   var endTime = startTime.clone();
@@ -715,7 +717,7 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
     event = five.EventsTimeline.EventType.EVENTS_TOGGLE_TODO;
   } else if (e.keyCode == goog.events.KeyCodes.ESC) {
-    this.clearMouseDown_();
+    this.clearPointerDown_();
     this.cancelDragCreateEvent_();
     this.cancelDragEvents_();
     this.cancelDragMoveControls_();
@@ -728,54 +730,55 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
 };
 
 /** @param {goog.events.BrowserEvent} e */
-five.EventsTimeline.prototype.handleMouseDown_ = function(e) {
+five.EventsTimeline.prototype.handlePointerDown_ = function(e) {
   if (!this.timeMap_) {
-    this.clearMouseDown_();
+    this.clearPointerDown_();
     return;
   }
-  this.clearMouseDown_(true);
+  this.clearPointerDown_(true);
   this.clearGlobalClickCancel_();
-  this.mouseDownTime_ = this.getMouseEventTime_(e);
+  this.pointerDownTime_ = this.getPointerEventTime_(e);
   this.mouseDownShiftKey_ = e.shiftKey;
-  this.globalMouseUpListenerKey_ = goog.events.listen(window,
-      goog.events.EventType.MOUSEUP, this.handleGlobalMouseUp_, false, this);
+  this.globalPointerUpListenerKey_ = goog.events.listen(window,
+      [goog.events.EventType.MOUSEUP,
+       goog.events.EventType.TOUCHEND],
+      this.handleGlobalPointerUp_, false, this);
 };
 
 /** @param {goog.events.Event} e */
 five.EventsTimeline.prototype.handleEventCardMouseDownInside_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.EventCard);
-  this.clearMouseDown_();
+  this.clearPointerDown_();
   this.mouseDownCard_ = e.target;
 };
 
-/** @param {goog.events.Event} e */
-five.EventsTimeline.prototype.handleEventsEditorMouseDownMoveControl_ =
+/** @param {five.PointerDownMoveControlEvent} e */
+five.EventsTimeline.prototype.handleEventsEditorPointerDownMoveControl_ =
     function(e) {
   goog.asserts.assertInstanceof(e.target, five.EventsEditor);
-  this.clearMouseDown_();
-  this.mouseDownMoveControl_ = true;
-  this.mouseDownMoveControlForStart_ = (e.type ==
-      five.EventsEditor.EventType.MOUSEDOWN_MOVE_START_CONTROL);
+  this.clearPointerDown_();
+  this.pointerDownMoveControl_ = true;
+  this.pointerDownMoveControlType_ = e.controlType;
 };
 
 /** @param {goog.events.BrowserEvent} e */
-five.EventsTimeline.prototype.handleGlobalMouseUp_ = function(e) {
+five.EventsTimeline.prototype.handleGlobalPointerUp_ = function(e) {
   if (!this.timeMap_) {
-    this.clearMouseDown_();
+    this.clearPointerDown_();
     return;
   }
   if (goog.dom.contains(this.el, e.target)) {
-    var mouseUpTime = this.getMouseEventTime_(e);
+    var pointerUpTime = this.getPointerEventTime_(e);
     if (this.dragCreatingEvent_) {
-      this.updateDragCreateEventTimeRange_(this.mouseDownTime_, mouseUpTime, e.shiftKey);
+      this.updateDragCreateEventTimeRange_(this.pointerDownTime_, pointerUpTime, e.shiftKey);
       this.commitDragCreateEvent_();
     }
     if (this.draggingEvents_) {
-      this.updateDragEventsTimeRange_(this.mouseDownTime_, mouseUpTime, e.shiftKey);
+      this.updateDragEventsTimeRange_(this.pointerDownTime_, pointerUpTime, e.shiftKey);
       this.commitDragEvents_();
     }
     if (this.draggingMoveControls_) {
-      this.updateDragMoveControlsTimeRange_(this.mouseDownTime_, mouseUpTime, e.shiftKey);
+      this.updateDragMoveControlsTimeRange_(this.pointerDownTime_, pointerUpTime, e.shiftKey);
       this.commitDragMoveControls_();
     }
   } else {
@@ -783,16 +786,16 @@ five.EventsTimeline.prototype.handleGlobalMouseUp_ = function(e) {
     this.cancelDragEvents_();
     this.cancelDragMoveControls_();
   }
-  this.clearMouseDown_();
+  this.clearPointerDown_();
 };
 
 /** @param {goog.events.BrowserEvent} e */
-five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
+five.EventsTimeline.prototype.handlePointerMove_ = function(e) {
   if (!this.timeMap_) {
     return;
   }
   if (five.deviceParams.getEnableCursorTimeMarker()) {
-    var time = this.getMouseEventTime_(e);
+    var time = this.getPointerEventTime_(e);
     if (!this.cursorMarker_) {
       this.cursorMarker_ = new five.TimeMarker(time,
           five.TimeMarkerTheme.CURSOR);
@@ -803,10 +806,10 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
       this.cursorMarker_.setVisible(true);
     }
   }
-  if (this.mouseDownTime_) {
-    var time = this.getMouseEventTime_(e);
-    if (goog.date.Date.compare(this.mouseDownTime_, time)) {
-      if (this.mouseDownMoveControl_) {
+  if (this.pointerDownTime_) {
+    var time = this.getPointerEventTime_(e);
+    if (goog.date.Date.compare(this.pointerDownTime_, time)) {
+      if (this.pointerDownMoveControl_) {
         this.draggingMoveControls_ = five.deviceParams.
             getEnableDragMoveControls();
       } else if (this.mouseDownCard_) {
@@ -815,17 +818,17 @@ five.EventsTimeline.prototype.handleMouseMove_ = function(e) {
         this.dragCreatingEvent_ = five.deviceParams.getEnableDragCreateEvent();
       }
       if (this.dragCreatingEvent_) {
-        this.updateDragCreateEventTimeRange_(this.mouseDownTime_, time, e.shiftKey);
+        this.updateDragCreateEventTimeRange_(this.pointerDownTime_, time, e.shiftKey);
       }
       if (this.draggingEvents_) {
-        this.updateDragEventsTimeRange_(this.mouseDownTime_, time, e.shiftKey);
+        this.updateDragEventsTimeRange_(this.pointerDownTime_, time, e.shiftKey);
       }
       if (this.draggingMoveControls_) {
-        this.updateDragMoveControlsTimeRange_(this.mouseDownTime_, time, e.shiftKey);
+        this.updateDragMoveControlsTimeRange_(this.pointerDownTime_, time, e.shiftKey);
       }
     }
   }
-};
+}
 
 /** @param {goog.events.BrowserEvent} e */
 five.EventsTimeline.prototype.handleMouseOut_ = function(e) {
@@ -837,22 +840,22 @@ five.EventsTimeline.prototype.handleMouseOut_ = function(e) {
   }
 };
 
-/** @param {boolean=} opt_forNewMouseDown */
-five.EventsTimeline.prototype.clearMouseDown_ = function(opt_forNewMouseDown) {
-  delete this.mouseDownTime_;
+/** @param {boolean=} opt_forNewPointerDown */
+five.EventsTimeline.prototype.clearPointerDown_ = function(opt_forNewPointerDown) {
+  delete this.pointerDownTime_;
   delete this.mouseDownShiftKey_;
-  if (!opt_forNewMouseDown) {
+  if (!opt_forNewPointerDown) {
     delete this.mouseDownCard_;
-    delete this.mouseDownMoveControl_;
-    delete this.mouseDownMoveControlForStart_;
+    delete this.pointerDownMoveControl_;
+    delete this.pointerDownMoveControlType_;
   }
-  this.clearGlobalMouseUp_();
+  this.clearGlobalPointerUp_();
 };
 
-five.EventsTimeline.prototype.clearGlobalMouseUp_ = function() {
-  if (this.globalMouseUpListenerKey_) {
-    goog.events.unlistenByKey(this.globalMouseUpListenerKey_);
-    delete this.globalMouseUpListenerKey_;
+five.EventsTimeline.prototype.clearGlobalPointerUp_ = function() {
+  if (this.globalPointerUpListenerKey_) {
+    goog.events.unlistenByKey(this.globalPointerUpListenerKey_);
+    delete this.globalPointerUpListenerKey_;
   }
 };
 
@@ -953,47 +956,39 @@ five.EventsTimeline.prototype.cancelDragMoveControls_ = function() {
 
 five.EventsTimeline.prototype.updateDragMoveControlsTimeRange_ = function(
     dragStartTime, dragEndTime, shiftKey) {
+  var ControlType = five.PointerDownMoveControlEvent.ControlType;
   goog.asserts.assert(this.draggingMoveControls_);
   var timeCompare = goog.date.Date.compare(dragStartTime, dragEndTime); 
   if (timeCompare) {
     this.registerGlobalClickCancel_();
     this.layoutManager_.allowLayoutCondensing(false);
   }
-  this.owner_.startOrUpdateDragEvents(dragStartTime, dragEndTime,
-      this.mouseDownMoveControlForStart_ ?
-      five.EventsView.DragEventsType.START :
-      five.EventsView.DragEventsType.END, shiftKey);
+  var dragEventType = five.EventsView.DragEventsType.BOTH;
+  if (this.pointerDownMoveControlType_ == ControlType.START) {
+    dragEventType = five.EventsView.DragEventsType.START;
+  } else if (this.pointerDownMoveControlType_ == ControlType.END) {
+    dragEventType = five.EventsView.DragEventsType.END;
+  } else {
+    goog.asserts.assert(this.pointerDownMoveControlType_ == ControlType.BOTH);
+  }
+  this.owner_.startOrUpdateDragEvents(dragStartTime, dragEndTime, dragEventType, shiftKey);
 };
 
 /**
  * @param {goog.events.BrowserEvent} e
  * @return {!goog.date.DateTime}
  */
-five.EventsTimeline.prototype.getMouseEventTime_ = function(e) {
-  var yPos = this.getMouseEventYPos_(e);
-  var xPos = e.offsetX;
-  for (var el = e.target; el && el != this.el; el = el.parentNode) {
-    xPos += el.offsetLeft;
-  }
+five.EventsTimeline.prototype.getPointerEventTime_ = function(e) {
+  var elClientPos = goog.style.getClientPosition(this.el);
+  var eventClientPos = goog.style.getClientPosition(e);
+  var pos = goog.math.Coordinate.difference(eventClientPos, elClientPos);
   var time;
-  if (xPos <= five.deviceParams.getTimeAxisWidth()) {
-    time = this.linearTimeMap_.yPosToTime(yPos);
+  if (pos.x <= five.deviceParams.getTimeAxisWidth()) {
+    time = this.linearTimeMap_.yPosToTime(pos.y);
   } else {
-    time = this.timeMap_.yPosToTime(yPos);
+    time = this.timeMap_.yPosToTime(pos.y);
   }
   return five.util.roundToFiveMinutes(time); 
-};
-
-/**
- * @param {goog.events.BrowserEvent} e
- * @return {number}
- */
-five.EventsTimeline.prototype.getMouseEventYPos_ = function(e) {
-  var yPos = e.offsetY;
-  for (var el = e.target; el && el != this.el; el = el.parentNode) {
-    yPos += el.offsetTop;
-  }
-  return yPos;
 };
 
 /** @param {five.EventMoveEvent} e */
