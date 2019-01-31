@@ -49,7 +49,7 @@ five.NotificationManager.prototype.register = function(appContext) {
 
 five.NotificationManager.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'notification');
+  goog.dom.classlist.add(this.el, 'notification');
 };
 
 /** @override */

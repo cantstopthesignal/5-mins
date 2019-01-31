@@ -37,7 +37,7 @@ five.Component.prototype.render = function(parentEl) {
 
 /**
  * @param {string} className
- * @return {!goog.array.ArrayLike}
+ * @return {!IArrayLike<!Element>} The items found with the class name provided.
  */
 five.Component.prototype.getElementsByClass = function(className) {
   return goog.dom.getElementsByClass(className, this.el);

@@ -31,7 +31,7 @@ five.testing.FakeCalendarApi = function(requestHandler) {
 goog.inherits(five.testing.FakeCalendarApi, goog.events.EventTarget);
 
 /** @type {goog.debug.Logger} */
-five.testing.FakeCalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
+five.testing.FakeCalendarApi.prototype.logger_ = goog.log.getLogger(
     'five.testing.FakeCalendarApi');
 
 /** @type {number} */

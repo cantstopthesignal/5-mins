@@ -199,24 +199,24 @@ five.TimeAxis.Entry.prototype.getNextHour = function() {
 
 five.TimeAxis.Entry.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'time-axis');
+  goog.dom.classlist.add(this.el, 'time-axis');
 
   this.timeBoxEl_ = document.createElement('div');
-  goog.dom.classes.add(this.timeBoxEl_, 'time-box');
+  goog.dom.classlist.add(this.timeBoxEl_, 'time-box');
   var hours = (this.hour_.getHours() % 12) || 12;
   this.timeBoxEl_.appendChild(document.createTextNode('' + hours));
   this.el.appendChild(this.timeBoxEl_);
 
   this.amPmEl_ = document.createElement('div');
-  goog.dom.classes.add(this.amPmEl_, 'ampm');
+  goog.dom.classlist.add(this.amPmEl_, 'ampm');
   this.amPmEl_.appendChild(document.createTextNode(this.isPm ? 'PM' : 'AM'));
-  goog.style.showElement(this.amPmEl_, this.amPmVisible_);
+  goog.style.setElementShown(this.amPmEl_, this.amPmVisible_);
   this.timeBoxEl_.appendChild(this.amPmEl_);
 };
 
 five.TimeAxis.Entry.prototype.setAmPmVisible = function(visible) {
   if (this.amPmVisible_ != visible && this.el) {
-    goog.style.showElement(this.amPmEl_, visible);
+    goog.style.setElementShown(this.amPmEl_, visible);
   }
   this.amPmVisible_ = visible;
 };

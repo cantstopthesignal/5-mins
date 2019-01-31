@@ -173,7 +173,7 @@ five.EventsTimeline.prototype.setOwner = function(owner) {
 five.EventsTimeline.prototype.createDom = function() {
   goog.base(this, 'createDom');
   this.el.tabIndex = 0;
-  goog.dom.classes.add(this.el, 'events-timeline');
+  goog.dom.classlist.add(this.el, 'events-timeline');
 
   this.timeAxisLayer_ = document.createElement('div');
   this.el.appendChild(this.timeAxisLayer_);
@@ -429,12 +429,12 @@ five.EventsTimeline.prototype.layoutTimeMarker = function(timeMarker) {
       five.deviceParams.getTimeAxisWidth() - 1, 14));
 };
 
-/** @param {five.layout.HorzSplit} horzSplit */
+/** @param {!five.layout.HorzSplit} horzSplit */
 five.EventsTimeline.prototype.addHorzSplit = function(horzSplit) {
   this.layoutManager_.addHorzSplit(horzSplit);
 };
 
-/** @param {five.layout.HorzSplit} horzSplit */
+/** @param {!five.layout.HorzSplit} horzSplit */
 five.EventsTimeline.prototype.removeHorzSplit = function(horzSplit) {
   this.layoutManager_.removeHorzSplit(horzSplit);
 };

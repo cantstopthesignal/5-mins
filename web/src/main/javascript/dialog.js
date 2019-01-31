@@ -26,14 +26,14 @@ goog.inherits(five.Dialog, five.Component);
 five.Dialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
   this.el.tabIndex = '0';
-  goog.dom.classes.add(this.el, 'dialog-container');
+  goog.dom.classlist.add(this.el, 'dialog-container');
 
   this.backgroundEl_ = document.createElement('div');
-  goog.dom.classes.add(this.backgroundEl_, 'dialog-background');
+  goog.dom.classlist.add(this.backgroundEl_, 'dialog-background');
   this.el.appendChild(this.backgroundEl_);
 
   this.contentEl_ = document.createElement('div');
-  goog.dom.classes.add(this.contentEl_, 'dialog');
+  goog.dom.classlist.add(this.contentEl_, 'dialog');
   this.el.appendChild(this.contentEl_);
 };
 

@@ -4,9 +4,9 @@ goog.provide('five.CalendarApi');
 
 goog.require('five.BaseCalendarApi');
 goog.require('five.Service');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
+goog.require('goog.log');
 
 
 /**
@@ -39,7 +39,7 @@ five.CalendarApi.get = function(appContext) {
 };
 
 /** @type {goog.debug.Logger} */
-five.CalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
+five.CalendarApi.prototype.logger_ = goog.log.getLogger(
     'five.CalendarApi');
 
 /** @param {!five.AppContext} appContext */

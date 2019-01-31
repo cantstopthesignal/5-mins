@@ -4,7 +4,7 @@ goog.provide('five.demos.SplitsDemo');
 
 goog.require('goog.array');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.events');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
@@ -32,7 +32,7 @@ five.demos.SplitsDemo = function() {
   /** @type {Array.<five.demos.SplitsDemo.Grid>} */
   this.grids_ = [];
 
-  /** @rtpe {Array.<five.demos.SplitsDemo.Split>} */
+  /** @type {Array.<five.demos.SplitsDemo.Split>} */
   this.splits_ = [];
 
   this.splitState_ = 0;
@@ -51,11 +51,11 @@ five.demos.SplitsDemo.SPLIT_HEIGHT = 48;
 
 five.demos.SplitsDemo.prototype.start = function() {
   this.el_ = document.createElement('div');
-  goog.dom.classes.add(this.el_, 'container');
+  goog.dom.classlist.add(this.el_, 'container');
   document.body.appendChild(this.el_);
 
   this.boxEl_ = document.createElement('div');
-  goog.dom.classes.add(this.boxEl_, 'box');
+  goog.dom.classlist.add(this.boxEl_, 'box');
   document.body.appendChild(this.boxEl_);
 
   goog.style.setBorderBoxSize(this.boxEl_, new goog.math.Size(
@@ -184,14 +184,14 @@ five.demos.SplitsDemo.prototype.handleClickBox_ = function(e) {
 five.demos.SplitsDemo.Grid = function(yPos) {
   this.yPos = yPos;
   this.el = document.createElement('div');
-  goog.dom.classes.add(this.el, 'grid');
+  goog.dom.classlist.add(this.el, 'grid');
 };
 
 five.demos.SplitsDemo.Split = function(yPos) {
   this.yPos = yPos;
   this.height = 0;
   this.el = document.createElement('div');
-  goog.dom.classes.add(this.el, 'split');
+  goog.dom.classlist.add(this.el, 'split');
 };
 
 function testLoad() {

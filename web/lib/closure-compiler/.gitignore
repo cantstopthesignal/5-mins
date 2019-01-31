@@ -1,7 +1,0 @@
-# Ignore everything
-*
-
-# Except for these files
-!.gitignore
-!FETCHING
-!FETCHED_VERSION

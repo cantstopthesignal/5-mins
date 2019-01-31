@@ -9,10 +9,10 @@ goog.require('five.NotificationManager');
 goog.require('goog.asserts');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventType');
 goog.require('goog.events.EventTarget');
+goog.require('goog.log');
 
 
 /**
@@ -74,7 +74,7 @@ five.CalendarManager.OPEN_EVENTS_EDITOR_ERROR_ =
     'Error editing event. Please try again.';
 
 /** @type {goog.debug.Logger} */
-five.CalendarManager.prototype.logger_ = goog.debug.Logger.getLogger(
+five.CalendarManager.prototype.logger_ = goog.log.getLogger(
     'five.CalendarManager');
 
 /** @type {Array.<!five.Event>} */

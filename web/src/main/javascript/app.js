@@ -53,7 +53,7 @@ five.App = function() {
 goog.inherits(five.App, goog.events.EventTarget);
 
 /** @type {goog.debug.Logger} */
-five.App.prototype.logger_ = goog.debug.Logger.getLogger('five.App');
+five.App.prototype.logger_ = goog.log.getLogger('five.App');
 
 /** @type {five.AppBar} */
 five.App.prototype.appBar_;

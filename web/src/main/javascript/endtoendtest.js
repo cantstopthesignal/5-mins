@@ -134,7 +134,7 @@ five.EndToEndTest.prototype.tearDown = function() {
 };
 
 /**
- * @param {Function():boolean} conditionFn
+ * @param {function(): boolean} conditionFn
  * @return {!goog.async.Deferred}
  */
 five.EndToEndTest.prototype.pollUntil_ = function(conditionFn) {
@@ -181,7 +181,7 @@ five.EndToEndTest.prototype.addLoadApp = function() {
 
   var loadApp = goog.bind(function() {
     this.appFrame = document.createElement('iframe');
-    goog.dom.classes.add(this.appFrame, 'fivemins-app-frame');
+    goog.dom.classlist.add(this.appFrame, 'fivemins-app-frame');
     var url = new goog.Uri('/');
     url.setParameterValue('jsmode', this.jsMode);
     url.setParameterValue('Debug', 'true');

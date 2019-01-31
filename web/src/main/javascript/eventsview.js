@@ -128,10 +128,10 @@ five.EventsView.prototype.scrollAnimation_;
 
 five.EventsView.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'events-view');
+  goog.dom.classlist.add(this.el, 'events-view');
 
   this.scrollEl_ = document.createElement('div');
-  goog.dom.classes.add(this.scrollEl_, 'events-view-scroll');
+  goog.dom.classlist.add(this.scrollEl_, 'events-view-scroll');
   this.el.appendChild(this.scrollEl_);
 
   if (!five.device.isWebView()) {
@@ -149,7 +149,7 @@ five.EventsView.prototype.createDom = function() {
     this.appBar_.getButtonBar().addButton(this.saveButton_);
     this.eventHandler.listen(this.saveButton_.el, goog.events.EventType.CLICK,
         this.handleSaveClick_);
-    goog.style.showElement(this.saveButton_.el, false);
+    goog.style.setElementShown(this.saveButton_.el, false);
   } else {
     this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.REFRESH,
         goog.bind(this.handleRefreshClick_, this));
@@ -423,6 +423,10 @@ five.EventsView.prototype.handleEventsTimelineEventSelectNeighborEvent_ = functi
   if (e.dir == five.EventSelectNeighborEvent.Dir.PREVIOUS) {
     normCompare = function(compareResult) { return -compareResult; }
   }
+  /**
+   * @param {five.Event} a
+   * @param {five.Event} b
+   */
   var compareEvents = function(a, b) {
     var res = goog.date.Date.compare(
         goog.asserts.assertObject(a.getStartTime()),
@@ -554,6 +558,10 @@ five.EventsView.prototype.handleEventsTimelineEventsSnapTo_ = function(e) {
     });
   } else if (e.dir == five.EventSnapToEvent.Dir.PREVIOUS ||
       e.dir == five.EventSnapToEvent.Dir.NEXT) {
+    /**
+     * @param {goog.date.DateTime} a
+     * @param {goog.date.DateTime} b
+     */
     var compareTime = function(a, b) {
       return goog.date.Date.compare(goog.asserts.assertObject(a), goog.asserts.assertObject(b));
     };
@@ -564,6 +572,7 @@ five.EventsView.prototype.handleEventsTimelineEventsSnapTo_ = function(e) {
       var selectedEventTime = e.anchor == five.EventSnapToEvent.Anchor.START ?
           selectedEvent.getStartTime() : selectedEvent.getEndTime();
       var bestEvent = null;
+      /** @type {goog.date.DateTime} */
       var bestEventTime = null;
       goog.array.forEach(this.events_, function(event) {
         var eventTime = e.anchor == five.EventSnapToEvent.Anchor.START ?
@@ -939,7 +948,7 @@ five.EventsView.prototype.handleCalendarManagerMutationsStateChange_ =
     function(e) {
   var show = this.calendarManager_.hasMutations();
   if (!five.device.isWebView()) {
-    goog.style.showElement(this.saveButton_.el, show);
+    goog.style.setElementShown(this.saveButton_.el, show);
   } else {
     this.androidAppApi_.setButtonVisible(five.AndroidAppApi.ButtonId.SAVE, show);
   }
@@ -1025,9 +1034,11 @@ five.EventsView.prototype.scrollToTime = function(date,
     this.scrollAnimation_ = new goog.fx.Animation([lastScrollDate.getTime()],
         [date.getTime()], five.EventsView.SCROLL_ANIMATION_DURATION_MS,
         goog.fx.easing.easeOut);
-    var EventType = goog.fx.Animation.EventType;
+    var EventType = goog.fx.Transition.EventType;
     this.scrollAnimation_.registerDisposable(new goog.events.EventHandler(this).
-        listen(this.scrollAnimation_, [EventType.END, EventType.ANIMATE], function(e) {
+        listen(this.scrollAnimation_,
+            [goog.fx.Transition.EventType.END, goog.fx.Animation.EventType.ANIMATE],
+            function(e) {
       var curTime = new goog.date.DateTime(new Date(Math.round(e.coords[0])));
       this.scrollToTime(curTime);
       lastScrollDate = this.yPosToTime_(this.scrollEl_.scrollTop);

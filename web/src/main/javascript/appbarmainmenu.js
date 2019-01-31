@@ -25,16 +25,16 @@ five.AppBarMainMenu.prototype.titleEl_;
 
 five.AppBarMainMenu.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'app-bar-main-menu');
+  goog.dom.classlist.add(this.el, 'app-bar-main-menu');
 
   var menuArrowEl = document.createElement('div');
-  goog.dom.classes.add(menuArrowEl, 'arrow');
+  goog.dom.classlist.add(menuArrowEl, 'arrow');
   menuArrowEl.appendChild(document.createElement('div'));
-  goog.dom.classes.add(menuArrowEl.firstChild, 'inner');
+  goog.dom.classlist.add(goog.asserts.assertElement(menuArrowEl.firstChild), 'inner');
   this.el.appendChild(menuArrowEl);
 
   this.titleEl_ = document.createElement('div');
-  goog.dom.classes.add(this.titleEl_, 'title');
+  goog.dom.classlist.add(this.titleEl_, 'title');
   this.el.appendChild(this.titleEl_);
 };
 

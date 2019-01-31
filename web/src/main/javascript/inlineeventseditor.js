@@ -36,14 +36,14 @@ five.InlineEventsEditor.prototype.mouseHoverTop_ = false;
 
 five.InlineEventsEditor.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'inline-events-editor');
+  goog.dom.classlist.add(this.el, 'inline-events-editor');
 
   this.topButtonBar_ = document.createElement('div');
-  goog.dom.classes.add(this.topButtonBar_, 'button-bar');
+  goog.dom.classlist.add(this.topButtonBar_, 'button-bar');
   this.el.appendChild(this.topButtonBar_);
 
   this.bottomButtonBar_ = document.createElement('div');
-  goog.dom.classes.add(this.bottomButtonBar_, 'button-bar');
+  goog.dom.classlist.add(this.bottomButtonBar_, 'button-bar');
   this.el.appendChild(this.bottomButtonBar_);
 
   var moveUpButton = this.createArrowButton_(true, this.topButtonBar_);
@@ -88,10 +88,10 @@ five.InlineEventsEditor.prototype.createDom = function() {
 five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
     parentEl) {
   var button = document.createElement('button');
-  goog.dom.classes.add(button, 'button');
+  goog.dom.classlist.add(button, 'button');
   var arrow = document.createElement('div');
-  goog.dom.classes.add(arrow, 'arrow');
-  goog.dom.classes.add(arrow, up ? 'up' : 'down');
+  goog.dom.classlist.add(arrow, 'arrow');
+  goog.dom.classlist.add(arrow, up ? 'up' : 'down');
   button.appendChild(arrow);
   parentEl.appendChild(button);
   return button;
@@ -100,7 +100,7 @@ five.InlineEventsEditor.prototype.createArrowButton_ = function(up,
 /** @param {Element} parentEl */
 five.InlineEventsEditor.prototype.createSpacer_ = function(parentEl) {
   var spacer = document.createElement('div');
-  goog.dom.classes.add(spacer, 'spacer');
+  goog.dom.classlist.add(spacer, 'spacer');
   parentEl.appendChild(spacer);
   return spacer;
 };
@@ -112,7 +112,7 @@ five.InlineEventsEditor.prototype.createSpacer_ = function(parentEl) {
 five.InlineEventsEditor.prototype.createIconButton_ = function(parentEl,
     opt_floatRight) {
   var button = document.createElement('button');
-  goog.dom.classes.add(button, 'button');
+  goog.dom.classlist.add(button, 'button');
   if (opt_floatRight) {
     button.style.cssFloat = 'right';
   }
@@ -141,7 +141,7 @@ five.InlineEventsEditor.prototype.layout = function() {
     }
   });
 
-  goog.style.showElement(this.el, !!rect);
+  goog.style.setElementShown(this.el, !!rect);
   if (rect) {
     if (this.mouseHover_) {
       var oldPosition = goog.style.getPosition(this.el);

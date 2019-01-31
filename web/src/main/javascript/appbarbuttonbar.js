@@ -25,10 +25,10 @@ goog.inherits(five.AppBarButtonBar, five.Component);
 
 five.AppBarButtonBar.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'app-bar-button-bar');
+  goog.dom.classlist.add(this.el, 'app-bar-button-bar');
 };
 
-/** @param {five.Button} button */
+/** @param {!five.Button} button */
 five.AppBarButtonBar.prototype.addButton = function(button) {
   this.buttons_.push(button);
   button.render(this.el);

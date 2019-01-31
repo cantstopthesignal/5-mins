@@ -61,16 +61,17 @@ five.CalendarChooser.prototype.fireCalendarChoice_ = function(calendarId) {
 five.CalendarChooser.prototype.showChooserUi_ = function() {
   this.createDom();
   this.containerEl_ = document.createElement('div');
-  goog.dom.classes.add(this.containerEl_, 'calendar-chooser');
+  goog.dom.classlist.add(this.containerEl_, 'calendar-chooser');
   var headerEl = document.createElement('div');
-  goog.dom.classes.add(headerEl, 'title');
+  goog.dom.classlist.add(headerEl, 'title');
   headerEl.appendChild(document.createTextNode('Choose a calendar to use'));
   this.containerEl_.appendChild(headerEl);
   var ownedCalendars = this.getOwnedCalendars_();
   for (var i = 0; i < ownedCalendars.length; i++) {
     var ownedCalendar = ownedCalendars[i];
     var calendarEl = document.createElement('div');
-    goog.dom.classes.add(calendarEl, 'button', 'calendar-entry');
+    goog.dom.classlist.add(calendarEl, 'button');
+    goog.dom.classlist.add(calendarEl, 'calendar-entry');
     this.eventHandler.listen(calendarEl, goog.events.EventType.CLICK,
         goog.partial(this.handleCalendarClick_, ownedCalendar['id']));
     var calendarNameEl = document.createTextNode(ownedCalendar['summary']);

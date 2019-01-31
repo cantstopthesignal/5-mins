@@ -12,7 +12,7 @@ goog.require('goog.asserts');
 goog.require('goog.date.DateTime');
 goog.require('goog.date.Interval');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
 goog.require('goog.events.EventHandler');
@@ -201,7 +201,7 @@ five.demos.layout.Demo.prototype.renderTimeAxisPatch_ = function(
   canvasEl.setAttribute('width', five.demos.layout.Demo.
       TIME_AXIS_PATCH_WIDTH - 1);
   canvasEl.setAttribute('height', 700);
-  goog.dom.classes.add(canvasEl, 'time-axis-patch-canvas');
+  goog.dom.classlist.add(canvasEl, 'time-axis-patch-canvas');
   this.timeAxisPatchLayer_.appendChild(canvasEl);
 
   var ctx = canvasEl.getContext('2d');
@@ -314,10 +314,10 @@ goog.inherits(five.demos.layout.Demo.Event, five.Component);
 
 five.demos.layout.Demo.Event.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'event');
+  goog.dom.classlist.add(this.el, 'event');
 
   var titleEl = document.createElement('span');
-  goog.dom.classes.add(titleEl, 'title');
+  goog.dom.classlist.add(titleEl, 'title');
   titleEl.appendChild(document.createTextNode(this.name));
   this.el.appendChild(titleEl);
 
@@ -351,8 +351,8 @@ goog.inherits(five.demos.layout.Demo.CursorPopup_, five.Component);
 
 five.demos.layout.Demo.CursorPopup_.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'cursor-popup');
-  goog.style.showElement(this.el, false);
+  goog.dom.classlist.add(this.el, 'cursor-popup');
+  goog.style.setElementShown(this.el, false);
 };
 
 /** @param {string} text */
@@ -375,14 +375,14 @@ five.demos.layout.Demo.CursorPopup_.prototype.showAt = function(pos) {
   }
   var pos = goog.math.Coordinate.sum(pos, new goog.math.Coordinate(30, 15));
   goog.style.setPosition(this.el, pos);
-  goog.style.showElement(this.el, true);
+  goog.style.setElementShown(this.el, true);
 };
 
 five.demos.layout.Demo.CursorPopup_.prototype.hide = function() {
   if (!this.el) {
     return;
   }
-  goog.style.showElement(this.el, false);
+  goog.style.setElementShown(this.el, false);
 };
 
 function testLoad() {

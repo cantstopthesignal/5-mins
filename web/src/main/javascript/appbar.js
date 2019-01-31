@@ -36,15 +36,16 @@ goog.inherits(five.AppBar, five.Component);
 
 five.AppBar.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'app-bar');
+  goog.dom.classlist.add(this.el, 'app-bar');
 
   this.buttonBar_.render(this.el);
   this.spinner_.render(this.el);
 
   var appIconEl = document.createElement('div');
-  goog.dom.classes.add(appIconEl, 'app-icon', 'app-bar-icon');
+  goog.dom.classlist.add(appIconEl, 'app-icon');
+  goog.dom.classlist.add(appIconEl, 'app-bar-icon');
   appIconEl.appendChild(document.createElement('div'));
-  goog.dom.classes.add(appIconEl.firstChild, 'inner');
+  goog.dom.classlist.add(goog.asserts.assertElement(appIconEl.firstChild), 'inner');
   this.el.appendChild(appIconEl);
 
   this.mainMenu_.render(this.el);

@@ -50,7 +50,7 @@ five.TimeAxisPatchCanvas.prototype.upscaleRatio_ = 1;
 five.TimeAxisPatchCanvas.prototype.createDom = function() {
   goog.asserts.assert(!this.el);
   this.el = document.createElement('canvas');
-  goog.dom.classes.add(this.el, 'time-axis-patch-canvas');
+  goog.dom.classlist.add(this.el, 'time-axis-patch-canvas');
   this.el.setAttribute('width', this.width_ + 'px');
   this.ctx_ = this.el.getContext('2d');
 };

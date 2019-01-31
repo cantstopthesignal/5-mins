@@ -10,8 +10,8 @@ goog.require('five.util');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.Disposable');
-goog.require('goog.debug.Logger');
 goog.require('goog.dom');
+goog.require('goog.log');
 goog.require('goog.math.Rect');
 goog.require('goog.object');
 
@@ -38,7 +38,7 @@ five.layout.Calc = function(params) {
 goog.inherits(five.layout.Calc, goog.Disposable);
 
 /** @type {goog.debug.Logger} */
-five.layout.Calc.prototype.logger_ = goog.debug.Logger.getLogger(
+five.layout.Calc.prototype.logger_ = goog.log.getLogger(
     'five.layout.Calc');
 
 /** @type {Array.<five.layout.TimePoint>} */

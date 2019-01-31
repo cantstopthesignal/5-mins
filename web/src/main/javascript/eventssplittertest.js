@@ -7,7 +7,7 @@ goog.require('five.Event');
 goog.require('five.EventsSplitter');
 goog.require('goog.testing.jsunit');
 
-var baseTime = goog.date.fromIsoString('20190101T110000');
+var baseTime = goog.date.DateTime.fromIsoString('2019-01-01T110000');
 
 function testEmpty() {
   var events = [];

@@ -58,31 +58,31 @@ five.EventsSummaryDialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
   var contentEl = this.getContentEl();
 
-  goog.dom.classes.add(contentEl, 'events-summary-dialog');
+  goog.dom.classlist.add(contentEl, 'events-summary-dialog');
 
   var filterDiv = document.createElement('div');
-  goog.dom.classes.add(filterDiv, 'filter-div');
+  goog.dom.classlist.add(filterDiv, 'filter-div');
   var labelEl = document.createTextNode('Filter:');
   filterDiv.appendChild(labelEl);
   this.filterInputEl_ = document.createElement('input');
   this.filterInputEl_.type = 'text';
   this.filterInputEl_.setAttribute('autocapitalize', 'off');
-  goog.dom.classes.add(this.filterInputEl_, 'filter-input');
+  goog.dom.classlist.add(this.filterInputEl_, 'filter-input');
   filterDiv.appendChild(this.filterInputEl_);
   contentEl.appendChild(filterDiv);
 
   var headerEl = document.createElement('div');
-  goog.dom.classes.add(headerEl, 'title');
+  goog.dom.classlist.add(headerEl, 'title');
   headerEl.appendChild(document.createTextNode(this.title_));
   contentEl.appendChild(headerEl);
 
   this.summaryEl_ = document.createElement('div');
-  goog.dom.classes.add(this.summaryEl_, 'summary');
+  goog.dom.classlist.add(this.summaryEl_, 'summary');
   this.summaryEl_.setAttribute('tabindex', '0');
   contentEl.appendChild(this.summaryEl_);
 
   var doneButtonEl = document.createElement('div');
-  goog.dom.classes.add(doneButtonEl, 'button');
+  goog.dom.classlist.add(doneButtonEl, 'button');
   this.eventHandler.listen(doneButtonEl, goog.events.EventType.CLICK,
       this.handleDoneClick_);
   doneButtonEl.appendChild(document.createTextNode('Done'));
@@ -169,11 +169,11 @@ five.EventsSummaryDialog.prototype.updateSummary_ = function() {
 
     var rowEl = document.createElement('tr');
     var hoursCell = document.createElement('td');
-    goog.dom.classes.add(hoursCell, 'hours');
+    goog.dom.classlist.add(hoursCell, 'hours');
     hoursCell.appendChild(document.createTextNode(hoursStr));
     rowEl.appendChild(hoursCell);
     var minutesCell = document.createElement('td');
-    goog.dom.classes.add(minutesCell, 'minutes');
+    goog.dom.classlist.add(minutesCell, 'minutes');
     minutesCell.appendChild(document.createTextNode(minutesStr));
     rowEl.appendChild(minutesCell);
     var summaryCell = document.createElement('td');
@@ -195,11 +195,11 @@ five.EventsSummaryDialog.prototype.updateSummary_ = function() {
 
     var rowEl = document.createElement('tr');
     var hoursCell = document.createElement('td');
-    goog.dom.classes.add(hoursCell, 'hours');
+    goog.dom.classlist.add(hoursCell, 'hours');
     hoursCell.appendChild(document.createTextNode(hoursStr));
     rowEl.appendChild(hoursCell);
     var minutesCell = document.createElement('td');
-    goog.dom.classes.add(minutesCell, 'minutes');
+    goog.dom.classlist.add(minutesCell, 'minutes');
     minutesCell.appendChild(document.createTextNode(minutesStr));
     rowEl.appendChild(minutesCell);
     var summaryCell = document.createElement('td');

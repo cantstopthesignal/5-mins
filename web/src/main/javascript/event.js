@@ -338,7 +338,7 @@ five.Event.prototype.startCreate = function() {
   goog.asserts.assert(!goog.array.some(this.mutations_, function(mutation) {
     return mutation.isLocked();
   }));
-  var eventData = goog.json.parse(goog.json.serialize(this.eventData_));
+  var eventData = goog.asserts.assertObject(JSON.parse(goog.json.serialize(this.eventData_)));
   this.mergeMutationsIntoData_(eventData);
   goog.array.forEach(this.mutations_, function(mutation) {
     mutation.setLocked(true);
@@ -387,7 +387,7 @@ five.Event.prototype.abortMutationOrCreate_ = function() {
 /** @return {Object} */
 five.Event.prototype.startDelete = function() {
   goog.asserts.assert(!this.isNew());
-  var eventDeleteData = goog.json.parse(goog.json.serialize(this.eventData_));
+  var eventDeleteData = goog.asserts.assertObject(JSON.parse(goog.json.serialize(this.eventData_)));
   return eventDeleteData;
 };
 

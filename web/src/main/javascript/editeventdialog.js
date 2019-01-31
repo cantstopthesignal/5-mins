@@ -90,22 +90,22 @@ five.EditEventDialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
   var contentEl = this.getContentEl();
 
-  goog.dom.classes.add(contentEl, 'edit-event-dialog');
+  goog.dom.classlist.add(contentEl, 'edit-event-dialog');
 
   var headerEl = document.createElement('div');
-  goog.dom.classes.add(headerEl, 'title');
+  goog.dom.classlist.add(headerEl, 'title');
   headerEl.appendChild(document.createTextNode(
       this.newCreate_ ? 'Create event' : 'Edit event'));
   contentEl.appendChild(headerEl);
 
   var summaryDiv = document.createElement('div');
-  goog.dom.classes.add(summaryDiv, 'editor-row');
+  goog.dom.classlist.add(summaryDiv, 'editor-row');
   var labelEl = document.createTextNode('Summary:');
   summaryDiv.appendChild(labelEl);
   this.summaryInputEl_ = document.createElement('input');
   this.summaryInputEl_.type = 'text';
   this.summaryInputEl_.setAttribute('autocapitalize', 'off');
-  goog.dom.classes.add(this.summaryInputEl_, 'summary-input');
+  goog.dom.classlist.add(this.summaryInputEl_, 'summary-input');
   summaryDiv.appendChild(this.summaryInputEl_);
   contentEl.appendChild(summaryDiv);
 
@@ -119,21 +119,21 @@ five.EditEventDialog.prototype.createDom = function() {
   this.endTimePicker_.setReverseInputOrder(true);
 
   var dateDiv = document.createElement('div');
-  goog.dom.classes.add(dateDiv, 'editor-row');
+  goog.dom.classlist.add(dateDiv, 'editor-row');
   this.startTimePicker_.render(dateDiv);
   dateDiv.appendChild(document.createTextNode(' to '));
   this.endTimePicker_.render(dateDiv);
   contentEl.appendChild(dateDiv);
 
   var doneButtonEl = document.createElement('div');
-  goog.dom.classes.add(doneButtonEl, 'button');
+  goog.dom.classlist.add(doneButtonEl, 'button');
   this.eventHandler.listen(doneButtonEl, goog.events.EventType.CLICK,
       this.handleDoneClick_);
   doneButtonEl.appendChild(document.createTextNode('Done'));
   contentEl.appendChild(doneButtonEl);
 
   var cancelButtonEl = document.createElement('div');
-  goog.dom.classes.add(cancelButtonEl, 'button');
+  goog.dom.classlist.add(cancelButtonEl, 'button');
   this.eventHandler.listen(cancelButtonEl, goog.events.EventType.CLICK,
       this.handleCancelClick_);
   cancelButtonEl.appendChild(document.createTextNode('Cancel'));
@@ -404,12 +404,12 @@ TimePicker.prototype.createDom = function() {
 
   this.dateEl_ = document.createElement('input');
   this.dateEl_.type = 'text';
-  goog.dom.classes.add(this.dateEl_, 'date-time-input');
+  goog.dom.classlist.add(this.dateEl_, 'date-time-input');
 
   this.datePicker_ = new goog.ui.InputDatePicker(TimePicker.DATE_FORMATTER_,
       TimePicker.DATE_PARSER_);
   this.datePicker_.decorate(this.dateEl_);
-  goog.dom.classes.add(this.datePicker_.getDatePicker().getElement(),
+  goog.dom.classlist.add(this.datePicker_.getDatePicker().getElement(),
       'date-picker');
   this.registerDisposable(this.datePicker_);
   this.eventHandler.
@@ -422,7 +422,7 @@ TimePicker.prototype.createDom = function() {
 
   this.timeEl_ = document.createElement('input');
   this.timeEl_.type = 'text';
-  goog.dom.classes.add(this.timeEl_, 'date-time-input');
+  goog.dom.classlist.add(this.timeEl_, 'date-time-input');
   this.eventHandler.
       listen(this.timeEl_, goog.events.EventType.MOUSEDOWN,
           this.handleTimeInputMouseDown_).

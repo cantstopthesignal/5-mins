@@ -123,12 +123,12 @@ five.TimeMarker.Component.prototype.setTime = function(time) {
 
 five.TimeMarker.Component.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'time-marker');
+  goog.dom.classlist.add(this.el, 'time-marker');
   this.el.style.borderColor = this.theme_.color;
 
   if (five.deviceParams.getShowTimeMarkerLabels()) {
     this.labelEl_ = document.createElement('div');
-    goog.dom.classes.add(this.labelEl_, 'time-marker-label');
+    goog.dom.classlist.add(this.labelEl_, 'time-marker-label');
     this.labelEl_.style.color = this.theme_.labelColor;
 
     this.labelEl_.appendChild(document.createTextNode(
@@ -152,9 +152,9 @@ five.TimeMarker.Component.prototype.setVisible = function(visible) {
     this.createDom();
   }
   this.visible_ = visible;
-  goog.style.showElement(this.el, visible);
+  goog.style.setElementShown(this.el, visible);
   if (this.labelEl_) {
-    goog.style.showElement(this.labelEl_, visible);
+    goog.style.setElementShown(this.labelEl_, visible);
   }
   if (this.timeAxisPatchMarker_) {
     this.timeAxisPatchMarker_.setVisible(this.visible_);

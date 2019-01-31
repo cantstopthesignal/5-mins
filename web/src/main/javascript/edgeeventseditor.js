@@ -27,22 +27,22 @@ five.EdgeEventsEditor.prototype.editButton_;
 
 five.EdgeEventsEditor.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'edge-events-editor');
+  goog.dom.classlist.add(this.el, 'edge-events-editor');
 
   this.topButtonBar_ = document.createElement('div');
-  goog.dom.classes.add(this.topButtonBar_, 'button-bar');
+  goog.dom.classlist.add(this.topButtonBar_, 'button-bar');
   this.el.appendChild(this.topButtonBar_);
 
   var shadow = document.createElement('div');
-  goog.dom.classes.add(shadow, 'shadow');
+  goog.dom.classlist.add(shadow, 'shadow');
   this.topButtonBar_.appendChild(shadow);
 
   this.bottomButtonBar_ = document.createElement('div');
-  goog.dom.classes.add(this.bottomButtonBar_, 'button-bar');
+  goog.dom.classlist.add(this.bottomButtonBar_, 'button-bar');
   this.el.appendChild(this.bottomButtonBar_);
 
   shadow = document.createElement('div');
-  goog.dom.classes.add(shadow, 'shadow');
+  goog.dom.classlist.add(shadow, 'shadow');
   this.bottomButtonBar_.appendChild(shadow);
 
   this.editButton_ = this.createIconButton_(this.bottomButtonBar_);
@@ -95,10 +95,10 @@ five.EdgeEventsEditor.prototype.mouseDownTop_ = true;
 five.EdgeEventsEditor.prototype.createArrowButton_ = function(up,
     parentEl, opt_floatRight) {
   var button = document.createElement('button');
-  goog.dom.classes.add(button, 'button');
+  goog.dom.classlist.add(button, 'button');
   var arrow = document.createElement('div');
-  goog.dom.classes.add(arrow, 'arrow');
-  goog.dom.classes.add(arrow, up ? 'up' : 'down');
+  goog.dom.classlist.add(arrow, 'arrow');
+  goog.dom.classlist.add(arrow, up ? 'up' : 'down');
   button.appendChild(arrow);
   if (opt_floatRight) {
     button.style.cssFloat = 'right';
@@ -114,7 +114,7 @@ five.EdgeEventsEditor.prototype.createArrowButton_ = function(up,
 five.EdgeEventsEditor.prototype.createIconButton_ = function(parentEl,
     opt_floatRight) {
   var button = document.createElement('button');
-  goog.dom.classes.add(button, 'button');
+  goog.dom.classlist.add(button, 'button');
   if (opt_floatRight) {
     button.style.cssFloat = 'right';
   }
@@ -130,8 +130,8 @@ five.EdgeEventsEditor.prototype.getType = function() {
 five.EdgeEventsEditor.prototype.layout = function() {
   goog.asserts.assert(this.el);
   goog.asserts.assert(this.owner);
-  goog.style.showElement(this.el, this.events.length > 0);
-  goog.style.showElement(this.editButton_, this.events.length == 1);
+  goog.style.setElementShown(this.el, this.events.length > 0);
+  goog.style.setElementShown(this.editButton_, this.events.length == 1);
   if (!this.events.length) {
     return;
   }

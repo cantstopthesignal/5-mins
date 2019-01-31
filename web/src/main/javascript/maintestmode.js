@@ -9,6 +9,7 @@ goog.require('goog.testing.events');
 /**
  * @param {Function} mainStartFn method to start main app
  * @param {Function} mainDisposeFn method to dispose main app
+ * @suppress {deprecated}
  */
 five.mainTestMode.init = function(mainStartFn, mainDisposeFn) {
   goog.exportSymbol('five.mainTestMode.start', mainStartFn);

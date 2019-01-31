@@ -17,10 +17,15 @@ apply plugin: 'java'
 apply plugin: 'war'
 apply plugin: 'com.google.cloud.tools.appengine'
 
+configurations {
+    closureCompiler
+}
+
 dependencies {
     providedCompile group: 'javax.servlet', name: 'servlet-api', version:'2.5'
     compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.71'
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    closureCompiler 'com.google.javascript:closure-compiler:v20190121'
 }
 
 appengine {
@@ -42,10 +47,9 @@ ext.javascriptDepsFile = file("${buildDir}/deps.js")
 ext.libraryDir = file('lib')
 ext.closureLibraryDir = file("${libraryDir}/closure-library")
 ext.closureCompilerJar = file("${libraryDir}/closure-compiler/compiler.jar")
-ext.closureBuilderBin = file("${closureLibraryDir}/closure/bin/build/closurebuilder.py")
 ext.closureDepsWriterBin = file("${closureLibraryDir}/closure/bin/build/depswriter.py")
 
-class ClosureBuilderCompileTask extends DefaultTask {
+class ClosureCompileTask extends DefaultTask {
     String compilationLevel
     String namespace
     String warningLevel
@@ -54,40 +58,43 @@ class ClosureBuilderCompileTask extends DefaultTask {
     @TaskAction
     void run() {
         destFile.getParentFile().mkdirs();
-        project.exec {
-            commandLine project.closureBuilderBin,
-                    "--root=${project.closureLibraryDir}",
-                    "--root=${project.javascriptSourceDir}",
-                    "--namespace=${namespace}",
-                    "--output_mode=compiled",
-                    "--compiler_jar=${project.closureCompilerJar}",
-                    "--compiler_flags=--compilation_level=${compilationLevel}",
-                    "--compiler_flags=--warning_level=${warningLevel}",
-                    "--compiler_flags=--jscomp_error=accessControls",
-                    "--compiler_flags=--jscomp_error=ambiguousFunctionDecl",
-                    "--compiler_flags=--jscomp_error=checkDebuggerStatement",
-                    "--compiler_flags=--jscomp_error=checkRegExp",
-                    "--compiler_flags=--jscomp_error=checkTypes",
-                    "--compiler_flags=--jscomp_error=checkVars",
-                    "--compiler_flags=--jscomp_error=const",
-                    "--compiler_flags=--jscomp_error=constantProperty",
-                    "--compiler_flags=--jscomp_error=deprecated",
-                    "--compiler_flags=--jscomp_error=duplicate",
-                    // es5strict
-                    "--compiler_flags=--jscomp_error=externsValidation",
-                    "--compiler_flags=--jscomp_error=fileoverviewTags",
-                    "--compiler_flags=--jscomp_error=globalThis",
-                    "--compiler_flags=--jscomp_error=internetExplorerChecks",
-                    "--compiler_flags=--jscomp_error=invalidCasts",
-                    "--compiler_flags=--jscomp_error=missingProperties",
-                    "--compiler_flags=--jscomp_error=nonStandardJsDocs",
-                    "--compiler_flags=--jscomp_error=strictModuleDepCheck",
-                    "--compiler_flags=--jscomp_error=undefinedNames",
-                    "--compiler_flags=--jscomp_error=undefinedVars",
-                    "--compiler_flags=--jscomp_error=unknownDefines",
-                    "--compiler_flags=--jscomp_error=uselessCode",
-                    "--compiler_flags=--jscomp_error=visibility"
-            standardOutput destFile.newOutputStream()
+        project.javaexec {
+            classpath project.configurations.closureCompiler
+            main = 'com.google.javascript.jscomp.CommandLineRunner'
+
+            def closureArgs = []
+            closureArgs << "--entry_point=${namespace}"
+            closureArgs << "--js_output_file=${destFile}"
+            closureArgs << "--compilation_level=${compilationLevel}"
+            closureArgs << "--dependency_mode=STRICT"
+            closureArgs << "--warning_level=${warningLevel}"
+            closureArgs << "--jscomp_error=accessControls"
+            closureArgs << "--jscomp_error=ambiguousFunctionDecl"
+            closureArgs << "--jscomp_error=checkDebuggerStatement"
+            closureArgs << "--jscomp_error=checkRegExp"
+            closureArgs << "--jscomp_error=checkTypes"
+            closureArgs << "--jscomp_error=checkVars"
+            closureArgs << "--jscomp_error=const"
+            closureArgs << "--jscomp_error=constantProperty"
+            // TODO: closureArgs << "--jscomp_error=deprecated"
+            closureArgs << "--jscomp_error=duplicate"
+            closureArgs << "--jscomp_error=externsValidation"
+            closureArgs << "--jscomp_error=fileoverviewTags"
+            closureArgs << "--jscomp_error=globalThis"
+            closureArgs << "--jscomp_error=internetExplorerChecks"
+            closureArgs << "--jscomp_error=invalidCasts"
+            closureArgs << "--jscomp_error=missingProperties"
+            closureArgs << "--jscomp_error=nonStandardJsDocs"
+            closureArgs << "--jscomp_error=strictModuleDepCheck"
+            closureArgs << "--jscomp_error=undefinedNames"
+            closureArgs << "--jscomp_error=undefinedVars"
+            closureArgs << "--jscomp_error=unknownDefines"
+            closureArgs << "--jscomp_error=uselessCode"
+            closureArgs << "--jscomp_error=visibility"
+            closureArgs << "${project.closureLibraryDir}/**.js"
+            closureArgs << "!${project.closureLibraryDir}/**_test.js"
+            closureArgs << "${project.javascriptSourceDir}/**.js"
+            args closureArgs
         }
     }
 }
@@ -107,15 +114,16 @@ class ClosureGenerateDepsTask extends DefaultTask {
     }
 }
 
-task compileJavascriptDebug(type: ClosureBuilderCompileTask) {
+task compileJavascriptDebug(type: ClosureCompileTask) {
     compilationLevel "WHITESPACE_ONLY"
     namespace "five.main"
     warningLevel "VERBOSE"
     destFile file("${javascriptOutputDir}/maindebug.js")
 }
 
-task compileJavascriptOptimized(type: ClosureBuilderCompileTask) {
-    compilationLevel "ADVANCED_OPTIMIZATIONS"
+task compileJavascriptOptimized(type: ClosureCompileTask) {
+    // TODO: compilationLevel "ADVANCED_OPTIMIZATIONS"
+    compilationLevel "SIMPLE_OPTIMIZATIONS"
     namespace "five.main"
     warningLevel "VERBOSE"
     destFile file("${javascriptOutputDir}/mainoptimized.js")

@@ -11,99 +11,99 @@ goog.require('goog.testing.jsunit');
 
 
 function testForEachHourRangeWrap_oneInstant() {
-  var date = goog.date.fromIsoString('20120526T110000');
+  var date = goog.date.DateTime.fromIsoString('20120526T110000');
   var expected = [
       [date,
-       goog.date.fromIsoString('20120526T120000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(date,
       date));
 
-  date = goog.date.fromIsoString('20120526T111000');
+  date = goog.date.DateTime.fromIsoString('20120526T111000');
   expected = [
-      [goog.date.fromIsoString('20120526T110000'),
-       goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T110000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(date,
       date));
 }
 
 function testForEachHourWrap_oneInstant() {
-  var date = goog.date.fromIsoString('20120526T110000');
+  var date = goog.date.DateTime.fromIsoString('20120526T110000');
   var expected = [
       [date,
-       goog.date.fromIsoString('20120526T120000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        false],
-      [goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T120000'),
        null,
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourWrap(date, date));
 
-  date = goog.date.fromIsoString('20120526T111000');
+  date = goog.date.DateTime.fromIsoString('20120526T111000');
   expected = [
-      [goog.date.fromIsoString('20120526T110000'),
-       goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T110000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        false],
-      [goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T120000'),
        null,
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourWrap(date, date));
 }
 
 function testForEachHourRangeWrap_oneHour() {
-  var startDate = goog.date.fromIsoString('20120526T110000');
+  var startDate = goog.date.DateTime.fromIsoString('20120526T110000');
   var endDate = startDate.clone();
   endDate.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
 
   expected = [
-      [goog.date.fromIsoString('20120526T110000'),
-       goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T110000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(startDate,
       endDate));
 
-  startDate = goog.date.fromIsoString('20120526T113000');
+  startDate = goog.date.DateTime.fromIsoString('20120526T113000');
   endDate = startDate.clone();
   endDate.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
 
   expected = [
-      [goog.date.fromIsoString('20120526T110000'),
-       goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T110000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        false],
-      [goog.date.fromIsoString('20120526T120000'),
-       goog.date.fromIsoString('20120526T130000'),
+      [goog.date.DateTime.fromIsoString('20120526T120000'),
+       goog.date.DateTime.fromIsoString('20120526T130000'),
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(startDate,
       endDate));
 }
 
 function testForEachHourWrap_oneHour() {
-  var startDate = goog.date.fromIsoString('20120526T110000');
+  var startDate = goog.date.DateTime.fromIsoString('20120526T110000');
   var endDate = startDate.clone();
   endDate.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
 
   expected = [
-      [goog.date.fromIsoString('20120526T110000'),
-       goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T110000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        false],
-      [goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T120000'),
        null,
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourWrap(startDate,
       endDate));
 
-  startDate = goog.date.fromIsoString('20120526T113000');
+  startDate = goog.date.DateTime.fromIsoString('20120526T113000');
   endDate = startDate.clone();
   endDate.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
 
   expected = [
-      [goog.date.fromIsoString('20120526T110000'),
-       goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T110000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        false],
-      [goog.date.fromIsoString('20120526T120000'),
-       goog.date.fromIsoString('20120526T130000'),
+      [goog.date.DateTime.fromIsoString('20120526T120000'),
+       goog.date.DateTime.fromIsoString('20120526T130000'),
        false],
-      [goog.date.fromIsoString('20120526T130000'),
+      [goog.date.DateTime.fromIsoString('20120526T130000'),
        null,
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourWrap(startDate,
@@ -111,19 +111,19 @@ function testForEachHourWrap_oneHour() {
 }
 
 function testForEachHourRangeWrap_aFewHours() {
-  var startDate = goog.date.fromIsoString('20120526T110000');
+  var startDate = goog.date.DateTime.fromIsoString('20120526T110000');
   var endDate = startDate.clone();
   endDate.add(new goog.date.Interval(goog.date.Interval.HOURS, 3));
 
   expected = [
-      [goog.date.fromIsoString('20120526T110000'),
-       goog.date.fromIsoString('20120526T120000'),
+      [goog.date.DateTime.fromIsoString('20120526T110000'),
+       goog.date.DateTime.fromIsoString('20120526T120000'),
        false],
-      [goog.date.fromIsoString('20120526T120000'),
-       goog.date.fromIsoString('20120526T130000'),
+      [goog.date.DateTime.fromIsoString('20120526T120000'),
+       goog.date.DateTime.fromIsoString('20120526T130000'),
        false],
-      [goog.date.fromIsoString('20120526T130000'),
-       goog.date.fromIsoString('20120526T140000'),
+      [goog.date.DateTime.fromIsoString('20120526T130000'),
+       goog.date.DateTime.fromIsoString('20120526T140000'),
        true]];
   assertForEachHourWrapOutput(expected, doForEachHourRangeWrap(startDate,
       endDate));
@@ -162,8 +162,8 @@ function assertForEachHourWrapOutput(expected, actual) {
 
 function testRoundToFiveMinutes() {
   function doTest(expected, input) {
-    assertEquals(goog.date.fromIsoString(expected).toIsoString(),
-        five.util.roundToFiveMinutes(goog.date.fromIsoString(input)).
+    assertEquals(goog.date.DateTime.fromIsoString(expected).toIsoString(),
+        five.util.roundToFiveMinutes(goog.date.DateTime.fromIsoString(input)).
         toIsoString());
   }
   doTest('20120526T110000', '20120526T110000');
@@ -180,8 +180,8 @@ function testRoundToFiveMinutes() {
 
 function testHourFloor() {
   function doTest(expected, input) {
-    assertEquals(goog.date.fromIsoString(expected).toIsoString(),
-        five.util.hourFloor(goog.date.fromIsoString(input)).
+    assertEquals(goog.date.DateTime.fromIsoString(expected).toIsoString(),
+        five.util.hourFloor(goog.date.DateTime.fromIsoString(input)).
         toIsoString());
   }
   doTest('20120526T110000', '20120526T110000');
@@ -193,8 +193,8 @@ function testHourFloor() {
 
 function testDayFloor() {
   function doTest(expected, input) {
-    assertEquals(goog.date.fromIsoString(expected).toIsoString(),
-        five.util.dayFloor(goog.date.fromIsoString(input)).
+    assertEquals(goog.date.DateTime.fromIsoString(expected).toIsoString(),
+        five.util.dayFloor(goog.date.DateTime.fromIsoString(input)).
         toIsoString());
   }
   doTest('20120526T000000', '20120526T110000');
@@ -204,7 +204,7 @@ function testDayFloor() {
 }
 
 function testHourAddSafe() {
-  var start = goog.date.fromIsoString('20120526T110000');
+  var start = goog.date.DateTime.fromIsoString('20120526T110000');
   var expected = start.clone();
   expected.add(new goog.date.Interval(goog.date.Interval.HOURS, 1));
   assertTimesEqualOrNull('Should be equal', expected,

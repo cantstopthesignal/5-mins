@@ -3,9 +3,9 @@
 goog.provide('five.AndroidAppApi');
 
 goog.require('five.Service');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
+goog.require('goog.log');
 
 
 /**
@@ -42,7 +42,7 @@ five.AndroidAppApi.get = function(appContext) {
 };
 
 /** @type {goog.debug.Logger} */
-five.AndroidAppApi.prototype.logger_ = goog.debug.Logger.getLogger(
+five.AndroidAppApi.prototype.logger_ = goog.log.getLogger(
     'five.AndroidAppApi');
 
 /** @param {!five.AppContext} appContext */

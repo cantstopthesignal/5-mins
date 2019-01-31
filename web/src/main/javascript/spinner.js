@@ -48,7 +48,7 @@ five.Spinner.prototype.blipOpacity_;
 five.Spinner.prototype.createDom = function() {
   goog.asserts.assert(!this.el);
   this.el = document.createElement('canvas');
-  goog.dom.classes.add(this.el, 'spinner');
+  goog.dom.classlist.add(this.el, 'spinner');
 
   this.checkVisibility_();
 };
@@ -93,7 +93,7 @@ five.Spinner.prototype.checkVisibility_ = function() {
     this.checkTimeoutId_ = window.setTimeout(
         goog.bind(this.handleCheckTimeout_, this), minTimestamp - now);
   }
-  goog.style.showElement(this.el, triggered);
+  goog.style.setElementShown(this.el, triggered);
 
   if (triggered) {
     this.maybeStartAnimation_();

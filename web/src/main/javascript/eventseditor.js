@@ -81,7 +81,7 @@ five.EventsEditor.prototype.setVisible = function(visible) {
   }
   this.visible_ = visible;
   if (this.el) {
-    goog.style.showElement(this.el, this.visible_);
+    goog.style.setElementShown(this.el, this.visible_);
   }
   this.dispatchEvent(this.visible_ ? five.EventsEditor.EventType.SHOW :
       five.EventsEditor.EventType.HIDE);
@@ -94,7 +94,7 @@ five.EventsEditor.prototype.isVisible = function() {
 
 five.EventsEditor.prototype.render = function(parentEl) {
   goog.base(this, 'render', parentEl);
-  goog.style.showElement(this.el, this.visible_);
+  goog.style.setElementShown(this.el, this.visible_);
 };
 
 /** @return {?Object} */

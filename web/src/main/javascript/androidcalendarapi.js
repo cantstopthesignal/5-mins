@@ -4,10 +4,9 @@ goog.provide('five.AndroidCalendarApi');
 
 goog.require('five.BaseCalendarApi');
 goog.require('five.Service');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
-
+goog.require('goog.log');
 
 /**
  * Android calendar api wrapper.
@@ -36,7 +35,7 @@ five.AndroidCalendarApi.get = function(appContext) {
 };
 
 /** @type {goog.debug.Logger} */
-five.AndroidCalendarApi.prototype.logger_ = goog.debug.Logger.getLogger(
+five.AndroidCalendarApi.prototype.logger_ = goog.log.getLogger(
     'five.AndroidCalendarApi');
 
 /** @param {!five.AppContext} appContext */

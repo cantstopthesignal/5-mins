@@ -58,12 +58,12 @@ five.layout.Manager.prototype.updateParams = function(params) {
   this.params_ = params;
 };
 
-/** @param {five.layout.HorzSplit} horzSplit */
+/** @param {!five.layout.HorzSplit} horzSplit */
 five.layout.Manager.prototype.addHorzSplit = function(horzSplit) {
   this.horzSplits_.push(horzSplit);
 };
 
-/** @param {five.layout.HorzSplit} horzSplit */
+/** @param {!five.layout.HorzSplit} horzSplit */
 five.layout.Manager.prototype.removeHorzSplit = function(horzSplit) {
   var index = this.horzSplits_.indexOf(horzSplit);
   goog.asserts.assert(index >= 0);

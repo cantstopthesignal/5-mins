@@ -117,9 +117,9 @@ five.EventCard.prototype.getThemeForSummaryType_ = function(summaryType) {
 
 five.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'event-card');
+  goog.dom.classlist.add(this.el, 'event-card');
   this.dateRangeEl_ = document.createElement('div');
-  goog.dom.classes.add(this.dateRangeEl_, 'date-range');
+  goog.dom.classlist.add(this.dateRangeEl_, 'date-range');
   this.el.appendChild(this.dateRangeEl_);
   this.summaryEl_ = document.createElement('span');
   this.el.appendChild(this.summaryEl_);
@@ -176,12 +176,12 @@ five.EventCard.prototype.setRect = function(rect) {
   this.rect_ = rect;
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.el, rect.getSize());
-  goog.dom.classes.enable(this.el, 'micro-height',
+  goog.dom.classlist.enable(this.el, 'micro-height',
       rect.height < five.deviceParams.getEventCardMinShortHeight());
-  goog.dom.classes.enable(this.el, 'short-height',
+  goog.dom.classlist.enable(this.el, 'short-height',
       rect.height >= five.deviceParams.getEventCardMinShortHeight() &&
       rect.height < five.deviceParams.getEventCardMinNormalHeight());
-  goog.dom.classes.enable(this.el, 'large-height',
+  goog.dom.classlist.enable(this.el, 'large-height',
       rect.height >= five.deviceParams.getEventCardMinLargeHeight());
 };
 
@@ -196,7 +196,7 @@ five.EventCard.prototype.setSelected = function(selected) {
     this.createDom();
   }
   this.selected_ = selected;
-  goog.dom.classes.enable(this.el, 'selected', this.selected_);
+  goog.dom.classlist.enable(this.el, 'selected', this.selected_);
   this.updateThemeDisplay_();
   if (this.timeAxisPatch_) {
     this.timeAxisPatch_.setSelected(this.selected_);
@@ -204,7 +204,7 @@ five.EventCard.prototype.setSelected = function(selected) {
 };
 
 five.EventCard.prototype.timeAxisPatchUpdated = function() {
-  goog.dom.classes.enable(this.el, 'attached-to-patch',
+  goog.dom.classlist.enable(this.el, 'attached-to-patch',
       !!this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent());
 };
 
@@ -223,7 +223,7 @@ five.EventCard.prototype.dispatchSelectionEvent = function(select, shiftKey) {
 five.EventCard.prototype.handleClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
-  this.dispatchSelectionEvent(!goog.dom.classes.has(this.el, 'selected'),
+  this.dispatchSelectionEvent(!goog.dom.classlist.contains(this.el, 'selected'),
       e.shiftKey);
 };
 

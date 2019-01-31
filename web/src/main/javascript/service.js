@@ -5,6 +5,6 @@ goog.provide('five.Service');
 
 /**
  * @interface
- * @extends {goog.Disposable}
+ * @extends {goog.disposable.IDisposable}
  */
-five.Service = goog.abstractMethod;
+five.Service = function() {};

@@ -26,7 +26,7 @@ five.Auth.GAPI_CLIENT_ID = '446611198518.apps.googleusercontent.com';
 five.Auth.GAPI_SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
 /** @type {goog.debug.Logger} */
-five.Auth.prototype.logger_ = goog.debug.Logger.getLogger('five.Auth');
+five.Auth.prototype.logger_ = goog.log.getLogger('five.Auth');
 
 /** @type {five.Auth.ConnectDialog_} */
 five.Auth.prototype.connectDialog_;
@@ -154,7 +154,7 @@ five.Auth.prototype.clearAuthRefreshTimer_ = function() {
 };
 
 five.Auth.prototype.setAuthRefreshTimer_ = function(expireTimeSecs) {
-  goog.asserts.assert(goog.math.isFiniteNumber(expireTimeSecs));
+  goog.asserts.assert(isFinite(expireTimeSecs));
   this.clearAuthRefreshTimer_();
   var refreshDelaySecs = Math.max(5 * 60, expireTimeSecs - 5 * 60);
   this.authRefreshTimeoutId_ = window.setTimeout(
@@ -186,13 +186,13 @@ five.Auth.ConnectDialog_.prototype.createDom = function() {
   var contentEl = this.getContentEl();
 
   var headerEl = document.createElement('div');
-  goog.dom.classes.add(headerEl, 'title');
+  goog.dom.classlist.add(headerEl, 'title');
   headerEl.appendChild(document.createTextNode(
       '5 mins needs your authorization to read your calendar'));
   contentEl.appendChild(headerEl);
 
   var connectButtonEl = document.createElement('div');
-  goog.dom.classes.add(connectButtonEl, 'button');
+  goog.dom.classlist.add(connectButtonEl, 'button');
   this.eventHandler.listen(connectButtonEl, goog.events.EventType.CLICK,
       this.handleConnectClick_);
   connectButtonEl.appendChild(document.createTextNode('Connect'));

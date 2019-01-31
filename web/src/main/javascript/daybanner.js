@@ -41,7 +41,7 @@ five.DayBanner.prototype.setOwner = function(owner) {
 
 five.DayBanner.prototype.createDom = function() {
   goog.base(this, 'createDom');
-  goog.dom.classes.add(this.el, 'day-banner');
+  goog.dom.classlist.add(this.el, 'day-banner');
 
   this.el.appendChild(document.createTextNode(''));
   this.updateDisplay_();

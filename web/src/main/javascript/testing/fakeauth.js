@@ -43,7 +43,7 @@ five.testing.FakeAuth.RequestHandler.prototype.handleRpcRequest =
     goog.abstractMethod;
 
 /** @type {goog.debug.Logger} */
-five.testing.FakeAuth.prototype.logger_ = goog.debug.Logger.getLogger(
+five.testing.FakeAuth.prototype.logger_ = goog.log.getLogger(
     'five.testing.FakeAuth');
 
 /** @type {string} */
