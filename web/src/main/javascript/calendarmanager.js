@@ -7,6 +7,7 @@ goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('five.NotificationManager');
 goog.require('goog.asserts');
+goog.require('goog.async.DeferredList');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
 goog.require('goog.events.EventHandler');
@@ -164,20 +165,23 @@ five.CalendarManager.prototype.removeEvent = function(event) {
   this.updateHasMutations_();
 };
 
+/** @return {goog.async.DeferredList} */
 five.CalendarManager.prototype.saveMutations = function() {
+  var deferreds = [];
   if (!this.hasMutations()) {
-    return;
+    return new goog.async.DeferredList(deferreds);
   }
   goog.array.forEach(this.events_, function(event) {
     if (event.isNew()) {
-      this.createEvent_(event);
+      deferreds.push(this.createEvent_(event));
     } else if (event.hasMutations()) {
-      this.saveMutatedEvent_(event);
+      deferreds.push(this.saveMutatedEvent_(event));
     }
   }, this);
   goog.array.forEach(this.removedEvents_, function(event) {
-    this.deleteEvent_(event);
+    deferreds.push(this.deleteEvent_(event));
   }, this);
+  return new goog.async.DeferredList(deferreds);
 };
 
 /** @param {five.Event} event */
@@ -201,11 +205,14 @@ five.CalendarManager.prototype.setPauseEventsLoading = function(pause) {
   this.pauseEventsLoading_ = pause;
 };
 
-/** @param {five.Event} event */
+/**
+ * @param {five.Event} event
+ * @return {goog.async.Deferred}
+ */
 five.CalendarManager.prototype.createEvent_ = function(event) {
   goog.asserts.assert(event.isNew());
   this.requestStarted_();
-  this.calendarApi_.createEvent(this.calendarData_['id'], event.startCreate()).
+  return this.calendarApi_.createEvent(this.calendarData_['id'], event.startCreate()).
       addCallback(function(resp) {
         goog.asserts.assert(resp['kind'] == 'calendar#event');
         event.endCreate(resp);
@@ -220,11 +227,14 @@ five.CalendarManager.prototype.createEvent_ = function(event) {
       }, this);
 };
 
-/** @param {five.Event} event */
+/**
+ * @param {five.Event} event
+ * @return {goog.async.Deferred}
+ */
 five.CalendarManager.prototype.saveMutatedEvent_ = function(event) {
   goog.asserts.assert(event.hasMutations());
   this.requestStarted_();
-  this.calendarApi_.saveEvent(this.calendarData_['id'],
+  return this.calendarApi_.saveEvent(this.calendarData_['id'],
       event.getEventData(), event.startMutationPatch()).
       addCallback(function(resp) {
         goog.asserts.assert(resp['kind'] == 'calendar#event');
@@ -240,15 +250,18 @@ five.CalendarManager.prototype.saveMutatedEvent_ = function(event) {
       }, this);
 };
 
-/** @param {five.Event} event */
+/**
+ * @param {five.Event} event
+ * @return {goog.async.Deferred}
+ */
 five.CalendarManager.prototype.deleteEvent_ = function(event) {
   this.requestStarted_();
   if (event.isNew()) {
     this.eventDeleted_(event);
     this.requestEnded_();
-    return;
+    return goog.async.Deferred.succeed();
   }
-  this.calendarApi_.deleteEvent(this.calendarData_['id'], event.startDelete()).
+  return this.calendarApi_.deleteEvent(this.calendarData_['id'], event.startDelete()).
       addCallback(function(resp) {
         this.eventDeleted_(event);
         this.requestEnded_();

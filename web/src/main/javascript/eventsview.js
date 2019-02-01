@@ -879,9 +879,10 @@ five.EventsView.prototype.handleEventEdit_ = function(e) {
   if (!five.device.isWebView()) {
     this.openEditEventDialog_(event, false);
   } else {
-    if (!event.hasMutations()) {
+    this.calendarManager_.saveMutations().addCallback(function() {
+      this.replaceSelectedEvents_([]);
       this.calendarManager_.openEventEditor(event);
-    }
+    }, this);
   }
 };
 
@@ -1174,6 +1175,7 @@ five.EventsView.prototype.handleSaveClick_ = function(opt_e) {
   if (opt_e) {
     opt_e.preventDefault();
   }
+  this.replaceSelectedEvents_([]);
   this.calendarManager_.saveMutations();
 };
 
