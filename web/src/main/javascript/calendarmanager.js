@@ -48,6 +48,12 @@ five.CalendarManager = function(appContext, calendarData) {
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
 
+  /** @type {Object} */
+  this.eventLoadingLocks_ = {};
+
+  /** @type {number} */
+  this.eventLoadingLockNextId_ = 1;
+
   this.calendarApi_.registerEventsListener(goog.bind(this.handleEventsChanged_, this));
 };
 goog.inherits(five.CalendarManager, goog.events.EventTarget);
@@ -57,6 +63,39 @@ five.CalendarManager.EventType = {
   EVENTS_CHANGED: goog.events.getUniqueId('eventschanged'),
   REQUESTS_STATE_CHANGED: goog.events.getUniqueId('requestsstatechanged'),
   MUTATIONS_STATE_CHANGED: goog.events.getUniqueId('mutationsstatechanged')
+};
+
+/**
+ * @constructor
+ * @param {!five.CalendarManager} calendarManager
+ * @extends {goog.Disposable}
+ */
+five.CalendarManager.EventLoadingLock = function(calendarManager) {
+  /** @type {!five.CalendarManager} */
+  this.calendarManager_ = calendarManager;
+
+  /** @type {number} */
+  this.lockId_ = 0;
+};
+goog.inherits(five.CalendarManager.EventLoadingLock, goog.Disposable);
+
+five.CalendarManager.EventLoadingLock.prototype.setLocked = function(locked) {
+  if (locked) {
+    if (!this.lockId_) {
+      this.lockId_ = this.calendarManager_.lockEventLoading_();
+    }
+  } else if (this.lockId_) {
+    this.calendarManager_.unlockEventLoading_(this.lockId_);
+    this.lockId_ = 0;
+  }
+};
+
+/** @override */
+five.CalendarManager.EventLoadingLock.prototype.disposeInternal = function() {
+  if (this.lockId_) {
+    this.calendarManager_.unlockEventLoading_(this.lockId_);
+  }
+  goog.base(this, 'disposeInternal');
 };
 
 five.CalendarManager.EVENTS_LOAD_ERROR_ =
@@ -86,9 +125,6 @@ five.CalendarManager.prototype.numRequestsInProgress_ = 0;
 
 /** @type {boolean} */
 five.CalendarManager.prototype.hasMutations_ = false;
-
-/** @type {boolean} */
-five.CalendarManager.prototype.pauseEventsLoading_ = false;
 
 /** @override */
 five.CalendarManager.prototype.disposeInternal = function() {
@@ -201,8 +237,23 @@ five.CalendarManager.prototype.openEventEditor = function(event) {
       }, this);
 };
 
-five.CalendarManager.prototype.setPauseEventsLoading = function(pause) {
-  this.pauseEventsLoading_ = pause;
+/** @return {!five.CalendarManager.EventLoadingLock} */
+five.CalendarManager.prototype.createEventLoadingLock = function() {
+  return new five.CalendarManager.EventLoadingLock(this);
+};
+
+/** @return {number} */
+five.CalendarManager.prototype.lockEventLoading_ = function() {
+  var lockId = this.eventLoadingLockNextId_;
+  this.eventLoadingLocks_[lockId] = true;
+  this.eventLoadingLockNextId_ += 1;
+  return lockId;
+};
+
+/** @param lockId {number} */
+five.CalendarManager.prototype.unlockEventLoading_ = function(lockId) {
+  goog.asserts.assert(lockId in this.eventLoadingLocks_);
+  delete this.eventLoadingLocks_[lockId];
 };
 
 /**
@@ -301,7 +352,7 @@ five.CalendarManager.prototype.eventDeleted_ = function(event) {
 
 /** @param {Array.<Object>} eventsData */
 five.CalendarManager.prototype.updateEventsData_ = function(eventsData) {
-  if (this.hasMutations_ || this.pauseEventsLoading_) {
+  if (this.hasMutations_ || !goog.object.isEmpty(this.eventLoadingLocks_)) {
     return;
   }
   goog.disposeAll(this.events_);

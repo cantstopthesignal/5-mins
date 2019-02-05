@@ -146,7 +146,10 @@ five.EventsTimeline.prototype.dragCreatingEvent_;
 five.EventsTimeline.prototype.draggingMoveControls_;
 
 /** @type {?goog.events.Key} */
-five.EventsTimeline.prototype.globalPointerUpListenerKey_;
+five.EventsTimeline.prototype.globalMouseUpListenerKey_;
+
+/** @type {?goog.events.Key} */
+five.EventsTimeline.prototype.globalTouchEndListenerKey_;
 
 /** @type {?goog.events.Key} */
 five.EventsTimeline.prototype.globalClickCancelListenerKey_;
@@ -159,6 +162,9 @@ five.EventsTimeline.prototype.eventAreaWidth_;
 
 /** @type {number} */
 five.EventsTimeline.prototype.batchUpdateDepth_ = 0;
+
+/** @type {five.CalendarManager.EventLoadingLock} */
+five.EventsTimeline.prototype.eventsEditorEventLoadingLock_;
 
 /** @type {boolean} */
 five.EventsTimeline.prototype.layoutNeeded_ = false;
@@ -269,10 +275,7 @@ five.EventsTimeline.prototype.focus = function() {
 five.EventsTimeline.prototype.disposeInternal = function() {
   goog.disposeAll(this.eventCards_);
   delete this.owner_;
-  if (this.globalPointerUpListenerKey_) {
-    goog.events.unlistenByKey(this.globalPointerUpListenerKey_);
-    delete this.globalPointerUpListenerKey_;
-  }
+  this.disposeGlobalPointerUp_();
   goog.base(this, 'disposeInternal');
 };
 
@@ -381,7 +384,11 @@ five.EventsTimeline.prototype.eventsChanged = function(changedEvents) {
 five.EventsTimeline.prototype.setSelectedEvents = function(selectedEvents) {
   var selectedEventCards = this.getEventCardsForEvents_(selectedEvents);
   this.eventsEditor_.setEvents(selectedEventCards);
-  this.owner_.setPauseEventsLoading(this.eventsEditor_.isVisible());
+  if (!this.eventsEditorEventLoadingLock_) {
+    this.eventsEditorEventLoadingLock_ = this.owner_.createEventLoadingLock();
+    this.registerDisposable(this.eventsEditorEventLoadingLock_);
+  }
+  this.eventsEditorEventLoadingLock_.setLocked(this.eventsEditor_.isVisible());
   this.layout_();
 };
 
@@ -739,9 +746,11 @@ five.EventsTimeline.prototype.handlePointerDown_ = function(e) {
   this.clearGlobalClickCancel_();
   this.pointerDownTime_ = this.getPointerEventTime_(e);
   this.mouseDownShiftKey_ = e.shiftKey;
-  this.globalPointerUpListenerKey_ = goog.events.listen(window,
-      [goog.events.EventType.MOUSEUP,
-       goog.events.EventType.TOUCHEND],
+  this.globalMouseUpListenerKey_ = goog.events.listen(window,
+      goog.events.EventType.MOUSEUP,
+      this.handleGlobalPointerUp_, false, this);
+  this.globalTouchEndListenerKey_ = goog.events.listen(window,
+      goog.events.EventType.TOUCHEND,
       this.handleGlobalPointerUp_, false, this);
 };
 
@@ -849,13 +858,17 @@ five.EventsTimeline.prototype.clearPointerDown_ = function(opt_forNewPointerDown
     delete this.pointerDownMoveControl_;
     delete this.pointerDownMoveControlType_;
   }
-  this.clearGlobalPointerUp_();
+  this.disposeGlobalPointerUp_();
 };
 
-five.EventsTimeline.prototype.clearGlobalPointerUp_ = function() {
-  if (this.globalPointerUpListenerKey_) {
-    goog.events.unlistenByKey(this.globalPointerUpListenerKey_);
-    delete this.globalPointerUpListenerKey_;
+five.EventsTimeline.prototype.disposeGlobalPointerUp_ = function() {
+  if (this.globalMouseUpListenerKey_) {
+    goog.events.unlistenByKey(this.globalMouseUpListenerKey_);
+    delete this.globalMouseUpListenerKey_;
+  }
+  if (this.globalTouchEndListenerKey_) {
+    goog.events.unlistenByKey(this.globalTouchEndListenerKey_);
+    delete this.globalTouchEndListenerKey_;
   }
 };
 

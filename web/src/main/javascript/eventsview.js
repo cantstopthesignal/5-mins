@@ -42,6 +42,10 @@ five.EventsView = function(appContext, calendarManager, appBar) {
   /** @type {five.CalendarManager} */
   this.calendarManager_ = calendarManager;
 
+  /** @type {!five.CalendarManager.EventLoadingLock} */
+  this.eventEditorEventLoadingLock_ = this.calendarManager_.createEventLoadingLock();
+  this.registerDisposable(this.eventEditorEventLoadingLock_);
+
   /** @type {five.AppBar} */
   this.appBar_ = appBar;
 
@@ -740,15 +744,14 @@ five.EventsView.prototype.cancelDragCreateEvent = function() {
 
 five.EventsView.prototype.commitDragCreateEvent = function() {
   if (this.dragCreateEvent_) {
+    var event = this.dragCreateEvent_;
     var dialog = this.openEditEventDialog_(this.dragCreateEvent_, true);
-    this.eventHandler.listen(dialog, five.EditEventDialog.EventType.DONE,
-        function() {
-          delete this.dragCreateEvent_;
-        });
     this.eventHandler.listen(dialog, five.EditEventDialog.EventType.CANCEL,
         function() {
-          this.cancelDragCreateEvent();
+          this.replaceSelectedEvents_([]);
+          this.removeEvent_(event);
         });
+    delete this.dragCreateEvent_;
   }
 };
 
@@ -830,8 +833,9 @@ five.EventsView.prototype.commitDragEvents = function() {
   delete this.dragEventsLastUpdateTimes_;
 };
 
-five.EventsView.prototype.setPauseEventsLoading = function(pause) {
-  this.calendarManager_.setPauseEventsLoading(pause);
+/** @return {!five.CalendarManager.EventLoadingLock} */
+five.EventsView.prototype.createEventLoadingLock = function() {
+  return this.calendarManager_.createEventLoadingLock();
 };
 
 /** @param {goog.events.Event} e */
@@ -895,12 +899,14 @@ five.EventsView.prototype.handleEventEdit_ = function(e) {
 five.EventsView.prototype.openEditEventDialog_ = function(event, newCreate) {
   goog.asserts.assert(this.events_.indexOf(event) >= 0);
   var dialog = new five.EditEventDialog(this.appContext_, event, newCreate);
-  this.calendarManager_.setPauseEventsLoading(true);
+  this.eventEditorEventLoadingLock_.setLocked(true);
   this.eventHandler.
       listen(dialog, five.EditEventDialog.EventType.EVENT_CHANGED,
           this.handleEditEventDialogEventChanged_.bind(this, event)).
       listenOnce(dialog, five.EditEventDialog.EventType.DONE,
-          this.handleEditEventDialogDone_.bind(this, event));
+          this.handleEditEventDialogDone_.bind(this, event)).
+      listenOnce(dialog, five.EditEventDialog.EventType.CANCEL,
+          this.handleEditEventDialogCancel_, this);
   dialog.show();
   return dialog;
 };
@@ -915,8 +921,12 @@ five.EventsView.prototype.handleEditEventDialogEventChanged_ = function(event) {
 /** @param {!five.Event} event */
 five.EventsView.prototype.handleEditEventDialogDone_ = function(event) {
   this.handleEditEventDialogEventChanged_(event);
-  this.calendarManager_.setPauseEventsLoading(false);
-}
+  this.eventEditorEventLoadingLock_.setLocked(false);
+};
+
+five.EventsView.prototype.handleEditEventDialogCancel_ = function() {
+  this.eventEditorEventLoadingLock_.setLocked(false);
+};
 
 five.EventsView.prototype.registerListenersForCalendarManager_ = function() {
   this.eventHandler.
