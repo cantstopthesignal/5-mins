@@ -187,6 +187,7 @@ public class CalendarFragment extends Fragment {
                     }
                     buttonInfo = new ButtonInfo(buttonId, resId);
                     mFragment.mButtonInfos.add(buttonInfo);
+                    mFragment.mMenu.findItem(buttonInfo.resId).setVisible(true);
                 }
                 buttonInfo.jsCallback = jsCallback;
             });
@@ -202,11 +203,7 @@ public class CalendarFragment extends Fragment {
                 if (mFragment.mMenu == null) {
                     throw new IllegalStateException("Menu is null");
                 }
-                MenuItem item = mFragment.mMenu.findItem(buttonInfo.resId);
-                if (item == null) {
-                    throw new IllegalStateException("Menu item not found for button " + buttonInfo.id);
-                }
-                item.setVisible(isVisible);
+                mFragment.mMenu.findItem(buttonInfo.resId).setVisible(isVisible);
             });
         }
 
@@ -369,10 +366,8 @@ public class CalendarFragment extends Fragment {
 
         mWebView.addJavascriptInterface(mWebAppInterface, JAVASCRIPT_INTERFACE_NAME);
 
-        if (BuildConfig.DEBUG) {
-            mWebView.clearCache(true);
-        }
-        mWebView.loadUrl(getWebUri().toString());
+        boolean clearCache = BuildConfig.DEBUG;
+        reload(clearCache);
     }
 
     private void onCreateEventClicked() {
@@ -399,8 +394,7 @@ public class CalendarFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_clear_cache) {
-            mWebView.clearCache(true);
-            mWebView.loadUrl(getWebUri().toString());
+            reload(true);
             return true;
         }
 
@@ -412,6 +406,18 @@ public class CalendarFragment extends Fragment {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void reload(boolean clearCache) {
+        for (ButtonInfo buttonInfo : mButtonInfos) {
+            mMenu.findItem(buttonInfo.resId).setVisible(false);
+        }
+        mButtonInfos.clear();
+
+        if (clearCache) {
+            mWebView.clearCache(true);
+        }
+        mWebView.loadUrl(getWebUri().toString());
     }
 
     private static Uri getWebUri() {
