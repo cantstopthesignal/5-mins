@@ -363,8 +363,16 @@ TimePicker.prototype.setReverseInputOrder = function(reverseInputOrder) {
   this.reverseInputOrder_ = reverseInputOrder;
 };
 
-TimePicker.prototype.setDate = function(date) {
-  this.date_ = date;
+/**
+ * @param {goog.date.DateTime} newDate
+ * @param {boolean=} opt_forceUpdate
+ */
+TimePicker.prototype.setDate = function(newDate, opt_forceUpdate) {
+  if (!opt_forceUpdate && this.date_ && newDate &&
+      goog.date.Date.compare(this.date_, newDate) == 0) {
+    return;
+  }
+  this.date_ = newDate;
   if (this.datePicker_) {
     this.datePicker_.setDate(this.date_);
     this.setTimeValue_(this.date_);
@@ -373,7 +381,15 @@ TimePicker.prototype.setDate = function(date) {
 };
 
 TimePicker.prototype.getDate = function() {
-  var date = this.datePicker_.getDate().clone();
+  return this.date_;
+};
+
+/**
+ * @param {goog.date.Date=} opt_datePickerDate
+ */
+TimePicker.prototype.calculateDate_ = function(opt_datePickerDate) {
+  var datePickerDate = opt_datePickerDate || this.datePicker_.getDate();
+  var date = new goog.date.DateTime(datePickerDate);
   goog.asserts.assertObject(date);
   var timeStr = this.timeEl_.value;
   if (timeStr.length == 0) {
@@ -409,6 +425,7 @@ TimePicker.prototype.createDom = function() {
   this.datePicker_ = new goog.ui.InputDatePicker(TimePicker.DATE_FORMATTER_,
       TimePicker.DATE_PARSER_);
   this.datePicker_.decorate(this.dateEl_);
+  this.datePicker_.setPopupParentElement(this.el);
   goog.dom.classlist.add(this.datePicker_.getDatePicker().getElement(),
       'date-picker');
   this.registerDisposable(this.datePicker_);
@@ -441,7 +458,7 @@ TimePicker.prototype.createDom = function() {
     this.el.appendChild(this.dateEl_);
   }
 
-  this.setDate(this.date_);
+  this.setDate(this.date_, true);
 
   this.eventHandler.
       listen(this.timeEl_, goog.events.EventType.KEYDOWN,
@@ -497,20 +514,33 @@ TimePicker.prototype.handleTimeInputFocus_ = function() {
 };
 
 TimePicker.prototype.handleTimeInputBlur_ = function() {
-  var date = this.getDate();
-  if (!date) {
+  var newDate = this.calculateDate_();
+  if (!newDate) {
     this.timeEl_.select();
     return;
   }
-  this.setTimeValue_(date);
+  if (goog.date.Date.compare(goog.asserts.assertObject(this.date_), newDate) == 0) {
+    return;
+  }
+  this.date_ = newDate;
+  this.setTimeValue_(newDate);
   this.dispatchEvent(TimePicker.EventType.CHANGE);
 };
 
-TimePicker.prototype.handleDatePickerChange_ = function() {
+/** @param {goog.ui.DatePickerEvent} e */
+TimePicker.prototype.handleDatePickerChange_ = function(e) {
+  if (!e.date) {
+    return;
+  }
   window.setTimeout(function() {
     if (document.activeElement == document.body) {
       this.timeEl_.select();
     }
+    var newDate = this.calculateDate_(e.date);
+    if (!newDate || goog.date.Date.compare(this.date_, newDate) == 0) {
+      return;
+    }
+    this.date_ = newDate;
     this.dispatchEvent(TimePicker.EventType.CHANGE);
   }.bind(this), 0);
 };
