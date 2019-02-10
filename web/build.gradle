@@ -137,8 +137,10 @@ task generateJavascriptDeps(type: ClosureGenerateDepsTask) {
 compileJavascriptDebug.dependsOn(generateJavascriptDeps)
 
 war {
-    dependsOn compileJavascriptDebug
-    dependsOn compileJavascriptOptimized
+    if (!project.hasProperty('noJsCompile')) {
+        dependsOn compileJavascriptDebug
+        dependsOn compileJavascriptOptimized
+    }
     exclude "js"
     from("${buildDir}/js", {
         into 'js'
