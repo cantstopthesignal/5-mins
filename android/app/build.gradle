@@ -57,7 +57,7 @@ task publishReleaseAlpha(type : AndroidPublishTask) {
 
     doFirst {
         android.applicationVariants.all { variant ->
-            if (variant.name.equals("release")) {
+            if (variant.name == "release") {
                 variant.outputs.each { output ->
                     apkFile = output.outputFile
                 }
