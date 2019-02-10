@@ -310,7 +310,7 @@ five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
   var event = /** @type {!five.Event} */ (e.target);
   goog.asserts.assert(this.events_.indexOf(event) >= 0);
   this.startBatchRenderUpdate_();
-  this.maybeUpgradeFromProposed_(event);
+  var upgradedFromProposed = this.maybeUpgradeFromProposed_(event);
   if (e.shiftKey) {
     var existingIndex = this.selectedEvents_.indexOf(event);
     if (e.type == five.Event.EventType.SELECT) {
@@ -333,16 +333,21 @@ five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
     this.replaceSelectedEvents_(newSelectedEvents);
   }
   this.finishBatchRenderUpdate_();
+  if (upgradedFromProposed) {
+    this.openEditEventDialogForCreate_(event);
+  }
 };
 
 five.EventsView.prototype.maybeUpgradeFromProposed_ = function(event) {
-  if (event.isProposed()) {
+  var upgrade = event.isProposed();
+  if (upgrade) {
     var proposedIndex = this.proposedEvents_.indexOf(event);
     goog.asserts.assert(proposedIndex >= 0);
     this.proposedEvents_.splice(proposedIndex, 1);
     event.setProposed(false);
   }
   this.replaceProposedEvents_([]);
+  return upgrade;
 };
 
 five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
@@ -443,12 +448,7 @@ five.EventsView.prototype.handleEventsTimelineEventCreate_ = function(e) {
   var newEvent = five.Event.createNew(e.startTime, e.endTime, '<new>');
   this.addEvent_(newEvent);
   this.replaceSelectedEvents_([newEvent]);
-  var dialog = this.openEditEventDialog_(newEvent, true);
-  this.eventHandler.listen(dialog, five.EditEventDialog.EventType.CANCEL,
-      function() {
-        this.replaceSelectedEvents_([]);
-        this.removeEvent_(newEvent);
-      });
+  this.openEditEventDialogForCreate_(newEvent);
 };
 
 /** @param {five.EventSelectNeighborEvent} e */
@@ -524,7 +524,7 @@ five.EventsView.prototype.handleEventsTimelineEventsEdit_ = function() {
   }
   var event = this.selectedEvents_[0];
   this.maybeUpgradeFromProposed_(event);
-  this.openEditEventDialog_(event, false);
+  this.openEditEventDialog_(event);
 };
 
 five.EventsView.prototype.handleEventsTimelineEventsDelete_ = function() {
@@ -801,12 +801,7 @@ five.EventsView.prototype.cancelDragCreateEvent = function() {
 five.EventsView.prototype.commitDragCreateEvent = function() {
   if (this.dragCreateEvent_) {
     var event = this.dragCreateEvent_;
-    var dialog = this.openEditEventDialog_(this.dragCreateEvent_, true);
-    this.eventHandler.listen(dialog, five.EditEventDialog.EventType.CANCEL,
-        function() {
-          this.replaceSelectedEvents_([]);
-          this.removeEvent_(event);
-        });
+    this.openEditEventDialogForCreate_(this.dragCreateEvent_);
     delete this.dragCreateEvent_;
   }
 };
@@ -936,9 +931,12 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
 five.EventsView.prototype.handleEventEdit_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
   var event = /** @type {!five.Event} */ (e.target);
-  this.maybeUpgradeFromProposed_(event);
+  if (this.maybeUpgradeFromProposed_(event)) {
+    this.openEditEventDialogForCreate_(event);
+    return;
+  }
   if (!five.device.isWebView() || e.doubleClick) {
-    this.openEditEventDialog_(event, false);
+    this.openEditEventDialog_(event);
   } else {
     this.calendarManager_.saveMutations().addCallback(function() {
       this.replaceSelectedEvents_([]);
@@ -948,14 +946,26 @@ five.EventsView.prototype.handleEventEdit_ = function(e) {
 };
 
 /**
+ * @param {!five.Event} newEvent
+ */
+five.EventsView.prototype.openEditEventDialogForCreate_ = function(newEvent) {
+  var dialog = this.openEditEventDialog_(newEvent, true);
+  this.eventHandler.listen(dialog, five.EditEventDialog.EventType.CANCEL,
+      function() {
+        this.replaceSelectedEvents_([]);
+        this.removeEvent_(newEvent);
+      });
+};
+
+/**
  * @param {!five.Event} event
- * @param {boolean} newCreate Whether the editor should indicate that
+ * @param {boolean=} opt_newCreate Whether the editor should indicate that
  *     this is a newly created event.
  * @return {!five.EditEventDialog}
  */
-five.EventsView.prototype.openEditEventDialog_ = function(event, newCreate) {
+five.EventsView.prototype.openEditEventDialog_ = function(event, opt_newCreate) {
   goog.asserts.assert(this.events_.indexOf(event) >= 0);
-  var dialog = new five.EditEventDialog(this.appContext_, event, newCreate);
+  var dialog = new five.EditEventDialog(this.appContext_, event, !!opt_newCreate);
   this.eventEditorEventLoadingLock_.setLocked(true);
   this.eventHandler.
       listen(dialog, five.EditEventDialog.EventType.EVENT_CHANGED,
