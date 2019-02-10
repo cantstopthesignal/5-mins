@@ -1,0 +1,12 @@
+repositories {
+    jcenter()
+    google()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy:2.4.4'
+    compile group: 'com.google.oauth-client', name: 'google-oauth-client-java6', version: '1.28.0'
+    compile group: 'com.google.oauth-client', name: 'google-oauth-client-jetty', version: '1.28.0'
+    compile group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
+    compile 'com.google.apis:google-api-services-androidpublisher:v3-rev46-1.25.0'
+}
