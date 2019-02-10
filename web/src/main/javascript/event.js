@@ -165,6 +165,9 @@ five.Event.SummaryInfo.prototype.getType = function() {
 /** @type {boolean} */
 five.Event.prototype.selected_ = false;
 
+/** @type {boolean} */
+five.Event.prototype.proposed_ = false;
+
 /** @type {goog.date.DateTime} */
 five.Event.prototype.startTime_;
 
@@ -215,6 +218,7 @@ five.Event.prototype.getDuration = function() {
 five.Event.prototype.attachDisplay = function(display) {
   this.displays_.push(display);
   display.setSelected(this.selected_);
+  display.setProposed(this.proposed_);
   var EventType = five.Event.EventType;
   this.eventHandler_.
       listen(display, [EventType.SELECT, EventType.DESELECT, EventType.EDIT],
@@ -450,6 +454,19 @@ five.Event.prototype.setSelected = function(selected) {
   this.selected_ = selected;
   goog.array.forEach(this.displays_, function(display) {
     display.setSelected(this.selected_);
+  }, this);
+};
+
+/** @return {boolean} */
+five.Event.prototype.isProposed = function() {
+  return this.proposed_;
+};
+
+/** @param {boolean} proposed */
+five.Event.prototype.setProposed = function(proposed) {
+  this.proposed_ = proposed;
+  goog.array.forEach(this.displays_, function(display) {
+    display.setProposed(this.proposed_);
   }, this);
 };
 

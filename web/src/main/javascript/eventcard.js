@@ -50,6 +50,9 @@ five.EventCard.prototype.theme_ = five.EventTheme.DEFAULT;
 /** @type {boolean} */
 five.EventCard.prototype.selected_ = false;
 
+/** @type {boolean} */
+five.EventCard.prototype.proposed_ = false;
+
 /** @type {goog.math.Rect} */
 five.EventCard.prototype.rect_;
 
@@ -81,6 +84,7 @@ five.EventCard.prototype.setTimeAxisPatch = function(patch) {
   if (this.timeAxisPatch_) {
     this.timeAxisPatch_.setEventTheme(this.theme_);
     this.timeAxisPatch_.setSelected(this.selected_);
+    this.timeAxisPatch_.setProposed(this.proposed_);
   }
   this.timeAxisPatchUpdated();
 };
@@ -162,10 +166,16 @@ five.EventCard.prototype.updateThemeDisplay_ = function() {
   if (!this.theme_) {
     return;
   }
-  this.el.style.borderColor = this.selected_ ? this.theme_.selectedBorderColor :
-      this.theme_.borderColor;
-  this.el.style.backgroundColor = this.selected_ ? this.theme_.selectedBgColor :
-      this.theme_.bgColor;
+  if (this.proposed_) {
+    this.el.style.borderColor = this.theme_.proposedBorderColor;
+    this.el.style.backgroundColor = this.theme_.proposedBgColor;
+  } else if (this.selected_) {
+    this.el.style.borderColor = this.theme_.selectedBorderColor;
+    this.el.style.backgroundColor = this.theme_.selectedBgColor;
+  } else {
+    this.el.style.borderColor = this.theme_.borderColor;
+    this.el.style.backgroundColor = this.theme_.bgColor;
+  }
 };
 
 /** @param {goog.math.Rect} rect */
@@ -200,6 +210,19 @@ five.EventCard.prototype.setSelected = function(selected) {
   this.updateThemeDisplay_();
   if (this.timeAxisPatch_) {
     this.timeAxisPatch_.setSelected(this.selected_);
+  }
+};
+
+/** @param {boolean} proposed */
+five.EventCard.prototype.setProposed = function(proposed) {
+  if (!this.el) {
+    this.createDom();
+  }
+  this.proposed_ = proposed;
+  goog.dom.classlist.enable(this.el, 'proposed', this.proposed_);
+  this.updateThemeDisplay_();
+  if (this.timeAxisPatch_) {
+    this.timeAxisPatch_.setProposed(this.proposed_);
   }
 };
 

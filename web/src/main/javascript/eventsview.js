@@ -55,6 +55,9 @@ five.EventsView = function(appContext, calendarManager, appBar) {
   /** @type {!Array.<!five.Event>} */
   this.selectedEvents_ = [];
 
+  /** @type {!Array.<!five.Event>} */
+  this.proposedEvents_ = [];
+
   /** @type {five.AndroidAppApi} */
   this.androidAppApi_;
 
@@ -149,6 +152,11 @@ five.EventsView.prototype.createDom = function() {
     this.eventHandler.listen(nowButton.el, goog.events.EventType.CLICK,
         this.handleNowClick_);
 
+    var proposeButton = new five.Button('Propose');
+    this.appBar_.getButtonBar().addButton(proposeButton);
+    this.eventHandler.listen(proposeButton.el, goog.events.EventType.CLICK,
+        this.handleProposeClick_);
+
     this.saveButton_ = new five.Button('Save');
     this.appBar_.getButtonBar().addButton(this.saveButton_);
     this.eventHandler.listen(this.saveButton_.el, goog.events.EventType.CLICK,
@@ -160,6 +168,9 @@ five.EventsView.prototype.createDom = function() {
 
     this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.NOW,
         goog.bind(this.handleNowClick_, this));
+
+    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.PROPOSE,
+        goog.bind(this.handleProposeClick_, this));
 
     this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.SAVE,
         goog.bind(this.handleSaveClick_, this));
@@ -255,6 +266,16 @@ five.EventsView.prototype.selectedEventsChanged_ = function() {
   }, this);
 };
 
+/** @param {!Array.<!five.Event>} newProposedEvents */
+five.EventsView.prototype.replaceProposedEvents_ = function(newProposedEvents) {
+  goog.array.forEach(this.proposedEvents_, function(proposedEvent) {
+    if (proposedEvent.isProposed()) {
+      this.removeEvent_(proposedEvent);
+    }
+  }, this);
+  this.proposedEvents_ = newProposedEvents;
+};
+
 /** @param {five.Event} event */
 five.EventsView.prototype.registerListenersForEvent_ = function(event) {
   var EventType = five.Event.EventType;
@@ -287,6 +308,12 @@ five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
   var event = /** @type {!five.Event} */ (e.target);
   goog.asserts.assert(this.events_.indexOf(event) >= 0);
   this.startBatchRenderUpdate_();
+  if (event.isProposed()) {
+    var proposedIndex = this.proposedEvents_.indexOf(event);
+    goog.asserts.assert(proposedIndex >= 0);
+    this.proposedEvents_.splice(proposedIndex, 1);
+    event.setProposed(false);
+  }
   if (e.shiftKey) {
     var existingIndex = this.selectedEvents_.indexOf(event);
     if (e.type == five.Event.EventType.SELECT) {
@@ -308,6 +335,7 @@ five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
     }
     this.replaceSelectedEvents_(newSelectedEvents);
   }
+  this.replaceProposedEvents_([]);
   this.finishBatchRenderUpdate_();
 };
 
@@ -399,6 +427,7 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
   this.replaceSelectedEvents_([]);
+  this.replaceProposedEvents_([]);
 };
 
 /** @param {five.EventCreateEvent} e */
@@ -560,51 +589,64 @@ five.EventsView.prototype.handleEventsTimelineEventsSnapTo_ = function(e) {
         selectedEvent.addMutation(new five.EventMutation.SetTimeRange(startTime, snapTime));
       }
     });
+    goog.array.forEach(this.columns_, function(column) {
+      column.timeline.eventsChanged(this.selectedEvents_);
+    }, this);
   } else if (e.dir == five.EventSnapToEvent.Dir.PREVIOUS ||
       e.dir == five.EventSnapToEvent.Dir.NEXT) {
-    /**
-     * @param {goog.date.DateTime} a
-     * @param {goog.date.DateTime} b
-     */
-    var compareTime = function(a, b) {
-      return goog.date.Date.compare(goog.asserts.assertObject(a), goog.asserts.assertObject(b));
-    };
-    var inDirection = e.dir == five.EventSnapToEvent.Dir.PREVIOUS ?
-        function(value) { return value < 0; } :
-        function(value) { return value > 0; };
-    goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
-      var selectedEventTime = e.anchor == five.EventSnapToEvent.Anchor.START ?
-          selectedEvent.getStartTime() : selectedEvent.getEndTime();
-      var bestEvent = null;
-      /** @type {goog.date.DateTime} */
-      var bestEventTime = null;
-      goog.array.forEach(this.events_, function(event) {
-        var eventTime = e.anchor == five.EventSnapToEvent.Anchor.START ?
-            event.getEndTime() : event.getStartTime();
-        var timeDifference = eventTime.getTime() - selectedEventTime.getTime();
-        if (!inDirection(timeDifference) || Math.abs(five.util.msToMin(timeDifference)) > 12 * 60) {
-          return;
-        }
-        if (bestEvent == null || inDirection(compareTime(bestEventTime, eventTime))) {
-          bestEvent = event;
-          bestEventTime = eventTime;
-        }
-      });
-      if (bestEvent) {
-        if (e.anchor == five.EventSnapToEvent.Anchor.START) {
-          selectedEvent.addMutation(new five.EventMutation.SetTimeRange(
-              goog.asserts.assertObject(bestEventTime),
-              goog.asserts.assertObject(selectedEvent.getEndTime())));
-        } else {
-          selectedEvent.addMutation(new five.EventMutation.SetTimeRange(
-              goog.asserts.assertObject(selectedEvent.getStartTime()),
-              goog.asserts.assertObject(bestEventTime)));
-        }
-      }
-    }, this);
+    this.snapEvents_(this.selectedEvents_,
+        e.dir == five.EventSnapToEvent.Dir.PREVIOUS,
+        e.anchor == five.EventSnapToEvent.Anchor.START);
   }
+};
+
+/**
+ * @param {!Array.<!five.Event>} snapEvents
+ * @param {boolean} toPrevious
+ * @param {boolean} anchorStart
+ */
+five.EventsView.prototype.snapEvents_ = function(snapEvents, toPrevious, anchorStart) {
+  /**
+   * @param {goog.date.DateTime} a
+   * @param {goog.date.DateTime} b
+   */
+  var compareTime = function(a, b) {
+    return goog.date.Date.compare(goog.asserts.assertObject(a), goog.asserts.assertObject(b));
+  };
+  var inDirection = toPrevious ?
+      function(value) { return value < 0; } :
+      function(value) { return value > 0; };
+  goog.array.forEach(snapEvents, function(snapEvent) {
+    var snapEventTime = anchorStart ? snapEvent.getStartTime() : snapEvent.getEndTime();
+    var bestEvent = null;
+    /** @type {goog.date.DateTime} */
+    var bestEventTime = null;
+    goog.array.forEach(this.events_, function(event) {
+      var eventTime = anchorStart ?
+          event.getEndTime() : event.getStartTime();
+      var timeDifference = eventTime.getTime() - snapEventTime.getTime();
+      if (!inDirection(timeDifference) || Math.abs(five.util.msToMin(timeDifference)) > 12 * 60) {
+        return;
+      }
+      if (bestEvent == null || inDirection(compareTime(bestEventTime, eventTime))) {
+        bestEvent = event;
+        bestEventTime = eventTime;
+      }
+    });
+    if (bestEvent) {
+      if (anchorStart) {
+        snapEvent.addMutation(new five.EventMutation.SetTimeRange(
+            goog.asserts.assertObject(bestEventTime),
+            goog.asserts.assertObject(snapEvent.getEndTime())));
+      } else {
+        snapEvent.addMutation(new five.EventMutation.SetTimeRange(
+            goog.asserts.assertObject(snapEvent.getStartTime()),
+            goog.asserts.assertObject(bestEventTime)));
+      }
+    }
+  }, this);
   goog.array.forEach(this.columns_, function(column) {
-    column.timeline.eventsChanged(this.selectedEvents_);
+    column.timeline.eventsChanged(snapEvents);
   }, this);
 };
 
@@ -1178,6 +1220,36 @@ five.EventsView.prototype.handleNowClick_ = function(opt_e) {
     opt_e.preventDefault();
   }
   this.scrollToNow_(true);
+};
+
+/** @param {goog.events.Event=} opt_e */
+five.EventsView.prototype.handleProposeClick_ = function(opt_e) {
+  if (opt_e) {
+    opt_e.preventDefault();
+  }
+
+  var newProposedEvents = [];
+
+  for (var i = 0; i < 4; i++) {
+    var startTime = five.util.roundToFiveMinutes(new goog.date.DateTime());
+    var endTime = startTime.clone();
+    if (i == 0) {
+      endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+    } else if (i == 1 || i == 2) {
+      startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+    } else if (i == 3) {
+      endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 60));
+    }
+    var proposedEvent = five.Event.createNew(startTime, endTime, '<new>');
+    if (i == 2) {
+      this.snapEvents_([proposedEvent], true, true);
+    }
+    proposedEvent.setProposed(true);
+    this.addEvent_(proposedEvent);
+    newProposedEvents.push(proposedEvent);
+  }
+
+  this.replaceProposedEvents_(newProposedEvents);
 };
 
 /** @param {goog.events.Event=} opt_e */

@@ -26,7 +26,8 @@ five.AndroidAppApi.SERVICE_ID = 's' + goog.getUid(five.AndroidAppApi);
 five.AndroidAppApi.ButtonId = {
   REFRESH: 'refresh',
   SAVE: 'save',
-  NOW: 'now'
+  NOW: 'now',
+  PROPOSE: 'propose'
 };
 
 /** @type {Object} */

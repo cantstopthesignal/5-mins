@@ -27,6 +27,9 @@ five.TimeAxisPatch.prototype.eventTheme;
 /** @type {boolean} */
 five.TimeAxisPatch.prototype.selected = false;
 
+/** @type {boolean} */
+five.TimeAxisPatch.prototype.proposed = false;
+
 /** @type {number} */
 five.TimeAxisPatch.prototype.axisTop;
 
@@ -81,6 +84,14 @@ five.TimeAxisPatch.prototype.setParams = function(axisTop, axisBottom,
 /** @param {boolean} selected */
 five.TimeAxisPatch.prototype.setSelected = function(selected) {
   this.selected = selected;
+  if (this.owner_) {
+    this.owner_.paint();
+  }
+};
+
+/** @param {boolean} proposed */
+five.TimeAxisPatch.prototype.setProposed = function(proposed) {
+  this.proposed = proposed;
   if (this.owner_) {
     this.owner_.paint();
   }
