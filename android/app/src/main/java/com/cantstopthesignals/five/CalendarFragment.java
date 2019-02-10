@@ -425,10 +425,13 @@ public class CalendarFragment extends Fragment {
 
     private void reload(boolean clearCache) {
         for (ButtonInfo buttonInfo : mButtonInfos) {
-            mMenu.findItem(buttonInfo.resId).setVisible(false);
+            if (buttonInfo.resId == R.id.action_propose) {
+                mFab.hide();
+            } else {
+                mMenu.findItem(buttonInfo.resId).setVisible(false);
+            }
         }
         mButtonInfos.clear();
-        mFab.hide();
 
         if (clearCache) {
             mWebView.clearCache(true);
