@@ -80,6 +80,7 @@ public class CalendarFragment extends Fragment {
     private List<String> mLoadEventsJsCallbacks = new ArrayList<>();
     private String mLoadEventsDefaultJsCallback;
 
+    private FloatingActionButton mFab;
     private Menu mMenu;
     private List<ButtonInfo> mButtonInfos = new ArrayList<>();
 
@@ -182,12 +183,18 @@ public class CalendarFragment extends Fragment {
                         resId = R.id.action_save;
                     } else if ("now".equals(buttonId)) {
                         resId = R.id.action_now;
+                    } else if ("propose".equals(buttonId)) {
+                        resId = R.id.action_propose;
                     } else {
                         throw new IllegalArgumentException("Unexpected button id: " + buttonId);
                     }
                     buttonInfo = new ButtonInfo(buttonId, resId);
                     mFragment.mButtonInfos.add(buttonInfo);
-                    mFragment.mMenu.findItem(buttonInfo.resId).setVisible(true);
+                    if (buttonInfo.resId == R.id.action_propose) {
+                        mFragment.mFab.show();
+                    } else {
+                        mFragment.mMenu.findItem(buttonInfo.resId).setVisible(true);
+                    }
                 }
                 buttonInfo.jsCallback = jsCallback;
             });
@@ -289,6 +296,7 @@ public class CalendarFragment extends Fragment {
             Log.d(TAG,"openEventEditor(" + calendarId + ", " + eventIdString + ")");
             mFragment.runOnUiThreadSync(() -> mFragment.openEventEditor(calendarId, eventId));
         }
+
         public void onEventsLoaded(List<Event> events) {
             JSONObject result = new JSONObject();
             try {
@@ -346,8 +354,8 @@ public class CalendarFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        FloatingActionButton fab = view.findViewById(R.id.fab);
-        fab.setOnClickListener(fabView -> onCreateEventClicked());
+        mFab = view.findViewById(R.id.fab);
+        mFab.setOnClickListener(fabView -> maybeInvokeJavascriptButton(R.id.action_propose));
 
         mWebView = view.findViewById(R.id.webview);
         mWebView.setWebViewClient(new WebViewClient());
@@ -370,7 +378,7 @@ public class CalendarFragment extends Fragment {
         reload(clearCache);
     }
 
-    private void onCreateEventClicked() {
+    private void createEventForNextHour() {
         Calendar startTime = Calendar.getInstance();
         startTime = Util.roundToFiveMinutes(startTime);
         Calendar endTime = (Calendar) startTime.clone();
@@ -398,14 +406,21 @@ public class CalendarFragment extends Fragment {
             return true;
         }
 
-        ButtonInfo buttonInfo = getButtonByResId(item.getItemId());
+        if (maybeInvokeJavascriptButton(item.getItemId())) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private boolean maybeInvokeJavascriptButton(int resId) {
+        ButtonInfo buttonInfo = getButtonByResId(resId);
         if (buttonInfo != null && buttonInfo.jsCallback != null) {
             mWebView.evaluateJavascript(
                     buttonInfo.jsCallback + "();", null);
             return true;
         }
-
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     private void reload(boolean clearCache) {
@@ -413,6 +428,7 @@ public class CalendarFragment extends Fragment {
             mMenu.findItem(buttonInfo.resId).setVisible(false);
         }
         mButtonInfos.clear();
+        mFab.hide();
 
         if (clearCache) {
             mWebView.clearCache(true);
