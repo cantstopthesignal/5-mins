@@ -244,7 +244,7 @@ public class CalendarFragment extends Fragment {
             mFragment.runOnUiThreadSync(() -> {
                 mFragment.mLoadEventsJsCallbacks.add(jsCallback);
                 mFragment.loadCalendarEvents(startTimeCalendar, endTimeCalendar);
-                mFragment.refreshCalendar();
+                mFragment.syncCalendar(true);
             });
         }
 
@@ -252,6 +252,13 @@ public class CalendarFragment extends Fragment {
         public void registerEventsListener(String jsCallback) {
             mFragment.runOnUiThreadSync(() -> {
                 mFragment.mLoadEventsDefaultJsCallback = jsCallback;
+            });
+        }
+
+        @JavascriptInterface
+        public void requestSync() {
+            mFragment.runOnUiThreadSync(() -> {
+                mFragment.syncCalendar(false);
             });
         }
 
@@ -529,15 +536,17 @@ public class CalendarFragment extends Fragment {
         startActivity(intent);
     }
 
-    private void refreshCalendar() {
-        Log.d(TAG, "refreshCalendar()");
+    private void syncCalendar(boolean expedited) {
+        Log.d(TAG, "syncCalendar()");
         Account[] accounts = AccountManager.get(getContext()).getAccounts();
         for (Account account : accounts) {
             if (account.name.equals(mCalendarInfo.accountName)) {
                 String authority = CalendarContract.Calendars.CONTENT_URI.getAuthority();
                 Bundle extras = new Bundle();
-                extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-                extras.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                if (expedited) {
+                    extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+                    extras.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                }
                 ContentResolver.requestSync(account, authority, extras);
                 return;
             }

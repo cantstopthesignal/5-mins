@@ -37,6 +37,11 @@ five.BaseCalendarApi.prototype.loadEvents = goog.abstractMethod;
 five.BaseCalendarApi.prototype.registerEventsListener = goog.abstractMethod;
 
 /**
+ * @return {goog.async.Deferred}
+ */
+five.BaseCalendarApi.prototype.requestSync = goog.abstractMethod;
+
+/**
  * @param {string} calendarId
  * @param {Object} eventData
  * @return {goog.async.Deferred}

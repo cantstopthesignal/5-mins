@@ -103,6 +103,9 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
 five.CalendarApi.prototype.registerEventsListener = function(callback) {
 };
 
+five.CalendarApi.prototype.requestSync = function() {
+};
+
 /**
  * @param {string} calendarId
  * @param {Object} eventData

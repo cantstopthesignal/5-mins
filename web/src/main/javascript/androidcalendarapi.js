@@ -94,6 +94,17 @@ five.AndroidCalendarApi.prototype.registerEventsListener = function(callback) {
 };
 
 /**
+ * @return {goog.async.Deferred}
+ */
+five.AndroidCalendarApi.prototype.requestSync = function() {
+  var errback = function(error) {
+    this.logger_.severe('Error requesting sync: ' + error, error);
+  };
+  return this.callApi_('requestSync').
+      addErrback(errback, this);
+};
+
+/**
  * @param {string} calendarId
  * @param {Object} eventData
  * @return {goog.async.Deferred}

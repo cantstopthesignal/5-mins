@@ -201,7 +201,7 @@ five.CalendarManager.prototype.removeEvent = function(event) {
   this.updateHasMutations_();
 };
 
-/** @return {goog.async.DeferredList} */
+/** @return {goog.async.Deferred} */
 five.CalendarManager.prototype.saveMutations = function() {
   var deferreds = [];
   if (!this.hasMutations()) {
@@ -217,7 +217,10 @@ five.CalendarManager.prototype.saveMutations = function() {
   goog.array.forEach(this.removedEvents_, function(event) {
     deferreds.push(this.deleteEvent_(event));
   }, this);
-  return new goog.async.DeferredList(deferreds);
+  return new goog.async.DeferredList(deferreds).
+      addCallback(function(resp) {
+        this.calendarApi_.requestSync();
+      }, this);
 };
 
 /** @param {five.Event} event */
