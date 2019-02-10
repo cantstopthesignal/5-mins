@@ -167,8 +167,13 @@ five.EventCard.prototype.updateThemeDisplay_ = function() {
     return;
   }
   if (this.proposed_) {
-    this.el.style.borderColor = this.theme_.proposedBorderColor;
-    this.el.style.backgroundColor = this.theme_.proposedBgColor;
+    if (this.selected_) {
+      this.el.style.borderColor = this.theme_.proposedSelectedBorderColor;
+      this.el.style.backgroundColor = this.theme_.proposedSelectedBgColor;
+    } else {
+      this.el.style.borderColor = this.theme_.proposedBorderColor;
+      this.el.style.backgroundColor = this.theme_.proposedBgColor;
+    }
   } else if (this.selected_) {
     this.el.style.borderColor = this.theme_.selectedBorderColor;
     this.el.style.backgroundColor = this.theme_.selectedBgColor;
@@ -255,7 +260,7 @@ five.EventCard.prototype.handleDblClick_ = function(e) {
   e.preventDefault();
   e.stopPropagation();
   goog.dom.Range.clearSelection(window);
-  this.dispatchEvent(five.Event.EventType.EDIT);
+  this.dispatchEvent(new five.EventEditEvent(true));
 };
 
 /** @param {goog.events.BrowserEvent} e */

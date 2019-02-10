@@ -3,6 +3,7 @@
 goog.provide('five.Event');
 goog.provide('five.Event.EventType');
 
+goog.require('five.EventEditEvent');
 goog.require('five.EventMoveEvent');
 goog.require('five.EventMutation');
 goog.require('goog.array');
@@ -47,7 +48,7 @@ five.Event.EventType = {
   DESELECT: goog.events.getUniqueId('deselect'),
   DELETE: goog.events.getUniqueId('delete'),
   DUPLICATE: goog.events.getUniqueId('duplicate'),
-  EDIT: goog.events.getUniqueId('edit'),
+  EDIT: five.EventEditEvent.EventType.EDIT,
   MOVE: five.EventMoveEvent.EventType.MOVE,
   MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),
   DATA_CHANGED: goog.events.getUniqueId('data_changed')

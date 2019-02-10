@@ -16,6 +16,9 @@ five.mainCssLoader.load = function() {
 
   loadStylesheet('/css/main.css');
   loadStylesheet('/css/main' + five.device.getDensity() + 'density.css');
+  if (five.device.isMobile()) {
+    loadStylesheet('/css/mainmobile.css');
+  }
   if (five.device.isWebView()) {
     loadStylesheet('/css/mainwebview.css');
   }

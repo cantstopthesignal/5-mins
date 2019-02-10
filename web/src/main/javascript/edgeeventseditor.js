@@ -4,6 +4,7 @@ goog.provide('five.EdgeEventsEditor');
 
 goog.require('five.Component');
 goog.require('five.Event');
+goog.require('five.EventEditEvent');
 goog.require('five.EventMoveEvent');
 goog.require('five.EventsEditor');
 goog.require('five.PointerDownMoveControlEvent');
@@ -230,7 +231,7 @@ five.EdgeEventsEditor.prototype.handleDupButtonClick_ = function(e) {
  */
 five.EdgeEventsEditor.prototype.handleEditButtonClick_ = function(e) {
   goog.asserts.assert(this.events.length == 1);
-  this.events[0].dispatchEvent(five.Event.EventType.EDIT);
+  this.events[0].dispatchEvent(new five.EventEditEvent());
 };
 
 /**

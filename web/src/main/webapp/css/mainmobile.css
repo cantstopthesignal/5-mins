@@ -1,0 +1,7 @@
+.edit-event-dialog {
+  top: 72px;
+}
+.summary-input {
+  font-size: 20px;
+  width: calc(100% - 10px);
+}

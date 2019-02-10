@@ -72,5 +72,7 @@ five.Dialog.prototype.handleWindowResize_ = function() {
 
 five.Dialog.prototype.reposition = function() {
   this.contentEl_.style.marginLeft = -(this.contentEl_.offsetWidth/2) + 'px';
-  this.contentEl_.style.marginTop = -(this.contentEl_.offsetHeight/2) + 'px';
+  if (!goog.dom.classlist.contains(this.contentEl_, 'no-center-vertically')) {
+    this.contentEl_.style.marginTop = -(this.contentEl_.offsetHeight/2) + 'px';
+  }
 };

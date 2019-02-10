@@ -152,10 +152,12 @@ five.EventsView.prototype.createDom = function() {
     this.eventHandler.listen(nowButton.el, goog.events.EventType.CLICK,
         this.handleNowClick_);
 
-    var proposeButton = new five.Button('Propose');
-    this.appBar_.getButtonBar().addButton(proposeButton);
-    this.eventHandler.listen(proposeButton.el, goog.events.EventType.CLICK,
-        this.handleProposeClick_);
+    if (five.device.isMobile()) {
+      var proposeButton = new five.Button('Propose');
+      this.appBar_.getButtonBar().addButton(proposeButton);
+      this.eventHandler.listen(proposeButton.el, goog.events.EventType.CLICK,
+          this.handleProposeClick_);
+    }
 
     this.saveButton_ = new five.Button('Save');
     this.appBar_.getButtonBar().addButton(this.saveButton_);
@@ -308,12 +310,7 @@ five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
   var event = /** @type {!five.Event} */ (e.target);
   goog.asserts.assert(this.events_.indexOf(event) >= 0);
   this.startBatchRenderUpdate_();
-  if (event.isProposed()) {
-    var proposedIndex = this.proposedEvents_.indexOf(event);
-    goog.asserts.assert(proposedIndex >= 0);
-    this.proposedEvents_.splice(proposedIndex, 1);
-    event.setProposed(false);
-  }
+  this.maybeUpgradeFromProposed_(event);
   if (e.shiftKey) {
     var existingIndex = this.selectedEvents_.indexOf(event);
     if (e.type == five.Event.EventType.SELECT) {
@@ -335,8 +332,17 @@ five.EventsView.prototype.handleEventToggleSelect_ = function(e) {
     }
     this.replaceSelectedEvents_(newSelectedEvents);
   }
-  this.replaceProposedEvents_([]);
   this.finishBatchRenderUpdate_();
+};
+
+five.EventsView.prototype.maybeUpgradeFromProposed_ = function(event) {
+  if (event.isProposed()) {
+    var proposedIndex = this.proposedEvents_.indexOf(event);
+    goog.asserts.assert(proposedIndex >= 0);
+    this.proposedEvents_.splice(proposedIndex, 1);
+    event.setProposed(false);
+  }
+  this.replaceProposedEvents_([]);
 };
 
 five.EventsView.prototype.updateAndResizeTimelines_ = function(timelinesWidth,
@@ -413,6 +419,8 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
           this.handleEventsTimelineEventsEscape_).
       listen(timeline, EventType.EVENTS_MOVE,
           this.handleEventsTimelineEventsMove_).
+      listen(timeline, EventType.EVENTS_PROPOSE,
+          this.handleEventsTimelineEventsPropose_).
       listen(timeline, EventType.EVENTS_REFRESH,
           this.handleEventsTimelineEventsRefresh_).
       listen(timeline, EventType.EVENTS_SAVE,
@@ -515,6 +523,7 @@ five.EventsView.prototype.handleEventsTimelineEventsEdit_ = function() {
     return;
   }
   var event = this.selectedEvents_[0];
+  this.maybeUpgradeFromProposed_(event);
   this.openEditEventDialog_(event, false);
 };
 
@@ -566,6 +575,7 @@ five.EventsView.prototype.handleEventsTimelineEventsToggleTodo_ = function(e) {
 
 five.EventsView.prototype.handleEventsTimelineEventsEscape_ = function() {
   this.replaceSelectedEvents_([]);
+  this.replaceProposedEvents_([]);
 }
 
 five.EventsView.prototype.handleEventsTimelineEventsSave_ = function() {
@@ -648,6 +658,10 @@ five.EventsView.prototype.snapEvents_ = function(snapEvents, toPrevious, anchorS
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.eventsChanged(snapEvents);
   }, this);
+};
+
+five.EventsView.prototype.handleEventsTimelineEventsPropose_ = function() {
+  this.proposeEvents_();
 };
 
 five.EventsView.prototype.handleEventsTimelineEventsRefresh_ = function() {
@@ -918,11 +932,12 @@ five.EventsView.prototype.handleMoveSelectedEventsCommand_ = function(e) {
   this.scrollAnchorPostCheck_();
 };
 
-/** @param {goog.events.Event} e */
+/** @param {five.EventEditEvent} e */
 five.EventsView.prototype.handleEventEdit_ = function(e) {
   goog.asserts.assertInstanceof(e.target, five.Event);
   var event = /** @type {!five.Event} */ (e.target);
-  if (!five.device.isWebView()) {
+  this.maybeUpgradeFromProposed_(event);
+  if (!five.device.isWebView() || e.doubleClick) {
     this.openEditEventDialog_(event, false);
   } else {
     this.calendarManager_.saveMutations().addCallback(function() {
@@ -986,6 +1001,7 @@ five.EventsView.prototype.registerListenersForCalendarManager_ = function() {
 /** @param {goog.events.Event} e */
 five.EventsView.prototype.handleCalendarManagerEventsChange_ = function(e) {
   this.events_ = goog.array.clone(this.calendarManager_.getEvents());
+  this.proposedEvents_ = [];
   this.selectedEvents_ = [];
   delete this.dragCreateEvent_;
   delete this.dragEventsStartTime_;
@@ -1228,6 +1244,10 @@ five.EventsView.prototype.handleProposeClick_ = function(opt_e) {
     opt_e.preventDefault();
   }
 
+  this.proposeEvents_();
+}
+
+five.EventsView.prototype.proposeEvents_ = function() {
   var newProposedEvents = [];
 
   for (var i = 0; i < 4; i++) {

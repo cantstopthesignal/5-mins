@@ -131,6 +131,7 @@ a:hover {
 }
 .edit-event-dialog {
   width: 400px !important;
+  max-width: calc(100vw - 20px);
 }
 .edit-event-dialog .editor-row {
   margin-top: 8px;
@@ -138,8 +139,11 @@ a:hover {
 .edit-event-dialog .button {
   margin-top: 8px;
 }
+.summary-label {
+  margin-right: 10px;
+  line-height: 29px;
+}
 .summary-input {
-  margin-left: 10px;
   width: 300px;
   font-size: 16px;
   padding: 4px;

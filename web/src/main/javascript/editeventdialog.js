@@ -91,6 +91,9 @@ five.EditEventDialog.prototype.createDom = function() {
   var contentEl = this.getContentEl();
 
   goog.dom.classlist.add(contentEl, 'edit-event-dialog');
+  if (five.device.isMobile()) {
+    goog.dom.classlist.add(contentEl, 'no-center-vertically');
+  }
 
   var headerEl = document.createElement('div');
   goog.dom.classlist.add(headerEl, 'title');
@@ -100,7 +103,9 @@ five.EditEventDialog.prototype.createDom = function() {
 
   var summaryDiv = document.createElement('div');
   goog.dom.classlist.add(summaryDiv, 'editor-row');
-  var labelEl = document.createTextNode('Summary:');
+  var labelEl = document.createElement('span');
+  goog.dom.classlist.add(labelEl, 'summary-label');
+  labelEl.appendChild(document.createTextNode('Summary:'));
   summaryDiv.appendChild(labelEl);
   this.summaryInputEl_ = document.createElement('input');
   this.summaryInputEl_.type = 'text';
