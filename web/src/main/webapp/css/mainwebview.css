@@ -1,10 +1,10 @@
 /* Copyright cantstopthesignals@gmail.com */
-body {
-  font-size: 16px;
-}
 .app-bar {
   display: none;
 }
 .footer {
   display: none;
+}
+.edit-event-dialog {
+  top: 24px;
 }
