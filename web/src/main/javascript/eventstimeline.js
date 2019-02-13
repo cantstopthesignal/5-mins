@@ -235,7 +235,9 @@ five.EventsTimeline.prototype.createDom = function() {
       listen(this.eventsEditor_, five.Event.EventType.DELETE,
           this.handleEventsEditorDelete_).
       listen(this.eventsEditor_, five.Event.EventType.DUPLICATE,
-          this.handleEventsEditorDuplicate_);
+          this.handleEventsEditorDuplicate_).
+      listen(this.eventsEditor_, five.Event.EventType.SNAP_TO,
+          this.handleEventsEditorSnapTo_);
 
   if (five.deviceParams.getEnableCursorTimeMarker() ||
       five.deviceParams.getEnableDragCreateEvent() ||
@@ -1027,4 +1029,10 @@ five.EventsTimeline.prototype.handleEventsEditorDelete_ = function(e) {
 /** @param {goog.events.Event} e */
 five.EventsTimeline.prototype.handleEventsEditorDuplicate_ = function(e) {
   this.dispatchEvent(five.EventsTimeline.EventType.EVENTS_DUPLICATE);
+};
+
+/** @param {goog.events.Event} e */
+five.EventsTimeline.prototype.handleEventsEditorSnapTo_ = function(e) {
+  e.type = five.EventsTimeline.EventType.EVENTS_SNAP_TO;
+  this.dispatchEvent(e);
 };

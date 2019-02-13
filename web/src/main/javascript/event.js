@@ -6,6 +6,7 @@ goog.provide('five.Event.EventType');
 goog.require('five.EventEditEvent');
 goog.require('five.EventMoveEvent');
 goog.require('five.EventMutation');
+goog.require('five.EventSnapToEvent');
 goog.require('goog.array');
 goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
@@ -44,14 +45,15 @@ goog.inherits(five.Event, goog.events.EventTarget);
 
 /** @enum {string} */
 five.Event.EventType = {
-  SELECT: goog.events.getUniqueId('select'),
-  DESELECT: goog.events.getUniqueId('deselect'),
+  DATA_CHANGED: goog.events.getUniqueId('data_changed'),
   DELETE: goog.events.getUniqueId('delete'),
+  DESELECT: goog.events.getUniqueId('deselect'),
   DUPLICATE: goog.events.getUniqueId('duplicate'),
   EDIT: five.EventEditEvent.EventType.EDIT,
   MOVE: five.EventMoveEvent.EventType.MOVE,
   MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),
-  DATA_CHANGED: goog.events.getUniqueId('data_changed')
+  SELECT: goog.events.getUniqueId('select'),
+  SNAP_TO: five.EventSnapToEvent.EventType.SNAP_TO
 };
 
 /** @enum {string} */

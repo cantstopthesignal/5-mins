@@ -6,6 +6,7 @@ goog.require('five.Component');
 goog.require('five.Event');
 goog.require('five.EventEditEvent');
 goog.require('five.EventMoveEvent');
+goog.require('five.EventSnapToEvent');
 goog.require('five.EventsEditor');
 goog.require('five.PointerDownMoveControlEvent');
 goog.require('five.deviceParams');
@@ -48,11 +49,13 @@ five.EdgeEventsEditor.prototype.createDom = function() {
   this.bottomButtonBar_.appendChild(shadow);
 
   this.editButton_ = this.createIconButton_(this.bottomButtonBar_);
-  this.editButton_.appendChild(document.createTextNode('E'));
+  goog.dom.classlist.add(this.editButton_, 'edit-button');
   var dupButton = this.createIconButton_(this.bottomButtonBar_);
-  dupButton.appendChild(document.createTextNode('D'));
+  goog.dom.classlist.add(dupButton, 'duplicate-button');
+  var nowButton = this.createIconButton_(this.bottomButtonBar_);
+  goog.dom.classlist.add(nowButton, 'now-button');
   var deleteButton = this.createIconButton_(this.bottomButtonBar_);
-  deleteButton.appendChild(document.createTextNode('-'));
+  goog.dom.classlist.add(deleteButton, 'delete-button');
 
   var moveStartDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
   var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
@@ -107,7 +110,9 @@ five.EdgeEventsEditor.prototype.createDom = function() {
       listen(moveEndUpButton, goog.events.EventType.TOUCHMOVE,
           this.handleTouchMove_).
       listen(moveEndDownButton, goog.events.EventType.TOUCHMOVE,
-          this.handleTouchMove_);
+          this.handleTouchMove_).
+      listen(nowButton, goog.events.EventType.CLICK,
+          this.handleNowButtonClick_);
 };
 
 /** @type {boolean} */
@@ -232,6 +237,13 @@ five.EdgeEventsEditor.prototype.handleDupButtonClick_ = function(e) {
 five.EdgeEventsEditor.prototype.handleEditButtonClick_ = function(e) {
   goog.asserts.assert(this.events.length == 1);
   this.events[0].dispatchEvent(new five.EventEditEvent());
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.EdgeEventsEditor.prototype.handleNowButtonClick_ = function(e) {
+  this.dispatchEvent(five.EventSnapToEvent.now(five.EventSnapToEvent.Anchor.AUTO));
 };
 
 /**

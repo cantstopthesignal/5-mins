@@ -100,7 +100,7 @@ body {
 .edge-events-editor > .button-bar > .shadow {
   height: 10px;
   top: -10px;
-  box-shadow: 0 0 20px 0px #333;
+  box-shadow: 0 0 16px 0px #333c;
 }
 .edge-events-editor > .button-bar > .button {
   width: 32px;
