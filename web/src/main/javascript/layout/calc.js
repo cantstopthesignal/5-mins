@@ -128,7 +128,7 @@ five.layout.Calc.prototype.calc = function() {
   this.calcTimeAxisPatches_();
   this.positionEvents_();
   var calcTimeMs = +new Date() - startTime;
-  if (calcTimeMs > 10) {
+  if (calcTimeMs > 30) {
     this.logger_.info('calc() finished in ' + calcTimeMs + 'ms');
   }
 };
