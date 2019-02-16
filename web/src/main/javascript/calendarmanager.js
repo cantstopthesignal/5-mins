@@ -127,6 +127,12 @@ five.CalendarManager.EVENT_DELETE_ERROR_ =
 five.CalendarManager.OPEN_EVENTS_EDITOR_ERROR_ =
     'Error editing event. Please try again.';
 
+five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_ =
+    'Events refreshed.';
+
+/** @type {number} */
+five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_DURATION_ = 1000;
+
 /** @type {goog.debug.Logger} */
 five.CalendarManager.prototype.logger_ = goog.log.getLogger(
     'five.CalendarManager');
@@ -463,6 +469,11 @@ five.CalendarManager.prototype.handleUserActive_ = function() {
 five.CalendarManager.prototype.checkIdleRefresh_ = function() {
   if (this.canRefreshEvents_() && this.needIdleRefresh_) {
     this.needIdleRefresh_ = false;
-    this.refreshEvents_();
+    this.refreshEvents_().addCallback(function() {
+      this.notificationManager_.show(
+          five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_,
+          five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_DURATION_,
+          five.NotificationManager.Level.INFO);
+    }, this);
   }
 };

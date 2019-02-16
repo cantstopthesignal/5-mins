@@ -222,6 +222,10 @@ a:hover {
   position: absolute;
   white-space: nowrap;
 }
+.notification.info {
+  background-color: #666;
+  border-color: #666;
+}
 .events-view {
   position: relative;
 }

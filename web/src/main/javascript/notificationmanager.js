@@ -36,6 +36,12 @@ five.NotificationManager.get = function(appContext) {
       appContext.get(five.NotificationManager.SERVICE_ID)));
 };
 
+/** @enum {string} */
+five.NotificationManager.Level = {
+  ERROR: 'error',
+  INFO: 'info'
+};
+
 /** @type {number} */
 five.NotificationManager.DEFAULT_SHOW_DURATION_MS_ = 5000;
 
@@ -61,8 +67,9 @@ five.NotificationManager.prototype.disposeInternal = function() {
 /**
  * @param {string} message
  * @param {number=} opt_duration
+ * @param {five.NotificationManager.Level=} opt_level
  */
-five.NotificationManager.prototype.show = function(message, opt_duration) {
+five.NotificationManager.prototype.show = function(message, opt_duration, opt_level) {
   if (!this.el) {
     this.createDom();
   }
@@ -70,7 +77,11 @@ five.NotificationManager.prototype.show = function(message, opt_duration) {
   var parentEl = document.body;
   parentEl.appendChild(this.el);
 
+  var level = opt_level || five.NotificationManager.Level.ERROR;
+
   goog.dom.setTextContent(this.el, message);
+  goog.dom.classlist.enable(this.el, 'info', level == five.NotificationManager.Level.INFO);
+
   this.clearShowTimeout_();
   this.showTimeoutId_ = window.setTimeout(goog.bind(this.hide, this),
       opt_duration || five.NotificationManager.DEFAULT_SHOW_DURATION_MS_);
