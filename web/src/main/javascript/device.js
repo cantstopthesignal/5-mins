@@ -6,14 +6,6 @@ goog.require('goog.Uri');
 goog.require('goog.userAgent');
 
 
-/** @return {!five.device.Density} */
-five.device.getDensity = function() {
-  if (!goog.isDef(five.device.density_)) {
-    five.device.density_ = five.device.Density.NORMAL;
-  }
-  return five.device.density_;
-};
-
 /** @return {boolean} */
 five.device.isTouch = function() {
   if (!goog.isDef(five.device.isTouch_)) {
@@ -60,9 +52,6 @@ five.device.getUriParam_ = function(name) {
   return five.device.uri_.getParameterValue(name);
 };
 
-/** @type {five.device.Density} */
-five.device.density_;
-
 /** @type {boolean} */
 five.device.isTouch_;
 
@@ -74,9 +63,3 @@ five.device.isWebView_;
 
 /** @type {goog.Uri} */
 five.device.uri_;
-
-/** @enum {string} */
-five.device.Density = {
-  HIGH: 'high',
-  NORMAL: 'normal'
-};

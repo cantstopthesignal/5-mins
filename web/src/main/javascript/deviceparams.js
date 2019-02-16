@@ -7,27 +7,27 @@ goog.require('five.device');
 
 /** @constructor */
 five.deviceParams.DeviceParams = function() {
-  var isHighDensity = five.device.getDensity() == five.device.Density.HIGH;
   var isTouch = five.device.isTouch();
+  var isMobile = five.device.isMobile();
 
-  this.timeAxisWidth = isHighDensity ? 48 : 40;
-  this.timeAxisPatchWidth = isHighDensity ? 25 : 15;
-  this.defaultHourHeight = isHighDensity ? 64 : 45;
-  this.minEventHeight = isHighDensity ? 25 : 17;
+  this.timeAxisWidth = isMobile ? 45 : 40;
+  this.timeAxisPatchWidth = 15;
+  this.defaultHourHeight = isMobile ? 50 : 45;
+  this.minEventHeight = isMobile ? 21 : 17;
 
-  this.eventCardMinShortHeight = isHighDensity ? 46 : 26;
-  this.eventCardMinNormalHeight = isHighDensity ? 50 : 30;
-  this.eventCardMinLargeHeight = isHighDensity ? 74 : 44;
-  this.eventCardHitBoxMargin = isHighDensity ? 8 : 5;
+  this.eventCardMinShortHeight = 26;
+  this.eventCardMinNormalHeight = 30;
+  this.eventCardMinLargeHeight = 44;
+  this.eventCardHitBoxMargin = 5;
 
-  this.timelineMinWidth = isHighDensity ? 600 : 400;
-  this.timelineMaxWidth = isHighDensity ? 850 : 600;
-  this.timelineRightGutterWidth = !isTouch ? (isHighDensity ? 48 : 24) : 0;
+  this.timelineMinWidth = 400;
+  this.timelineMaxWidth = 600;
+  this.timelineRightGutterWidth = !isMobile ? 24 : 0;
 
   this.enableInlineEventsEditor = !isTouch;
-  this.inlineEventsEditorHeight = isHighDensity ? 96 : 48;
+  this.inlineEventsEditorHeight = 48;
 
-  this.showTimeMarkerLabels = !isHighDensity;
+  this.showTimeMarkerLabels = true;
   this.enableCursorTimeMarker = !isTouch;
   this.enableDragCreateEvent = !isTouch;
   this.enableDragEvents = !isTouch;

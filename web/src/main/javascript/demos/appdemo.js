@@ -43,7 +43,6 @@ five.demos.AppDemo.loadCss = function() {
   }
 
   loadStylesheet('appdemo.css');
-  loadStylesheet('appdemo' + five.device.getDensity() + 'density.css');
 
   var uri = new goog.Uri(window.location.href);
   var zoom = parseFloat(uri.getParameterValue('zoom') || '1');
@@ -113,10 +112,8 @@ five.demos.AppDemo.prototype.handleResize_ = function() {
 };
 
 five.demos.AppDemo.prototype.calcEventAreaWidths_ = function() {
-  var minPixelsPerEventArea = five.device.getDensity() ==
-      five.device.Density.HIGH ? 600 : 400;
-  var maxPixelsPerEventArea = five.device.getDensity() ==
-      five.device.Density.HIGH ? 850 : 600;
+  var minPixelsPerEventArea = 400;
+  var maxPixelsPerEventArea = 600;
   var numEventAreas = Math.max(1, Math.floor(
       document.body.offsetWidth / minPixelsPerEventArea));
   var widthPerArea = Math.min(maxPixelsPerEventArea,

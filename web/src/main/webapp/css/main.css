@@ -4,14 +4,17 @@ html {
   height: 100%;
   overflow: hidden;
 }
+body {
+  font-size: 16px;
+}
 body.main {
   background-color: #333;
   font-family: Arial;
+  height: 100%;
   margin: 0;
   overflow: hidden;
   padding: 0;
   position: relative;
-  height: 100%;
   width: 100%;
 }
 body > iframe {
@@ -29,42 +32,55 @@ a:hover {
 }
 .app-bar {
   background-color: #222222;
-  position: relative;
   box-sizing: border-box;
+  height: 48px;
+  padding: 8px;
+  position: relative;
 }
 .app-bar-icon {
   display: inline-block;
+  margin-right: 8px;
   vertical-align: middle;
 }
 .app-icon {
   display: inline-block;
+  height: 32px;
   overflow: hidden;
+  width: 32px;
 }
 .app-icon > .inner {
-  width: 128px;
-  height: 128px;
-  background: url(/images/logo128.png) no-repeat;
+  background: url(/images/logo32.png) no-repeat;
+  height: 32px;
+  width: 32px;
 }
 .app-bar-main-menu {
   color: white;
   display: inline-block;
+  font-size: 18px;
+  height: 32px;
+  line-height: 32px;
   position: relative;
   vertical-align: middle;
 }
 .app-bar-main-menu > .title {
+  margin-right: 24px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .app-bar-main-menu > .arrow {
-  width: 0;
+  border-right: 10px solid #878787;
+  border-top: 10px solid transparent;
+  bottom: 0;
   height: 0;
   position: absolute;
   right: 0;
-  bottom: 0;
+  width: 0;
 }
 .app-bar > .spinner {
   float: right;
+  margin: 2px 5px 2px 0;
 }
 .app-bar-button-bar {
   float: right;
@@ -75,6 +91,8 @@ a:hover {
 }
 .footer {
   color: #ddd;
+  font-size: 13px;
+  padding: 10px;
   text-align: center;
 }
 .footer > a {
@@ -82,56 +100,60 @@ a:hover {
 }
 .button {
   background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+  border-radius: 2px;
+  border: 1px solid #999;
   color: black;
   cursor: pointer;
-  border: 1px solid #999;
-  border-radius: 2px;
   display: inline-block;
+  font-size: 14px;
+  line-height: 20px;
   margin: 0;
   outline: 0;
+  padding: 5px 10px;
   text-align: center;
 }
 .button:active {
   background: -webkit-gradient(linear, left top, left bottom, from(#ccc), to(#eee));
 }
 .dialog {
-  background-color: black;
-  color: white;
-  width: 300px;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  padding: 10px 10px;
-  border: 1px solid black;
-  border-radius: 15px;
   -moz-border-radius: 15px;  /* FF lt 4 */
-  box-shadow: 0px 5px 10px #000;
   -moz-box-shadow: 0px 5px 10px #000;  /* FF lt 4 */
   -webkit-box-shadow: 0px 5px 10px #000;  /* Safari le 5 */
-  overflow: hidden;
-  z-index: 20;
+  background-color: black;
+  border-radius: 15px;
+  border: 1px solid black;
+  box-shadow: 0px 5px 10px #000;
+  color: white;
+  left: 50%;
   outline: 0;
+  overflow: hidden;
+  padding: 10px 10px;
+  position: absolute;
+  top: 50%;
+  width: 300px;
+  z-index: 20;
 }
 .dialog .title {
+  font-size: 20px;
   margin-bottom: 10px;
 }
 .dialog .button {
   border: 1px solid #aaa;
-  margin-top: 5px;
   margin-right: 5px;
+  margin-top: 5px;
 }
 .dialog-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background-color: rgba(0, 0, 0, 0.1);
+  bottom: 0;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
   z-index: 20;
 }
 .edit-event-dialog {
-  width: 400px !important;
   max-width: calc(100vw - 20px);
+  width: 400px !important;
 }
 .edit-event-dialog .editor-row {
   margin-top: 8px;
@@ -140,13 +162,13 @@ a:hover {
   margin-top: 8px;
 }
 .summary-label {
-  margin-right: 10px;
   line-height: 29px;
+  margin-right: 10px;
 }
 .summary-input {
-  width: 300px;
   font-size: 16px;
   padding: 4px;
+  width: 300px;
 }
 .date-time-input {
   font-size: 12px;
@@ -154,15 +176,15 @@ a:hover {
   width: 80px;
 }
 .events-summary-dialog {
-  width: initial;
+  max-height: calc(100vh - 20px);
   max-width: calc(100vw - 20px);
   min-width: 300px;
-  max-height: calc(100vh - 20px);
+  width: initial;
 }
 .events-summary-dialog .summary {
-  overflow: scroll;
   max-height: calc(100vh - 100px);
   outline: 0;
+  overflow: scroll;
 }
 .events-summary-dialog .summary table {
   border-spacing: 8px 0px;
@@ -175,48 +197,54 @@ a:hover {
   white-space: nowrap;
 }
 .events-summary-dialog .filter-div {
-  position: absolute;
   bottom: 10px;
+  position: absolute;
   right: 20px;
 }
 .events-summary-dialog .filter-input {
-  margin-left: 5px;
   font-size: 16px;
+  margin-left: 5px;
 }
 .notification {
-  border: 1px solid #a00;
   background-color: #a00;
+  border-radius: 4px;
+  border: 1px solid #a00;
   color: white;
-  white-space: nowrap;
+  margin-top: 3px;
+  padding: 3px 8px;
   position: absolute;
+  white-space: nowrap;
 }
 .events-view {
   position: relative;
 }
 .events-view-scroll {
   background: #fff;
+  box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: scroll;
   position: relative;
-  box-sizing: border-box;
 }
 .events-timeline {
-  background: #fff;
-  outline: 0;
   -moz-user-select: none;
-  -webkit-user-select: none;
-  position: absolute;
-  box-sizing: border-box;
-  overflow: hidden;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  -webkit-user-select: none;
+  background: #fff;
+  box-sizing: border-box;
+  outline: 0;
+  overflow: hidden;
+  position: absolute;
 }
 .day-banner {
+  background-color: rgba(40, 40, 40, 0.5);
+  box-sizing: border-box;
   color: white;
   cursor: pointer;
+  font-size: 14px;
+  padding: 4px 5px 4px 53px;
   position: absolute;
-  background-color: rgba(40, 40, 40, 0.5);
+  top: 48px;
   width: 100%;
-  box-sizing: border-box;
   z-index: 1;
 }
 .day-banner.inline {
@@ -224,19 +252,24 @@ a:hover {
   top: 0px;
 }
 .time-axis {
-  position: absolute;
   border-bottom: 1px solid #cdcdcd;
+  position: absolute;
   width: 100%;
 }
 .time-axis > .time-box {
   border-right: 1px solid #cdcdcd;
-  color: #666;
-  text-align: right;
-  height: 100%;
   box-sizing: border-box;
+  color: #666;
+  font-size: 14px;
+  height: 100%;
+  padding: 2px;
+  text-align: right;
+  width: 41px;
 }
 .time-axis > .time-box > .ampm {
   color: #999;
+  font-size: 13px;
+  margin-top: -1px;
 }
 .time-axis-patch-canvas {
   position: absolute;
@@ -247,10 +280,13 @@ a:hover {
   position: absolute;
 }
 .time-marker-label {
-  text-align: right;
-  position: absolute;
-  pointer-events: none;
   background-color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 16px;
+  padding-right: 2px;
+  pointer-events: none;
+  position: absolute;
+  text-align: right;
 }
 .inline-events-editor {
   pointer-events: none;
@@ -258,32 +294,40 @@ a:hover {
   width: 100%;
 }
 .inline-events-editor > .button-bar {
+  bottom: -18px;
   box-sizing: border-box;
+  height: 18px;
   overflow: hidden;
   position: absolute;
   width: 100%;
 }
 .inline-events-editor > .button-bar:first-child {
   bottom: inherit;
+  top: -18px;
 }
 .inline-events-editor > .button-bar > .button {
   border-radius: 0px;
-  text-align: center;
+  height: 18px;
   padding: 0;
   pointer-events: auto;
+  text-align: center;
+  width: 18px;
 }
 .inline-events-editor > .button-bar > .button > .arrow {
+  border-width: 4px;
   border: solid transparent;
-  width: 0px;
-  height: 0px;
   display: inline-block;
+  height: 0px;
+  margin: 6px 0px;
+  width: 0px;
 }
 .inline-events-editor > .button-bar > .spacer {
   display: inline-block;
+  width: 4px;
 }
 .inline-events-editor > .button-bar > .shadow {
-  width: 100%;
   position: absolute;
+  width: 100%;
 }
 .edge-events-editor {
   pointer-events: none;
@@ -291,58 +335,78 @@ a:hover {
   width: 100%;
 }
 .edge-events-editor > .button-bar {
-  pointer-events: auto;
   background-color: #44444455;
+  bottom: -48px;
   box-sizing: border-box;
+  height: 48px;
+  line-height: 32px;
   overflow: hidden;
+  padding: 8px 4px;
+  pointer-events: auto;
   position: absolute;
   width: 100%;
 }
 .edge-events-editor > .button-bar:first-child {
   bottom: inherit;
+  top: -48px;
 }
 .edge-events-editor > .button-bar > .button {
   background: initial;
   border-radius: 0px;
-  vertical-align: middle;
-  text-align: center;
-  padding: 0;
   border: initial;
+  height: 32px;
+  line-height: 32px;
+  margin: 0px 4px;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+  width: 32px;
 }
 .edge-events-editor > .button-bar > .button > .arrow {
   border: solid transparent;
-  width: 0px;
-  height: 0px;
   display: inline-block;
+  height: 0px;
+  width: 0px;
 }
 .edge-events-editor > .button-bar > .shadow {
-  width: 100%;
+  box-shadow: 0 0 16px 0px #333c;
+  height: 10px;
   position: absolute;
+  top: -10px;
+  width: 100%;
 }
 .arrow.up {
   border-bottom-color: black !important;
   border-top-width: 0 !important;
 }
 .arrow.down {
-  border-top-color: black !important;
   border-bottom-width: 0 !important;
+  border-top-color: black !important;
 }
 .edge-events-editor > .button-bar > .button > .arrow {
   border-color: white transparent white transparent !important;
 }
+.edge-events-editor > .button-bar > .button > .arrow {
+  border-width: 8px;
+  margin: 12px 0px;
+}
 .event-card {
-  cursor: default;
-  position: absolute;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   border: 1px solid;
+  cursor: default;
+  font-size: 13px;
   outline: 0;
   overflow: hidden;
+  padding: 3px;
+  position: absolute;
   white-space: nowrap;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 .event-card.selected {
 }
 .event-card.micro-height,
 .event-card.short-height {
+  padding-bottom: 1px;
+  padding-top: 1px;
   text-overflow: ellipsis;
 }
 .event-card.large-height {
@@ -352,17 +416,22 @@ a:hover {
   border-left-width: 0;
 }
 .event-card > .date-range {
+  font-size: 11px;
   font-weight: bold;
 }
 .event-card.short-height > .date-range {
+  margin-bottom: -2px;
 }
 .event-card.micro-height > .date-range {
   display: inline;
+  margin-right: 5px;
 }
 .calendar-chooser {
 }
 .spinner {
   display: inline-block;
+  height: 28px;
+  width: 28px;
 }
 .date-picker {
   position: absolute !important;
