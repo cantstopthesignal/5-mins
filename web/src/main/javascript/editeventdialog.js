@@ -40,6 +40,9 @@ five.EditEventDialog = function(appContext, event, newCreate) {
   /** @type {Element} */
   this.summaryInputEl_;
 
+  /** @type {Element} */
+  this.todoCheckboxEl_;
+
   /** @type {goog.ui.InputDatePicker} */
   this.startDatePicker_;
 
@@ -130,6 +133,21 @@ five.EditEventDialog.prototype.createDom = function() {
   this.endTimePicker_.render(dateDiv);
   contentEl.appendChild(dateDiv);
 
+  var todoDivEl = document.createElement('div');
+  goog.dom.classlist.add(todoDivEl, 'todo');
+  this.todoCheckboxEl_ = document.createElement('input');
+  this.todoCheckboxEl_.setAttribute('type', 'checkbox');
+  var todoCheckboxId = goog.getUid(this.todoCheckboxEl_);
+  this.todoCheckboxEl_.setAttribute('id', todoCheckboxId);
+  todoDivEl.append(this.todoCheckboxEl_);
+  var todoLabelEl = document.createElement('label');
+  todoLabelEl.setAttribute('for', todoCheckboxId);
+  todoLabelEl.appendChild(document.createTextNode('todo'));
+  todoDivEl.append(todoLabelEl);
+  this.eventHandler.listen(this.todoCheckboxEl_, goog.events.EventType.CHANGE,
+      this.handleTodoCheckboxChange_);
+  contentEl.appendChild(todoDivEl);
+
   var doneButtonEl = document.createElement('div');
   goog.dom.classlist.add(doneButtonEl, 'button');
   this.eventHandler.listen(doneButtonEl, goog.events.EventType.CLICK,
@@ -192,6 +210,8 @@ five.EditEventDialog.prototype.handleSummaryChanged_ = function() {
     return;
   }
   var newSummary = this.summaryInputEl_.value.trim();
+  var summaryInfo =  five.Event.SummaryInfo.fromSummary(newSummary);
+  this.todoCheckboxEl_.checked = summaryInfo.getType() == five.Event.SummaryType.TODO;
   if (!newSummary.length) {
     return;
   }
@@ -207,6 +227,7 @@ five.EditEventDialog.prototype.setSummaryInputValueAndSelect_ = function(summary
   this.summaryInputEl_.setSelectionRange(
       summaryInfo.getSummary().length - summaryInfo.getShortenedSummary().length,
       summaryInfo.getSummary().length);
+  this.todoCheckboxEl_.checked = summaryInfo.getType() == five.Event.SummaryType.TODO;
 };
 
 /** @override */
@@ -277,6 +298,10 @@ five.EditEventDialog.prototype.handleCancelClick_ = function() {
   this.cancel_();
 };
 
+five.EditEventDialog.prototype.handleTodoCheckboxChange_ = function() {
+  this.toggleTodo_();
+};
+
 /** @param {goog.events.BrowserEvent} e */
 five.EditEventDialog.prototype.handleKeyDown_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
@@ -293,12 +318,16 @@ five.EditEventDialog.prototype.handleKeyUp_ = function(e) {
     this.done_();
     e.preventDefault();
   } else if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
-    var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
-    var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
-    this.setSummaryInputValueAndSelect_(newSummaryInfo);
-    this.handleSummaryChanged_();
+    this.toggleTodo_();
     e.preventDefault();
   }
+};
+
+five.EditEventDialog.prototype.toggleTodo_ = function() {
+  var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
+  var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
+  this.setSummaryInputValueAndSelect_(newSummaryInfo);
+  this.handleSummaryChanged_();
 };
 
 goog.scope(function() {

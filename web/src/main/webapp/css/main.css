@@ -99,7 +99,7 @@ a:hover {
   color: #99f;
 }
 .button {
-  background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
+  background: linear-gradient(#eee, #ccc);
   border-radius: 2px;
   border: 1px solid #999;
   color: black;
@@ -113,12 +113,9 @@ a:hover {
   text-align: center;
 }
 .button:active {
-  background: -webkit-gradient(linear, left top, left bottom, from(#ccc), to(#eee));
+  background: linear-gradient(#ccc, #eee);
 }
 .dialog {
-  -moz-border-radius: 15px;  /* FF lt 4 */
-  -moz-box-shadow: 0px 5px 10px #000;  /* FF lt 4 */
-  -webkit-box-shadow: 0px 5px 10px #000;  /* Safari le 5 */
   background-color: black;
   border-radius: 15px;
   border: 1px solid black;
@@ -160,6 +157,16 @@ a:hover {
 }
 .edit-event-dialog .button {
   margin-top: 8px;
+}
+.edit-event-dialog div.todo {
+  float: right;
+  line-height: 32px;
+  margin-right: 5px;
+  margin-top: 8px;
+  user-select: none;
+}
+.edit-event-dialog div.todo > input {
+  vertical-align: middle;
 }
 .summary-label {
   line-height: 29px;
@@ -226,14 +233,13 @@ a:hover {
   position: relative;
 }
 .events-timeline {
-  -moz-user-select: none;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-  -webkit-user-select: none;
   background: #fff;
   box-sizing: border-box;
   outline: 0;
   overflow: hidden;
   position: absolute;
+  user-select: none;
 }
 .day-banner {
   background-color: rgba(40, 40, 40, 0.5);
