@@ -29,6 +29,18 @@ goog.inherits(five.CalendarApi, five.BaseCalendarApi);
 
 five.CalendarApi.SERVICE_ID = 's' + goog.getUid(five.CalendarApi);
 
+/** @type {goog.date.DateTime} */
+five.CalendarApi.prototype.startDate_;
+
+/** @type {goog.date.DateTime} */
+five.CalendarApi.prototype.endDate_;
+
+/** @type {string} */
+five.CalendarApi.prototype.nextSyncToken_;
+
+/** @type {Object} */
+five.CalendarApi.prototype.eventsData_;
+
 /**
  * @param {!five.AppContext} appContext
  * @return {!five.CalendarApi}
@@ -54,7 +66,7 @@ five.CalendarApi.prototype.loadCalendarList = function() {
     this.logger_.info('Loaded ' + (resp['items'] || []).length + ' calendars');
   };
   var errback = function(error) {
-    this.logger_.severe('Error loading calendars: ' + error, error);
+    this.logger_.severe('Error loading calendars: ' + goog.json.serialize(error), error);
   };
   return this.callApi_(['users', 'me', 'calendarList'], 'GET').
       addCallbacks(callback, errback, this);
@@ -69,13 +81,23 @@ five.CalendarApi.prototype.loadCalendarList = function() {
  */
 five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
     endDate, opt_prevResp) {
+  if (!this.startDate_ || !startDate.equals(this.startDate_) ||
+      !this.endDate_ || !endDate.equals(this.endDate_)) {
+    delete this.nextSyncToken_;
+    delete this.eventsData_;
+    this.startDate_ = startDate;
+    this.endDate_ = endDate;
+  }
   var params = {
-    'orderBy': 'startTime',
     'singleEvents': true,
-    'timeMin': new Date(startDate.valueOf()).toISOString(),
-    'timeMax': new Date(endDate.valueOf()).toISOString(),
     'maxResults': 240  // set to be under 250 where the api stops reporting properly
   };
+  if (this.nextSyncToken_) {
+    params['syncToken'] = this.nextSyncToken_;
+  } else {
+    params['timeMin'] = new Date(startDate.valueOf()).toISOString();
+    params['timeMax'] = new Date(endDate.valueOf()).toISOString();
+  }
   if (opt_prevResp) {
     goog.asserts.assert(opt_prevResp['nextPageToken']);
     params['pageToken'] = opt_prevResp['nextPageToken'];
@@ -88,10 +110,25 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
     if (resp['nextPageToken']) {
       return this.loadEvents(calendarId, startDate, endDate, resp);
     }
-    this.logger_.info('Loaded ' + (resp['items'] || []).length + ' events');
+    this.nextSyncToken_ = resp['nextSyncToken'];
+    var changedEventsCount = (resp['items'] || []).length;
+    this.mergeEventsData_(resp);
+    var finalEventsCount = (this.eventsData_['items'] || []).length;
+    if (changedEventsCount != finalEventsCount) {
+      this.logger_.info('Loaded ' + changedEventsCount + ' changed events (' +
+          finalEventsCount + ' total events)');
+    } else {
+      this.logger_.info('Loaded ' + finalEventsCount + ' events');
+    }
+    return this.eventsData_;
   };
   var errback = function(error) {
-    this.logger_.severe('Error loading events: ' + error, error);
+    if (error && error['code'] == 410) {
+      delete this.nextSyncToken_;
+      delete this.eventsData_;
+      return this.loadEvents(calendarId, startDate, endDate);
+    }
+    this.logger_.severe('Error loading events: ' + goog.json.serialize(error), error);
   };
   return this.callApi_(['calendars', calendarId, 'events'], 'GET', params).
       addCallbacks(callback, errback, this);
@@ -118,7 +155,7 @@ five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
     this.logger_.info('Event created');
   };
   var errback = function(error) {
-    this.logger_.severe('Error creating event: ' + error, error);
+    this.logger_.severe('Error creating event: ' + goog.json.serialize(error), error);
   };
   return this.callApi_(['calendars', calendarId, 'events'], 'POST', {}, eventData).
       addCallbacks(callback, errback, this);
@@ -138,7 +175,7 @@ five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
     this.logger_.info('Event saved');
   };
   var errback = function(error) {
-    this.logger_.severe('Error saving event: ' + error, error);
+    this.logger_.severe('Error saving event: ' + goog.json.serialize(error), error);
   };
   return this.callApi_(['calendars', calendarId, 'events', eventData['id']], 'PATCH', {},
       eventPatchData).
@@ -156,7 +193,7 @@ five.CalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
     this.logger_.info('Event deleted');
   };
   var errback = function(error) {
-    this.logger_.severe('Error deleting event: ' + error, error);
+    this.logger_.severe('Error deleting event: ' + goog.json.serialize(error), error);
   };
   return this.callApi_(['calendars', calendarId, 'events', eventDeleteData['id']], 'DELETE',
       {}, {}, true).
@@ -203,7 +240,7 @@ five.CalendarApi.prototype.callApi_ = function(pathParts, httpMethod, opt_params
           this.auth_.getAuthDeferred().branch().addCallbacks(doRequest,
               goog.bind(d.errback, d));
         } else {
-          d.errback('Request error: ' + goog.json.serialize(error));
+          d.errback(error);
         }
       } else {
         d.callback(resp);
@@ -242,4 +279,29 @@ five.CalendarApi.prototype.isLikelyAuthFailure_ = function(error) {
     return true;
   }
   return false;
+};
+
+five.CalendarApi.prototype.mergeEventsData_ = function(resp) {
+  if (!this.eventsData_) {
+    this.eventsData_ = resp;
+    return;
+  }
+
+  var eventsMap = {};
+  for (var eventData of this.eventsData_['items']) {
+    eventsMap[eventData['id']] = eventData;
+  }
+  for (var eventData of (resp['items'] || [])) {
+    eventsMap[eventData['id']] = eventData;
+  }
+
+  var items = [];
+  goog.object.forEach(eventsMap, function(eventData) {
+    if (eventData['status'] != 'cancelled') {
+      items.push(eventData);
+    }
+  });
+
+  this.eventsData_ = resp;
+  this.eventsData_['items'] = items;
 };

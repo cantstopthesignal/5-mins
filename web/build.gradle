@@ -91,6 +91,7 @@ class ClosureCompileTask extends DefaultTask {
             closureArgs << "--jscomp_error=unknownDefines"
             closureArgs << "--jscomp_error=uselessCode"
             closureArgs << "--jscomp_error=visibility"
+            closureArgs << "--force_inject_library=es6_runtime"
             closureArgs << "${project.closureLibraryDir}/**.js"
             closureArgs << "!${project.closureLibraryDir}/**_test.js"
             closureArgs << "${project.javascriptSourceDir}/**.js"

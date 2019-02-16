@@ -5,6 +5,7 @@ goog.provide('five.CalendarManager');
 goog.require('five.AppContext');
 goog.require('five.Event');
 goog.require('five.EventMutation');
+goog.require('five.IdleTracker');
 goog.require('five.NotificationManager');
 goog.require('goog.asserts');
 goog.require('goog.async.DeferredList');
@@ -36,6 +37,14 @@ five.CalendarManager = function(appContext, calendarData) {
     this.calendarApi_ = five.CalendarApi.get(this.appContext_);
   }
 
+  /** @type {five.IdleTracker} */
+  this.idleTracker_;
+
+  if (!five.device.isWebView()) {
+    this.idleTracker_ = new five.IdleTracker();
+    this.registerDisposable(this.idleTracker_);
+  }
+
   /** @type {!five.NotificationManager} */
   this.notificationManager_ = five.NotificationManager.get(this.appContext_);
 
@@ -55,6 +64,11 @@ five.CalendarManager = function(appContext, calendarData) {
   this.eventLoadingLockNextId_ = 1;
 
   this.calendarApi_.registerEventsListener(goog.bind(this.handleEventsChanged_, this));
+
+  if (this.idleTracker_) {
+    this.eventHandler.listen(this.idleTracker_, five.IdleTracker.EventType.ACTIVE,
+        this.handleUserActive_);
+  }
 };
 goog.inherits(five.CalendarManager, goog.events.EventTarget);
 
@@ -117,6 +131,12 @@ five.CalendarManager.OPEN_EVENTS_EDITOR_ERROR_ =
 five.CalendarManager.prototype.logger_ = goog.log.getLogger(
     'five.CalendarManager');
 
+/** @type {goog.date.DateTime} */
+five.CalendarManager.prototype.startDate_;
+
+/** @type {goog.date.DateTime} */
+five.CalendarManager.prototype.endDate_;
+
 /** @type {Array.<!five.Event>} */
 five.CalendarManager.prototype.events_;
 
@@ -125,6 +145,9 @@ five.CalendarManager.prototype.numRequestsInProgress_ = 0;
 
 /** @type {boolean} */
 five.CalendarManager.prototype.hasMutations_ = false;
+
+/** @type {boolean} */
+five.CalendarManager.prototype.needIdleRefresh_ = false;
 
 /** @override */
 five.CalendarManager.prototype.disposeInternal = function() {
@@ -164,9 +187,20 @@ five.CalendarManager.prototype.hasRequestsInProgress = function() {
  * @return {goog.async.Deferred}
  */
 five.CalendarManager.prototype.loadEvents = function(startDate, endDate) {
+  this.startDate_ = startDate;
+  this.endDate_ = endDate;
+  return this.refreshEvents_();
+};
+
+/**
+ * @return {goog.async.Deferred}
+ */
+five.CalendarManager.prototype.refreshEvents_ = function() {
+  goog.asserts.assert(this.startDate_);
+  goog.asserts.assert(this.endDate_);
   this.requestStarted_();
-  return this.calendarApi_.loadEvents(this.calendarData_['id'], startDate,
-      endDate).
+  return this.calendarApi_.loadEvents(this.calendarData_['id'], this.startDate_,
+      this.endDate_).
       addCallback(function(resp) {
         this.handleEventsChanged_(resp);
         this.requestEnded_();
@@ -219,6 +253,7 @@ five.CalendarManager.prototype.saveMutations = function() {
   }, this);
   return new goog.async.DeferredList(deferreds).
       addCallback(function(resp) {
+        this.checkIdleRefresh_();
         this.calendarApi_.requestSync();
       }, this);
 };
@@ -257,6 +292,7 @@ five.CalendarManager.prototype.lockEventLoading_ = function() {
 five.CalendarManager.prototype.unlockEventLoading_ = function(lockId) {
   goog.asserts.assert(lockId in this.eventLoadingLocks_);
   delete this.eventLoadingLocks_[lockId];
+  this.checkIdleRefresh_();
 };
 
 /**
@@ -355,7 +391,7 @@ five.CalendarManager.prototype.eventDeleted_ = function(event) {
 
 /** @param {Array.<Object>} eventsData */
 five.CalendarManager.prototype.updateEventsData_ = function(eventsData) {
-  if (this.hasMutations_ || !goog.object.isEmpty(this.eventLoadingLocks_)) {
+  if (!this.canRefreshEvents_()) {
     return;
   }
   goog.disposeAll(this.events_);
@@ -410,4 +446,23 @@ five.CalendarManager.prototype.handleEventMutationsChanged_ = function(e) {
 five.CalendarManager.prototype.handleEventsChanged_ = function(resp) {
   goog.asserts.assert(resp['kind'] == 'calendar#events');
   this.updateEventsData_(resp['items'] || []);
+};
+
+five.CalendarManager.prototype.canRefreshEvents_ = function() {
+  return !this.hasMutations_ && goog.object.isEmpty(this.eventLoadingLocks_)
+};
+
+five.CalendarManager.prototype.handleUserActive_ = function() {
+  if (!this.startDate_ || five.device.isWebView()) {
+    return;
+  }
+  this.needIdleRefresh_ = true;
+  this.checkIdleRefresh_();
+};
+
+five.CalendarManager.prototype.checkIdleRefresh_ = function() {
+  if (this.canRefreshEvents_() && this.needIdleRefresh_) {
+    this.needIdleRefresh_ = false;
+    this.refreshEvents_();
+  }
 };
