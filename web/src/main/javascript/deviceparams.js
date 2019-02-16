@@ -15,8 +15,8 @@ five.deviceParams.DeviceParams = function() {
   this.defaultHourHeight = isMobile ? 50 : 45;
   this.minEventHeight = isMobile ? 21 : 17;
 
-  this.eventCardMinShortHeight = 26;
-  this.eventCardMinNormalHeight = 30;
+  this.eventCardMinShortHeight = isMobile ? 28 : 26;
+  this.eventCardMinNormalHeight = isMobile ? 32 : 30;
   this.eventCardMinLargeHeight = 44;
   this.eventCardHitBoxMargin = 5;
 
