@@ -1,3 +1,9 @@
 [submodule "web/lib/closure-library"]
 	path = web/lib/closure-library
 	url = https://github.com/google/closure-library
+[submodule "android/lib/google-rfc-2445"]
+	path = android/lib/google-rfc-2445
+	url = https://github.com/cantstopthesignal/google-rfc-2445
+[submodule "android/lib/android-calendar-common"]
+	path = android/lib/android-calendar-common
+	url = https://github.com/cantstopthesignal/android-calendar-common

@@ -16,7 +16,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CalendarContract;
-import android.provider.CalendarContract.Events;
 import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,6 +30,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.android.calendarcommon2.DateException;
+import com.android.calendarcommon2.Duration;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,7 +40,10 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Semaphore;
@@ -49,27 +54,25 @@ public class CalendarFragment extends Fragment {
     private static final Uri DEBUG_URI = Uri.parse("http://localhost:8888/?jsmode=uncompiled&Debug=true");
     private static final Uri RELEASE_URI = Uri.parse("https://five-minutes-cssignal.appspot.com/");
 
-    private static final String KEY_START_TIME = "startTime";
-    private static final String KEY_END_TIME = "endTime";
-
     private static final String JAVASCRIPT_INTERFACE_NAME = "Android";
 
     private static final String ARG_CALENDAR_INFO = "calendar_info";
 
-    private static final String EVENTS_ETAG = Events.SYNC_DATA4;
+    private static final String EVENTS_ETAG = CalendarContract.Events.SYNC_DATA4;
 
     private static final String[] EVENTS_PROJECTION = new String[] {
-            Events._ID,
-            Events.TITLE,
-            Events.DTSTART,
-            Events.DTEND,
+            CalendarContract.Events._ID,
+            CalendarContract.Events.TITLE,
+            CalendarContract.Events.DTSTART,
+            CalendarContract.Events.DTEND,
+            CalendarContract.Events.DURATION,
+            CalendarContract.Events.RRULE,
+            CalendarContract.Events.RDATE,
+            CalendarContract.Events.ORIGINAL_ID,
+            CalendarContract.Events.ORIGINAL_INSTANCE_TIME,
+            CalendarContract.Events.STATUS,
             EVENTS_ETAG
     };
-    private static final int EVENTS_PROJECTION_ID_INDEX = 0;
-    private static final int EVENTS_PROJECTION_TITLE_INDEX = 1;
-    private static final int EVENTS_PROJECTION_DTSTART_INDEX = 2;
-    private static final int EVENTS_PROJECTION_DTEND_INDEX = 3;
-    private static final int EVENTS_PROJECTION_ETAG_INDEX = 4;
 
     private static final int CALENDAR_EVENTS_LOADER_ID = 0;
 
@@ -274,26 +277,31 @@ public class CalendarFragment extends Fragment {
         }
 
         @JavascriptInterface
-        public String saveEvent(final long calendarId, String eventIdString,
+        public String saveEvent(final long calendarId, String eventDataString,
                 String eventPatchDataString) throws JSONException {
-            final long eventId = Long.parseLong(eventIdString);
+            JSONObject eventData = new JSONObject(eventDataString);
+            Event event = Event.fromJson(eventData);
             JSONObject eventPatchData = new JSONObject(eventPatchDataString);
             EventPatch eventPatch = EventPatch.fromJson(eventPatchData);
-            Log.d(TAG,"saveEvent(" + calendarId + ", " + eventId + ", "
+            Log.d(TAG,"saveEvent(" + calendarId + ", " + eventDataString + ", "
                     + eventPatchDataString + ")");
             return mFragment.runOnUiThreadSync(() -> {
-                Event event = mFragment.saveEvent(calendarId, eventId, eventPatch);
-                return event.toJson().toString();
+                Event savedEvent = mFragment.saveEvent(calendarId, event, eventPatch);
+                if (savedEvent == null) {
+                    throw new IllegalArgumentException("Could not save event");
+                }
+                return savedEvent.toJson().toString();
             });
         }
 
         @JavascriptInterface
-        public void deleteEvent(long calendarId, String eventIdString) throws JSONException {
-            final long eventId = Long.parseLong(eventIdString);
-            Log.d(TAG,"deleteEvent(" + calendarId + ", " + eventIdString + ")");
+        public void deleteEvent(long calendarId, String eventDataString) throws JSONException {
+            JSONObject eventData = new JSONObject(eventDataString);
+            Event event = Event.fromJson(eventData);
+            Log.d(TAG,"deleteEvent(" + calendarId + ", " + eventDataString + ")");
             if (!mFragment.runOnUiThreadSync(
-                    () -> mFragment.deleteEvent(calendarId, eventId))) {
-                throw new RuntimeException("Could not delete event " + eventId);
+                    () -> mFragment.deleteEvent(calendarId, event))) {
+                throw new RuntimeException("Could not delete event");
             }
         }
 
@@ -391,10 +399,10 @@ public class CalendarFragment extends Fragment {
         Calendar endTime = (Calendar) startTime.clone();
         endTime.add(Calendar.HOUR, 1);
         Intent intent = new Intent(Intent.ACTION_INSERT)
-                .setData(Events.CONTENT_URI)
+                .setData(CalendarContract.Events.CONTENT_URI)
                 .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime.getTimeInMillis())
                 .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime.getTimeInMillis())
-                .putExtra(Events.TITLE, "");
+                .putExtra(CalendarContract.Events.TITLE, "");
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         startActivity(intent);
@@ -440,6 +448,9 @@ public class CalendarFragment extends Fragment {
         }
         mButtonInfos.clear();
 
+        mLoadEventsDefaultJsCallback = null;
+        mLoadEventsJsCallbacks.clear();
+
         if (clearCache) {
             mWebView.clearCache(true);
         }
@@ -460,10 +471,8 @@ public class CalendarFragment extends Fragment {
             return;
         }
 
-        Bundle args = new Bundle();
-        args.putLong(KEY_START_TIME, startTime.getTimeInMillis());
-        args.putLong(KEY_END_TIME, endTime.getTimeInMillis());
-        getLoaderManager().restartLoader(CALENDAR_EVENTS_LOADER_ID, args, new LoaderCallback());
+        getLoaderManager().restartLoader(CALENDAR_EVENTS_LOADER_ID, null,
+                new EventsLoaderCallback(startTime, endTime));
     }
 
     private Event createEvent(long calendarId, EventPatch eventPatch) {
@@ -473,12 +482,12 @@ public class CalendarFragment extends Fragment {
         }
         ContentResolver cr = getActivity().getContentResolver();
         ContentValues values = new ContentValues();
-        values.put(Events.TITLE, eventPatch.title);
-        values.put(Events.DTSTART, eventPatch.startTime.getTimeInMillis());
-        values.put(Events.DTEND, eventPatch.endTime.getTimeInMillis());
-        values.put(Events.CALENDAR_ID, calendarId);
-        values.put(Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
-        Uri eventUri = cr.insert(Events.CONTENT_URI, values);
+        values.put(CalendarContract.Events.TITLE, eventPatch.title);
+        values.put(CalendarContract.Events.DTSTART, eventPatch.startTime.getTimeInMillis());
+        values.put(CalendarContract.Events.DTEND, eventPatch.endTime.getTimeInMillis());
+        values.put(CalendarContract.Events.CALENDAR_ID, calendarId);
+        values.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
+        Uri eventUri = cr.insert(CalendarContract.Events.CONTENT_URI, values);
         if (eventUri == null) {
             throw new NullPointerException("eventUri is null");
         }
@@ -490,47 +499,100 @@ public class CalendarFragment extends Fragment {
         return eventFromCursor(cursor);
     }
 
-    private Event saveEvent(long calendarId, long eventId, EventPatch eventPatch) {
+    private Event saveEvent(long calendarId, Event event, EventPatch eventPatch) {
         ContentResolver cr = getActivity().getContentResolver();
-        Uri eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
-        ContentValues event = new ContentValues();
+        ContentValues values = new ContentValues();
         if (eventPatch.title != null) {
-            event.put(Events.TITLE, eventPatch.title);
+            values.put(CalendarContract.Events.TITLE, eventPatch.title);
         }
         if (eventPatch.startTime != null) {
-            event.put(Events.DTSTART, eventPatch.startTime.getTimeInMillis());
+            values.put(CalendarContract.Events.DTSTART,
+                    eventPatch.startTime.getTimeInMillis());
         }
         if (eventPatch.endTime != null) {
-            event.put(Events.DTEND, eventPatch.endTime.getTimeInMillis());
+            values.put(CalendarContract.Events.DTEND, eventPatch.endTime.getTimeInMillis());
         }
-        int rowsUpdated = cr.update(eventUri, event, null, null);
-        if (rowsUpdated > 1) {
-            throw new IllegalStateException("Updated more than one row!");
-        } else if (rowsUpdated == 0) {
-            return null;
+        Uri eventUri;
+        if (event.id != null) {
+            eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
+            int rowsUpdated = cr.update(eventUri, values, null, null);
+            if (rowsUpdated > 1) {
+                throw new IllegalStateException("Updated more than one row!");
+            } else if (rowsUpdated == 0) {
+                return null;
+            }
+        } else {
+            if (!values.containsKey(CalendarContract.Events.TITLE)) {
+                values.put(CalendarContract.Events.TITLE, event.title);
+            }
+            if (!values.containsKey(CalendarContract.Events.DTSTART)) {
+                values.put(CalendarContract.Events.DTSTART, event.startTime.getTimeInMillis());
+            }
+            if (!values.containsKey(CalendarContract.Events.DTEND)) {
+                values.put(CalendarContract.Events.DTEND, event.endTime.getTimeInMillis());
+            }
+            values.put(CalendarContract.Events.CALENDAR_ID, calendarId);
+            values.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
+            values.put(CalendarContract.Events.ORIGINAL_ID, event.originalId);
+            values.put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME,
+                    event.originalInstanceTime.getTimeInMillis());
+            eventUri = cr.insert(CalendarContract.Events.CONTENT_URI, values);
+            if (eventUri == null) {
+                throw new NullPointerException("eventUri is null (repeated instance)!");
+            }
         }
         Cursor cursor = cr.query(eventUri, EVENTS_PROJECTION, null, null,
                 null,null);
         if (!cursor.moveToNext()) {
-            throw new RuntimeException("Could not find saved event");
+            throw new RuntimeException("Could not find saved or created event");
         }
         return eventFromCursor(cursor);
     }
 
-    private boolean deleteEvent(long calendarId, long eventId) {
+    private boolean deleteEvent(long calendarId, Event event) {
         ContentResolver cr = getActivity().getContentResolver();
-        Uri eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
-        ContentValues event = new ContentValues();
-        event.put(Events.DELETED, true);
-        int rowsDeleted = cr.update(eventUri, event, null, null);
-        if (rowsDeleted > 1) {
-            throw new IllegalStateException("Deleted more than one row!");
+        if (event.originalId == null) {
+            Uri eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
+            ContentValues values = new ContentValues();
+            values.put(CalendarContract.Events.DELETED, true);
+            int rowsDeleted = cr.update(eventUri, values, null, null);
+            if (rowsDeleted > 1) {
+                throw new IllegalStateException("Deleted more than one row!");
+            }
+            return rowsDeleted > 0;
+        } else if (event.id == null) {
+            ContentValues values = new ContentValues();
+            values.put(CalendarContract.Events.DTSTART,
+                    event.originalInstanceTime.getTimeInMillis());
+            values.put(CalendarContract.Events.DTEND,
+                    event.originalInstanceTime.getTimeInMillis() + 60 * 60 * 1000);
+            values.put(CalendarContract.Events.CALENDAR_ID, calendarId);
+            values.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
+            values.put(CalendarContract.Events.ORIGINAL_ID, event.originalId);
+            values.put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME,
+                    event.originalInstanceTime.getTimeInMillis());
+            values.put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED);
+            Uri eventUri = cr.insert(CalendarContract.Events.CONTENT_URI, values);
+            if (eventUri == null) {
+                throw new NullPointerException("eventUri is null (repeated instance)!");
+            }
+            return true;
+        } else {
+            Uri eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
+            ContentValues values = new ContentValues();
+            values.put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED);
+            int rowsUpdated = cr.update(eventUri, values, null, null);
+            if (rowsUpdated > 1) {
+                throw new IllegalStateException("Updated more than one row (repeated instance)!");
+            } else if (rowsUpdated == 0) {
+                throw new IllegalStateException("Expected to update one row (repeated instance)!");
+            }
+            return true;
         }
-        return rowsDeleted > 0;
     }
 
     private void openEventEditor(long calendarId, long eventId) {
-        Uri uri = ContentUris.withAppendedId(Events.CONTENT_URI, eventId);
+        Uri uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId);
         Intent intent = new Intent(Intent.ACTION_VIEW)
                 .setData(uri);
         startActivity(intent);
@@ -554,43 +616,79 @@ public class CalendarFragment extends Fragment {
         Log.e(TAG, "Failed to find account to sync calendar");
     }
 
-    class LoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+    class EventsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+        Calendar mStartTime;
+        Calendar mEndTime;
 
-        LoaderCallback() {
+        EventsLoaderCallback(Calendar startTime, Calendar endTime) {
+            mStartTime = startTime;
+            mEndTime = endTime;
         }
 
         @Override
         public Loader<Cursor> onCreateLoader(int loaderId, Bundle args) {
             switch (loaderId) {
-                case CALENDAR_EVENTS_LOADER_ID:
-                    long startTime = args.getLong(KEY_START_TIME);
-                    long endTime = args.getLong(KEY_END_TIME);
-
+                case CALENDAR_EVENTS_LOADER_ID: {
                     CursorLoader loader = new CursorLoader(getActivity());
-                    loader.setUri(Events.CONTENT_URI);
-                    loader.setSelection("((" + Events.CALENDAR_ID + " = ?) AND ("
-                            + Events.DTSTART + " >= ?) AND (" + Events.DTEND + " <= ?) AND ("
-                            + Events.DELETED + " != 1))");
+                    loader.setUri(CalendarContract.Events.CONTENT_URI);
+                    loader.setSelection("("
+                            + CalendarContract.Events.CALENDAR_ID + "=? AND "
+                            + CalendarContract.Events.DTSTART + "<=? AND ("
+                            + CalendarContract.Events.DTEND + ">=? OR "
+                            + CalendarContract.Events.LAST_DATE + ">=? OR ("
+                            + CalendarContract.Events.DTEND + " is null AND "
+                            + CalendarContract.Events.LAST_DATE + " is null)) AND "
+                            + CalendarContract.Events.DELETED + " != 1)");
                     loader.setSelectionArgs(new String[]{Long.toString(mCalendarInfo.id),
-                            Long.toString(startTime),
-                            Long.toString(endTime)
+                            Long.toString(mEndTime.getTimeInMillis()),
+                            Long.toString(mStartTime.getTimeInMillis()),
+                            Long.toString(mStartTime.getTimeInMillis())
                     });
                     loader.setProjection(EVENTS_PROJECTION);
                     return loader;
+                }
             }
             return null;
         }
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-            List<Event> eventList = new ArrayList<>();
+            List<RecurringEvent> recurringEvents = new ArrayList<>();
+            List<Event> events = new ArrayList<>();
+            Map<Long, HashSet<Long>> overriddenInstances = new HashMap<>();
             while (cursor.moveToNext()) {
-                eventList.add(eventFromCursor(cursor));
+                Event event = eventFromCursor(cursor);
+                if (event != null) {
+                    if (event.status != CalendarContract.Events.STATUS_CANCELED) {
+                        events.add(event);
+                    }
+                    if (event.originalId != null) {
+                        HashSet<Long> timestampSet = overriddenInstances.get(event.originalId);
+                        if (timestampSet == null) {
+                            timestampSet = new HashSet<>();
+                            overriddenInstances.put(event.originalId, timestampSet);
+                        }
+                        timestampSet.add(event.originalInstanceTime.getTimeInMillis());
+                    }
+                    continue;
+                }
+                RecurringEvent recurringEvent = recurringEventFromCursor(cursor);
+                if (recurringEvent != null) {
+                    recurringEvents.add(recurringEvent);
+                    continue;
+                }
+                throw new IllegalStateException("Unexpected cursor content");
             }
-            Log.d(TAG, eventList.size() + " events loaded");
-            Collections.sort(eventList);
 
-            mWebAppInterface.onEventsLoaded(eventList);
+            for (RecurringEvent recurringEvent : recurringEvents) {
+                events.addAll(recurringEvent.generateEvents(mStartTime, mEndTime,
+                        overriddenInstances.get(recurringEvent.id)));
+            }
+
+            Log.d(TAG, events.size() + " events loaded");
+            Collections.sort(events);
+
+            mWebAppInterface.onEventsLoaded(events);
         }
 
         @Override
@@ -599,14 +697,80 @@ public class CalendarFragment extends Fragment {
     }
 
     private Event eventFromCursor(Cursor cursor) {
+        int idIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events._ID);
+        int titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.TITLE);
+        int dtStartIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTSTART);
+        int dtEndIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTEND);
+        int originalIdIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.ORIGINAL_ID);
+        int originalInstanceTimeIndex = cursor.getColumnIndexOrThrow(
+                CalendarContract.Events.ORIGINAL_INSTANCE_TIME);
+        int statusIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.STATUS);
+        int etagIndex = cursor.getColumnIndexOrThrow(EVENTS_ETAG);
+
+        int status = cursor.getInt(statusIndex);
+
         Calendar startTime = Calendar.getInstance();
-        startTime.setTimeInMillis(cursor.getLong(EVENTS_PROJECTION_DTSTART_INDEX));
+        startTime.setTimeInMillis(cursor.getLong(dtStartIndex));
         Calendar endTime = Calendar.getInstance();
-        endTime.setTimeInMillis(cursor.getLong(EVENTS_PROJECTION_DTEND_INDEX));
-        String etag = cursor.getString(EVENTS_PROJECTION_ETAG_INDEX);
+
+        if (status == CalendarContract.Events.STATUS_CANCELED) {
+            endTime.setTimeInMillis(startTime.getTimeInMillis());
+            endTime.add(Calendar.HOUR, 1);
+        } else if (!cursor.isNull(dtEndIndex)) {
+            endTime.setTimeInMillis(cursor.getLong(dtEndIndex));
+        } else {
+            return null;
+        }
+
+        Long originalId = cursor.isNull(originalIdIndex) ? null : cursor.getLong(originalIdIndex);
+        Calendar originalInstanceTime = null;
+        if (!cursor.isNull(originalIdIndex)) {
+            originalId = cursor.getLong(originalIdIndex);
+            originalInstanceTime = Calendar.getInstance();
+            originalInstanceTime.setTimeInMillis(cursor.getLong(originalInstanceTimeIndex));
+        }
+
         return new Event(
-                cursor.getLong(EVENTS_PROJECTION_ID_INDEX),
-                cursor.getString(EVENTS_PROJECTION_TITLE_INDEX),
-                startTime, endTime, etag);
+                cursor.getLong(idIndex),
+                cursor.getString(titleIndex),
+                startTime,
+                endTime,
+                status,
+                cursor.getString(etagIndex),
+                originalId,
+                originalInstanceTime);
+    }
+
+
+    private RecurringEvent recurringEventFromCursor(Cursor cursor) {
+        int idIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events._ID);
+        int titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.TITLE);
+        int dtStartIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTSTART);
+        int durationIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DURATION);
+        int rruleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.RRULE);
+        int rdateIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.RDATE);
+
+        if (cursor.isNull(durationIndex)) {
+            return null;
+        }
+
+        Calendar startTime = Calendar.getInstance();
+        startTime.setTimeInMillis(cursor.getLong(dtStartIndex));
+
+        Duration duration = new Duration();
+        try {
+            duration.parse(cursor.getString(durationIndex));
+        } catch (DateException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new RecurringEvent(
+                cursor.getLong(idIndex),
+                cursor.getString(titleIndex),
+                startTime,
+                duration,
+                cursor.getString(rruleIndex),
+                cursor.getString(rdateIndex),
+                mCalendarInfo.timeZone);
     }
 }

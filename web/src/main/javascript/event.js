@@ -327,8 +327,12 @@ five.Event.prototype.startMutationPatch = function() {
 /** @param {Object} eventData */
 five.Event.prototype.endMutationPatch = function(eventData) {
   goog.asserts.assert(eventData['kind'] == 'calendar#event');
-  goog.asserts.assert(this.eventData_['id'] == goog.asserts.assertString(
-      eventData['id']));
+  if (this.eventData_['id']) {
+    goog.asserts.assert(this.eventData_['id'] == goog.asserts.assertString(
+        eventData['id']));
+  } else {
+    goog.asserts.assertString(eventData['id']);
+  }
   goog.asserts.assert(!this.isNew());
   this.endMutationOrCreate_(eventData);
 };
@@ -394,8 +398,12 @@ five.Event.prototype.abortMutationOrCreate_ = function() {
 /** @return {Object} */
 five.Event.prototype.startDelete = function() {
   goog.asserts.assert(!this.isNew());
-  var eventDeleteData = goog.asserts.assertObject(JSON.parse(goog.json.serialize(this.eventData_)));
-  return eventDeleteData;
+  var deleteData = {};
+  deleteData['id'] = this.eventData_['id'];
+  deleteData['originalId'] = this.eventData_['originalId'];
+  deleteData['originalInstanceTime'] = this.eventData_['originalInstanceTime'];
+  deleteData['etag'] = this.eventData_['etag'];
+  return deleteData;
 };
 
 /** @return {boolean} Whether the current state of this event is valid. */

@@ -3,21 +3,26 @@ package com.cantstopthesignals.five;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.TimeZone;
+
 public class CalendarInfo implements Parcelable {
     public final String accountName;
     public final long id;
     public final String displayName;
+    public final String timeZone;
 
-    public CalendarInfo(String accountName, long id, String displayName) {
+    public CalendarInfo(String accountName, long id, String displayName, String timeZone) {
         this.accountName = accountName;
         this.id = id;
         this.displayName = displayName;
+        this.timeZone = timeZone;
     }
 
     public CalendarInfo(Parcel in) {
         accountName = in.readString();
         id = in.readLong();
         displayName = in.readString();
+        timeZone = in.readString();
     }
 
     @Override
@@ -41,6 +46,7 @@ public class CalendarInfo implements Parcelable {
         out.writeString(accountName);
         out.writeLong(id);
         out.writeString(displayName);
+        out.writeString(timeZone);
     }
 
     public static Creator<CalendarInfo> CREATOR = new Creator<CalendarInfo>() {

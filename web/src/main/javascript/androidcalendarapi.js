@@ -110,7 +110,10 @@ five.AndroidCalendarApi.prototype.requestSync = function() {
  * @return {goog.async.Deferred}
  */
 five.AndroidCalendarApi.prototype.createEvent = function(calendarId, eventData) {
-  this.assertValidCreateData_(eventData);
+  goog.asserts.assert(!eventData['id']);
+  goog.asserts.assert(!eventData['originalId']);
+  goog.asserts.assert(!eventData['originalInstanceTime']);
+  goog.asserts.assert(!eventData['etag']);
   var callback = function(respJson) {
     var resp = JSON.parse(respJson);
     goog.asserts.assert(resp['kind'] == 'calendar#event');
@@ -132,7 +135,10 @@ five.AndroidCalendarApi.prototype.createEvent = function(calendarId, eventData) 
  */
 five.AndroidCalendarApi.prototype.saveEvent = function(calendarId, eventData,
     eventPatchData) {
-  this.assertValidSaveData_(eventData, eventPatchData);
+  if (!eventData['id']) {
+    goog.asserts.assert(eventData['originalId']);
+    goog.asserts.assert(eventData['originalInstanceTime']);
+  }
   var callback = function(respJson) {
     var resp = JSON.parse(respJson);
     goog.asserts.assert(resp['kind'] == 'calendar#event');
@@ -142,7 +148,8 @@ five.AndroidCalendarApi.prototype.saveEvent = function(calendarId, eventData,
   var errback = function(error) {
     this.logger_.severe('Error saving event: ' + error, error);
   };
-  return this.callApi_('saveEvent', calendarId, eventData['id'], JSON.stringify(eventPatchData)).
+  return this.callApi_('saveEvent', calendarId, JSON.stringify(eventData),
+      JSON.stringify(eventPatchData)).
       addCallbacks(callback, errback, this);
 };
 
@@ -152,14 +159,17 @@ five.AndroidCalendarApi.prototype.saveEvent = function(calendarId, eventData,
  * @return {goog.async.Deferred}
  */
 five.AndroidCalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
-  this.assertValidDeleteData_(eventDeleteData);
+  if (!eventDeleteData['id']) {
+    goog.asserts.assert(eventDeleteData['originalId']);
+    goog.asserts.assert(eventDeleteData['originalInstanceTime']);
+  }
   var callback = function(resp) {
     this.logger_.info('Event deleted');
   };
   var errback = function(error) {
     this.logger_.severe('Error deleting event: ' + error, error);
   };
-  return this.callApi_('deleteEvent', calendarId, eventDeleteData['id']).
+  return this.callApi_('deleteEvent', calendarId, JSON.stringify(eventDeleteData)).
       addCallbacks(callback, errback, this);
 };
 

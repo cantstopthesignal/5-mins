@@ -1,3 +1,5 @@
 include ':app'
+include ':lib:android-calendar-common'
+include ':lib:google-rfc-2445'
 
 rootProject.name = '5-mins-android'

@@ -65,11 +65,9 @@ public class NavigationDrawerFragment extends Fragment
 
     private static String[] CALENDARS_PROJECTION = new String[] {
             Calendars._ID,
-            Calendars.CALENDAR_DISPLAY_NAME
+            Calendars.CALENDAR_DISPLAY_NAME,
+            Calendars.CALENDAR_TIME_ZONE
     };
-    private static final int CALENDARS_PROJECTION_ID_INDEX = 0;
-    private static final int CALENDARS_PROJECTION_DISPLAY_NAME_INDEX = 1;
-
     private static final int CALENDAR_LIST_LOADER_ID = 0;
 
     /**
@@ -324,11 +322,15 @@ public class NavigationDrawerFragment extends Fragment
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        int idIndex = cursor.getColumnIndexOrThrow(Calendars._ID);
+        int displayNameIndex = cursor.getColumnIndexOrThrow(Calendars.CALENDAR_DISPLAY_NAME);
+        int timeZoneIndex = cursor.getColumnIndexOrThrow(Calendars.CALENDAR_TIME_ZONE);
         List<CalendarInfo> calendarList = new ArrayList<>();
         while (cursor.moveToNext()) {
             calendarList.add(new CalendarInfo(mCurrentAccountName,
-                    cursor.getLong(CALENDARS_PROJECTION_ID_INDEX),
-                    cursor.getString(CALENDARS_PROJECTION_DISPLAY_NAME_INDEX)));
+                    cursor.getLong(idIndex),
+                    cursor.getString(displayNameIndex),
+                    cursor.getString(timeZoneIndex)));
         }
         mCalendars = calendarList.toArray(new CalendarInfo[calendarList.size()]);
         mCalendarListView.setAdapter(new CalendarListAdapter(getActivity(), mCalendars));

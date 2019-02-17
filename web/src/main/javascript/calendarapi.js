@@ -149,7 +149,8 @@ five.CalendarApi.prototype.requestSync = function() {
  * @return {goog.async.Deferred}
  */
 five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
-  this.assertValidCreateData_(eventData);
+  goog.asserts.assert(!eventData['id']);
+  goog.asserts.assert(!eventData['etag']);
   var callback = function(resp) {
     goog.asserts.assert(resp['kind'] == 'calendar#event');
     this.logger_.info('Event created');
@@ -169,7 +170,8 @@ five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
  */
 five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
     eventPatchData) {
-  this.assertValidSaveData_(eventData, eventPatchData);
+  goog.asserts.assert(eventData['id']);
+  goog.asserts.assert(eventPatchData['etag']);
   var callback = function(resp) {
     goog.asserts.assert(resp['kind'] == 'calendar#event');
     this.logger_.info('Event saved');
@@ -188,7 +190,8 @@ five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
  * @return {goog.async.Deferred}
  */
 five.CalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
-  this.assertValidDeleteData_(eventDeleteData);
+  goog.asserts.assert(eventDeleteData['id']);
+  goog.asserts.assert(eventDeleteData['etag']);
   var callback = function(resp) {
     this.logger_.info('Event deleted');
   };
