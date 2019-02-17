@@ -76,13 +76,11 @@ public class Event implements Comparable<Event> {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder("EventInfo[");
-        sb.append("id:").append(id);
-        sb.append(", originalId:").append(originalId);
-        sb.append(", title:\"").append(title);
-        sb.append("\", startTime:").append(startTime.getTime());
-        sb.append(", endTime:").append(endTime.getTime());
-        return sb.append("]").toString();
+        try {
+            return toJson().toString();
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public JSONObject toJson() throws JSONException {

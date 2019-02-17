@@ -514,14 +514,30 @@ public class CalendarFragment extends Fragment {
         }
         Uri eventUri;
         if (event.id != null) {
-            eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
-            int rowsUpdated = cr.update(eventUri, values, null, null);
+            String where = CalendarContract.Events.CALENDAR_ID + "=? AND "
+                    + CalendarContract.Events._ID + "=?";
+            ArrayList<String> selectionArgs = new ArrayList<>();
+            selectionArgs.add(Long.toString(calendarId));
+            selectionArgs.add(Long.toString(event.id));
+            if (event.etag != null) {
+                where += " AND " + EVENTS_ETAG + "=?";
+                selectionArgs.add(event.etag);
+            }
+            int rowsUpdated = cr.update(CalendarContract.Events.CONTENT_URI, values, where,
+                    selectionArgs.toArray(new String[selectionArgs.size()]));
             if (rowsUpdated > 1) {
                 throw new IllegalStateException("Updated more than one row!");
             } else if (rowsUpdated == 0) {
                 return null;
             }
+            eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
         } else {
+            if (event.originalId == null) {
+                throw new NullPointerException("event.originalId is null");
+            }
+            if (event.originalInstanceTime == null) {
+                throw new NullPointerException("event.originalInstanceTime is null");
+            }
             if (!values.containsKey(CalendarContract.Events.TITLE)) {
                 values.put(CalendarContract.Events.TITLE, event.title);
             }
@@ -552,15 +568,30 @@ public class CalendarFragment extends Fragment {
     private boolean deleteEvent(long calendarId, Event event) {
         ContentResolver cr = getActivity().getContentResolver();
         if (event.originalId == null) {
-            Uri eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
+            if (event.id == null) {
+                throw new NullPointerException("event.id is null");
+            }
             ContentValues values = new ContentValues();
             values.put(CalendarContract.Events.DELETED, true);
-            int rowsDeleted = cr.update(eventUri, values, null, null);
-            if (rowsDeleted > 1) {
+            String where = CalendarContract.Events.CALENDAR_ID + "=? AND "
+                    + CalendarContract.Events._ID + "=?";
+            ArrayList<String> selectionArgs = new ArrayList<>();
+            selectionArgs.add(Long.toString(calendarId));
+            selectionArgs.add(Long.toString(event.id));
+            if (event.etag != null) {
+                where += " AND " + EVENTS_ETAG + "=?";
+                selectionArgs.add(event.etag);
+            }
+            int rowsUpdated = cr.update(CalendarContract.Events.CONTENT_URI, values, where,
+                    selectionArgs.toArray(new String[selectionArgs.size()]));
+            if (rowsUpdated > 1) {
                 throw new IllegalStateException("Deleted more than one row!");
             }
-            return rowsDeleted > 0;
+            return rowsUpdated > 0;
         } else if (event.id == null) {
+            if (event.originalInstanceTime == null) {
+                throw new NullPointerException("event.originalInstanceTime is null");
+            }
             ContentValues values = new ContentValues();
             values.put(CalendarContract.Events.DTSTART,
                     event.originalInstanceTime.getTimeInMillis());
@@ -578,10 +609,22 @@ public class CalendarFragment extends Fragment {
             }
             return true;
         } else {
-            Uri eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
+            if (event.id == null) {
+                throw new NullPointerException("event.id is null");
+            }
             ContentValues values = new ContentValues();
             values.put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED);
-            int rowsUpdated = cr.update(eventUri, values, null, null);
+            String where = CalendarContract.Events.CALENDAR_ID + "=? AND "
+                    + CalendarContract.Events._ID + "=?";
+            ArrayList<String> selectionArgs = new ArrayList<>();
+            selectionArgs.add(Long.toString(calendarId));
+            selectionArgs.add(Long.toString(event.id));
+            if (event.etag != null) {
+                where += " AND " + EVENTS_ETAG + "=?";
+                selectionArgs.add(event.etag);
+            }
+            int rowsUpdated = cr.update(CalendarContract.Events.CONTENT_URI, values, where,
+                    selectionArgs.toArray(new String[selectionArgs.size()]));
             if (rowsUpdated > 1) {
                 throw new IllegalStateException("Updated more than one row (repeated instance)!");
             } else if (rowsUpdated == 0) {
