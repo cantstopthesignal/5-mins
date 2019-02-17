@@ -5,7 +5,6 @@ goog.provide('five.layout.TimePoint');
 goog.require('five.util');
 goog.require('goog.array');
 goog.require('goog.asserts');
-goog.require('goog.Disposable');
 goog.require('goog.object');
 
 
@@ -46,7 +45,10 @@ five.layout.TimePoint = function(time, opt_startsSplit) {
   /** @type {string} */
   this.key_ = five.layout.TimePoint.getKey(this.time, this.startsSplit);
 };
-goog.inherits(five.layout.TimePoint, goog.Disposable);
+
+five.layout.TimePoint.comparator = function(a, b) {
+  return a.key_ < b.key_ ? -1 : (a.key_ > b.key_ ? 1 : 0);
+};
 
 /**
  * @param {!goog.date.DateTime} time
@@ -54,15 +56,7 @@ goog.inherits(five.layout.TimePoint, goog.Disposable);
  * @return {string}
  */
 five.layout.TimePoint.getKey = function(time, opt_startsSplit) {
-  return time.toString() + (opt_startsSplit ? '_1' : '_2');
-};
-
-/** @override */
-five.layout.TimePoint.prototype.disposeInternal =
-    function() {
-  delete this.openEvents;
-  delete this.next;
-  goog.base(this, 'disposeInternal');
+  return '' + time.getTime() + (opt_startsSplit ? '_1' : '_2');
 };
 
 five.layout.TimePoint.prototype.toString = function() {

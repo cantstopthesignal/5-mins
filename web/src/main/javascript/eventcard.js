@@ -56,6 +56,9 @@ five.EventCard.prototype.proposed_ = false;
 /** @type {goog.math.Rect} */
 five.EventCard.prototype.rect_;
 
+/** @type {boolean} */
+five.EventCard.prototype.wasAttachedToPatch_;
+
 /** @type {Element} */
 five.EventCard.prototype.dateRangeEl_;
 
@@ -188,16 +191,21 @@ five.EventCard.prototype.setRect = function(rect) {
   if (!this.el) {
     this.createDom();
   }
-  this.rect_ = rect;
+  if (goog.math.Rect.equals(this.rect_, rect)) {
+    return;
+  }
   goog.style.setPosition(this.el, rect.left, rect.top);
   goog.style.setBorderBoxSize(this.el, rect.getSize());
-  goog.dom.classlist.enable(this.el, 'micro-height',
-      rect.height < five.deviceParams.getEventCardMinShortHeight());
-  goog.dom.classlist.enable(this.el, 'short-height',
-      rect.height >= five.deviceParams.getEventCardMinShortHeight() &&
-      rect.height < five.deviceParams.getEventCardMinNormalHeight());
-  goog.dom.classlist.enable(this.el, 'large-height',
-      rect.height >= five.deviceParams.getEventCardMinLargeHeight());
+  if (!this.rect_ || this.rect_.height != rect.height) {
+    goog.dom.classlist.enable(this.el, 'micro-height',
+        rect.height < five.deviceParams.getEventCardMinShortHeight());
+    goog.dom.classlist.enable(this.el, 'short-height',
+        rect.height >= five.deviceParams.getEventCardMinShortHeight() &&
+        rect.height < five.deviceParams.getEventCardMinNormalHeight());
+    goog.dom.classlist.enable(this.el, 'large-height',
+        rect.height >= five.deviceParams.getEventCardMinLargeHeight());
+  }
+  this.rect_ = rect;
 };
 
 /** @return {goog.math.Rect} */
@@ -232,8 +240,12 @@ five.EventCard.prototype.setProposed = function(proposed) {
 };
 
 five.EventCard.prototype.timeAxisPatchUpdated = function() {
-  goog.dom.classlist.enable(this.el, 'attached-to-patch',
-      !!this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent());
+  var attachedToPatch = !!this.timeAxisPatch_ && this.timeAxisPatch_.getAttachedToEvent();
+  if (this.wasAttachedToPatch_ === attachedToPatch) {
+    return;
+  }
+  goog.dom.classlist.enable(this.el, 'attached-to-patch', attachedToPatch);
+  this.wasAttachedToPatch_ = attachedToPatch;
 };
 
 /**

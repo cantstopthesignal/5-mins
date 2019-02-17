@@ -2,6 +2,7 @@
 
 goog.provide('five.layout.Calc');
 
+goog.require('five.layout.AvlTree');
 goog.require('five.layout.Event');
 goog.require('five.layout.Params');
 goog.require('five.layout.TimeMap');
@@ -182,70 +183,43 @@ five.layout.Calc.prototype.calcTimeRange_ = function() {
 };
 
 five.layout.Calc.prototype.calcTimePoints_ = function() {
-  var timePointMap = {};
+  var timePointTree = new five.layout.AvlTree(five.layout.TimePoint.comparator);
 
   if (this.minTime) {
     var minTimePoint = new five.layout.TimePoint(this.minTime);
-    this.registerDisposable(minTimePoint);
-    timePointMap[minTimePoint] = minTimePoint;
+    timePointTree.add(minTimePoint);
   }
   if (this.maxTime) {
     var maxTimePoint = new five.layout.TimePoint(this.maxTime);
-    this.registerDisposable(maxTimePoint);
-    timePointMap[maxTimePoint] = maxTimePoint;
+    timePointTree.add(maxTimePoint);
   }
 
   // Create time points for all horz splits
   goog.array.forEach(this.horzSplits_, function(horzSplit) {
-    var startKey = five.layout.TimePoint.getKey(horzSplit.getTime(), true);
-    var startPoint = timePointMap[startKey];
-    if (!startPoint) {
-      startPoint = new five.layout.TimePoint(horzSplit.getTime(), true);
-      this.registerDisposable(startPoint);
-      timePointMap[startPoint] = startPoint;
-    }
+    var startPoint = new five.layout.TimePoint(horzSplit.getTime(), true);
+    startPoint = timePointTree.add(startPoint);
     startPoint.linearTimeAnchor = true;
     horzSplit.startTimePoint = startPoint;
-    var endKey = five.layout.TimePoint.getKey(horzSplit.getTime());
-    var endPoint = timePointMap[endKey];
-    if (!endPoint) {
-      endPoint = new five.layout.TimePoint(horzSplit.getTime());
-      this.registerDisposable(endPoint);
-      timePointMap[endPoint] = endPoint;
-    }
+    var endPoint = new five.layout.TimePoint(horzSplit.getTime());
+    endPoint = timePointTree.add(endPoint);
     endPoint.linearTimeAnchor = true;
     horzSplit.endTimePoint = endPoint;
   }, this);
 
   // Create all relevant time points for the start and end times of all events.
   goog.array.forEach(this.events_, function(event) {
-    var startKey = five.layout.TimePoint.getKey(event.startTime);
-    var startPoint = timePointMap[startKey];
-    if (!startPoint) {
-      startPoint = new five.layout.TimePoint(event.startTime);
-      this.registerDisposable(startPoint);
-      timePointMap[startPoint] = startPoint;
-    }
+    var startPoint = new five.layout.TimePoint(event.startTime);
+    startPoint = timePointTree.add(startPoint);
     event.startTimePoint = startPoint;
-    var endKey = five.layout.TimePoint.getKey(event.endTime, true);
-    if (!(endKey in timePointMap)) {
-      endKey = five.layout.TimePoint.getKey(event.endTime);
-    }
-    var endPoint = timePointMap[endKey];
+    var endPoint = timePointTree.find(new five.layout.TimePoint(event.endTime, true));
     if (!endPoint) {
       endPoint = new five.layout.TimePoint(event.endTime);
-      this.registerDisposable(endPoint);
-      timePointMap[endPoint] = endPoint;
+      endPoint = timePointTree.add(endPoint);
     }
     event.endTimePoint = endPoint;
   }, this);
 
-  this.timePoints_ = goog.object.getValues(timePointMap);
-  this.timePoints_.sort(function(a, b) {
-    a = a.toString();
-    b = b.toString();
-    return a < b ? -1 : (a > b ? 1 : 0);
-  });
+  this.timePoints_ = timePointTree.getValues();
 
   var lastTimePoint = null;
   goog.array.forEach(this.timePoints_, function(timePoint) {
@@ -479,12 +453,12 @@ five.layout.Calc.prototype.calcLinearTimeMap_ = function() {
   five.util.forEachHourWrap(this.minTime, this.maxTime, function(hour) {
     var yPos = this.timeMap_.timeToYPos(hour);
     timeAndYPosList.push([hour, yPos]);
-    hourTimeSet[hour.toString()] = true;
+    hourTimeSet[hour.getTime()] = true;
   }, this);
 
   // Stitch in linear time yPos from time points.
   goog.array.forEach(this.timePoints_, function(timePoint) {
-    if (!goog.object.containsKey(hourTimeSet, timePoint.time.toString())) {
+    if (!goog.object.containsKey(hourTimeSet, timePoint.time.getTime())) {
       timeAndYPosList.push([timePoint.time, timePoint.linearTimeYPos]);
     }
   }, this);
