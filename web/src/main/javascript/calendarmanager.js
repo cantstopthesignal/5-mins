@@ -133,7 +133,7 @@ five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_ =
 /** @type {number} */
 five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_DURATION_ = 1000;
 
-/** @type {goog.debug.Logger} */
+/** @type {goog.log.Logger} */
 five.CalendarManager.prototype.logger_ = goog.log.getLogger(
     'five.CalendarManager');
 

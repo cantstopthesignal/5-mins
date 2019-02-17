@@ -12,7 +12,7 @@ goog.require('goog.date.Date');
 goog.require('goog.date.DateTime');
 goog.require('goog.date.Interval');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.events.EventType');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.style');
@@ -331,12 +331,17 @@ five.EndToEndTest.prototype.addDeleteEvent = function() {
   }, this);
 };
 
-five.EndToEndTest.prototype.addChangeEventSummary = function() {
+five.EndToEndTest.prototype.addChangeEventSummary = function(newSummary) {
   this.addWaitForAsync('Changing the summary of one event');
   this.testDeferred.addCallback(function() {
     var eventCard = goog.asserts.assertObject(this.appDom.getElementsByClass(
         'event-card')[0]);
     this.fireAppDoubleClickSequence_(eventCard);
+    var summaryEl = this.appDom.getElementByClass('summary-input');
+    summaryEl.value = newSummary;
+    this.fireAppKeySequence_(summaryEl, goog.events.KeyCodes.TAB);
+    this.fireAppKeySequence_(this.appDom.getElementByClass('dialog'),
+        goog.events.KeyCodes.ENTER);
   }, this);
 };
 
@@ -478,22 +483,7 @@ function testChangeSummary() {
   test.addReplayMocks();
   test.addAppStartupSequence();
   test.addCheckSaveButtonVisible(false);
-
-  test.addWaitForAsync('Setup mock prompt');
-  test.testDeferred.addCallback(function() {
-    promptMockControl.createMethodMock(test.appDom.getWindow(), 'prompt')(
-        goog.testing.mockmatchers.isString, event['summary']).$returns(
-            event['summary'] + ' (edited)');
-    promptMockControl.$replayAll();
-  }, this);
-
-  test.addChangeEventSummary();
-
-  test.addWaitForAsync('Verify mock prompt');
-  test.testDeferred.addCallback(function() {
-    promptMockControl.$verifyAll();
-  }, this);
-
+  test.addChangeEventSummary(event['summary'] + ' (edited)');
   test.addSaveSequence();
   test.addVerifyMocks();
   test.waitForDeferred();

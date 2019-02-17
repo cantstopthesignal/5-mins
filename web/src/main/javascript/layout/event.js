@@ -6,8 +6,8 @@ goog.require('five.util');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.Disposable');
-goog.require('goog.debug.Logger');
 goog.require('goog.dom');
+goog.require('goog.log');
 goog.require('goog.math.Rect');
 goog.require('goog.object');
 

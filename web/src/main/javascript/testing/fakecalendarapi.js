@@ -5,11 +5,11 @@ goog.provide('five.testing.FakeCalendarApi');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
 goog.require('goog.json');
+goog.require('goog.log');
 goog.require('goog.testing.asserts');
 goog.require('goog.testing.mockmatchers');
 
@@ -30,7 +30,7 @@ five.testing.FakeCalendarApi = function(requestHandler) {
 };
 goog.inherits(five.testing.FakeCalendarApi, goog.events.EventTarget);
 
-/** @type {goog.debug.Logger} */
+/** @type {goog.log.Logger} */
 five.testing.FakeCalendarApi.prototype.logger_ = goog.log.getLogger(
     'five.testing.FakeCalendarApi');
 
@@ -54,55 +54,67 @@ five.testing.FakeCalendarApi.calendarListResult_;
 five.testing.FakeCalendarApi.calendar1EventsResult_;
 
 five.testing.FakeCalendarApi.prototype.expectLoadCalendars = function() {
-  this.requestHandler_.handleRpcRequest('calendar.calendarList.list', 'v3', {}).
-      $returns(this.calendarListResult_);
+  this.requestHandler_.handleRequest({
+    'path': 'https://www.googleapis.com/calendar/v3/users/me/calendarList',
+    'method': 'GET'
+  }).$returns(this.calendarListResult_);
 };
 
 five.testing.FakeCalendarApi.prototype.expectLoadCalendar1Events = function() {
-  var paramMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
-      goog.bind(function(params) {
-    var expectedParams = {
-      'calendarId': this.calendar1Id_,
-      'orderBy': 'startTime',
-      'singleEvents': true,
-      'timeMin': goog.asserts.assertString(params['timeMin']),
-      'timeMax': goog.asserts.assertString(params['timeMax'])
+  var argsMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
+      goog.bind(function(args) {
+    var expectedArgs = {
+      'path': 'https://www.googleapis.com/calendar/v3/calendars/' +
+          encodeURIComponent(this.calendar1Id_) + '/events',
+      'method': 'GET',
+      'params': {
+        'singleEvents': true,
+        'maxResults': 240,
+        'timeMin': goog.asserts.assertString(args['params']['timeMin']),
+        'timeMax': goog.asserts.assertString(args['params']['timeMax'])
+      }
     };
-    assertObjectEquals(expectedParams, params);
+    assertObjectEquals(expectedArgs, args);
     return true;
   }, this));
-  this.requestHandler_.handleRpcRequest('calendar.events.list', 'v3',
-      paramMatcher).$returns(this.calendar1EventsResult_);
+  this.requestHandler_.handleRequest(argsMatcher).$returns(this.calendar1EventsResult_);
 };
 
 five.testing.FakeCalendarApi.prototype.expectEventCreate = function(event,
     expectedResource, resultEvent) {
-  var expectedParams = {
-    'calendarId': this.calendar1Id_,
-    'resource': expectedResource
-  }
-  this.requestHandler_.handleRpcRequest('calendar.events.insert', 'v3',
-      expectedParams).$returns(resultEvent);
+  var expectedArgs = {
+    'path': 'https://www.googleapis.com/calendar/v3/calendars/' +
+        encodeURIComponent(this.calendar1Id_) + '/events',
+    'method': 'POST',
+    'params': {},
+    'body': expectedResource
+  };
+  this.requestHandler_.handleRequest(expectedArgs).$returns(resultEvent);
 };
 
 five.testing.FakeCalendarApi.prototype.expectEventPatch = function(event,
     expectedResource, resultEvent) {
-  var expectedParams = {
-    'calendarId': this.calendar1Id_,
-    'eventId': event['id'],
-    'resource': expectedResource
-  }
-  this.requestHandler_.handleRpcRequest('calendar.events.patch', 'v3',
-      expectedParams).$returns(resultEvent);
+  var expectedArgs = {
+    'path': 'https://www.googleapis.com/calendar/v3/calendars/' +
+        encodeURIComponent(this.calendar1Id_) + '/events/' +
+        encodeURIComponent(event['id']),
+    'method': 'PATCH',
+    'params': {},
+    'body': expectedResource
+  };
+  this.requestHandler_.handleRequest(expectedArgs).$returns(resultEvent);
 };
 
 five.testing.FakeCalendarApi.prototype.expectEventDelete = function(event) {
-  var expectedParams = {
-    'calendarId': this.calendar1Id_,
-    'eventId': event['id']
-  }
-  this.requestHandler_.handleRpcRequest('calendar.events.delete', 'v3',
-      expectedParams).$returns(null);
+  var expectedArgs = {
+    'path': 'https://www.googleapis.com/calendar/v3/calendars/' +
+        encodeURIComponent(this.calendar1Id_) + '/events/' +
+        encodeURIComponent(event['id']),
+    'method': 'DELETE',
+    'params': {},
+    'body': {}
+  };
+  this.requestHandler_.handleRequest(expectedArgs).$returns(null);
 };
 
 five.testing.FakeCalendarApi.prototype.makeTestData_ = function() {

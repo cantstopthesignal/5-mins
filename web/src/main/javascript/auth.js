@@ -5,10 +5,10 @@ goog.provide('five.Auth');
 goog.require('five.Dialog');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
+goog.require('goog.log');
 
 
 /**

@@ -8,7 +8,7 @@ goog.require('five.deviceParams');
 goog.require('five.util');
 goog.require('goog.asserts');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.dom.Range');
 goog.require('goog.events.EventType');
 goog.require('goog.style');

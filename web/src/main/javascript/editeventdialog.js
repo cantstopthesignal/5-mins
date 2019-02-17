@@ -5,12 +5,12 @@ goog.provide('five.EditEventDialog');
 goog.require('five.Dialog');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
 goog.require('goog.i18n.DateTimeFormat');
 goog.require('goog.i18n.DateTimeParse');
+goog.require('goog.log');
 goog.require('goog.ui.DatePicker');
 goog.require('goog.ui.InputDatePicker');
 goog.require('goog.ui.LabelInput');  // Fixes closure compile issue.

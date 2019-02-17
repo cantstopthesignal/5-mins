@@ -5,7 +5,7 @@ goog.provide('five.Dialog');
 goog.require('five.Component');
 goog.require('goog.asserts');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.style');
 
 /**

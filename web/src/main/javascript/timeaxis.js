@@ -9,7 +9,7 @@ goog.require('goog.date.Date');
 goog.require('goog.date.DateRange');
 goog.require('goog.date.Interval');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.object');
 goog.require('goog.style');
 

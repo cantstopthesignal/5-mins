@@ -50,7 +50,7 @@ five.CalendarApi.get = function(appContext) {
       appContext.get(five.CalendarApi.SERVICE_ID)));
 };
 
-/** @type {goog.debug.Logger} */
+/** @type {goog.log.Logger} */
 five.CalendarApi.prototype.logger_ = goog.log.getLogger(
     'five.CalendarApi');
 
@@ -217,12 +217,17 @@ five.CalendarApi.prototype.callApi_ = function(pathParts, httpMethod, opt_params
   this.logger_.info(path);
   var retryOnAuthFailure = true;
   var doRequest = goog.bind(function() {
-    var request = goog.getObjectByName('gapi.client.request')({
+    var args = {
       'path': path,
-      'method': httpMethod,
-      'params': opt_params,
-      'body': opt_body
-    });
+      'method': httpMethod
+    };
+    if (opt_params) {
+      args['params'] = opt_params;
+    }
+    if (opt_body) {
+      args['body'] = opt_body;
+    }
+    var request = goog.getObjectByName('gapi.client.request')(args);
     request['execute'](goog.bind(function(resp) {
       if (!resp) {
         if (opt_expectEmptyResponse) {

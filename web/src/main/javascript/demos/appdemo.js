@@ -11,7 +11,7 @@ goog.require('goog.asserts');
 goog.require('goog.date.DateTime');
 goog.require('goog.date.Interval');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
 goog.require('goog.events.EventHandler');

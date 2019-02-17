@@ -13,10 +13,10 @@ goog.require('five.EventsView');
 goog.require('five.NotificationManager');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
+goog.require('goog.log');
 
 
 /**
@@ -52,7 +52,7 @@ five.App = function() {
 };
 goog.inherits(five.App, goog.events.EventTarget);
 
-/** @type {goog.debug.Logger} */
+/** @type {goog.log.Logger} */
 five.App.prototype.logger_ = goog.log.getLogger('five.App');
 
 /** @type {five.AppBar} */

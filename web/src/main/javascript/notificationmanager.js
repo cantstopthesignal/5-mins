@@ -6,7 +6,7 @@ goog.require('five.Component');
 goog.require('five.Service');
 goog.require('goog.asserts');
 goog.require('goog.dom');
-goog.require('goog.dom.classes');
+goog.require('goog.dom.classlist');
 goog.require('goog.events.EventType');
 
 

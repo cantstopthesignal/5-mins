@@ -42,7 +42,7 @@ five.AndroidAppApi.get = function(appContext) {
       appContext.get(five.AndroidAppApi.SERVICE_ID)));
 };
 
-/** @type {goog.debug.Logger} */
+/** @type {goog.log.Logger} */
 five.AndroidAppApi.prototype.logger_ = goog.log.getLogger(
     'five.AndroidAppApi');
 

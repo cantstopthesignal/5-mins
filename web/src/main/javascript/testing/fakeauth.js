@@ -6,11 +6,10 @@ goog.provide('five.testing.FakeAuth.RequestHandler');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
-goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
-
+goog.require('goog.log');
 
 /**
  * Fake server authorization for tests.
@@ -34,12 +33,10 @@ goog.inherits(five.testing.FakeAuth, goog.events.EventTarget);
 five.testing.FakeAuth.RequestHandler = function() {};
 
 /**
- * @param {string} name
- * @param {string} version
- * @param {Object} params
+ * @param {Object} args
  * @return {Object} result
  */
-five.testing.FakeAuth.RequestHandler.prototype.handleRpcRequest =
+five.testing.FakeAuth.RequestHandler.prototype.handleRequest =
     goog.abstractMethod;
 
 /** @type {goog.debug.Logger} */
@@ -69,7 +66,7 @@ five.testing.FakeAuth.prototype.register = function() {
       'init': goog.bind(this.receiveAuthInit_, this)
     },
     'client': {
-      'rpcRequest': goog.bind(this.receiveRpcRequest_, this),
+      'request': goog.bind(this.receiveRequest_, this),
       'setApiKey': goog.bind(this.receiveClientSetApiKey_, this)
     }
   };
@@ -105,19 +102,16 @@ five.testing.FakeAuth.prototype.receiveClientSetApiKey_ = function(apiKey) {
 };
 
 /**
- * @param {string} name
- * @param {string} version
- * @param {Object} params
+ * @param {Object} args
  * @return {Object}
  */
-five.testing.FakeAuth.prototype.receiveRpcRequest_ = function(
-    name, version, params) {
-  goog.asserts.assertString(name, 'Rpc name expected');
-  goog.asserts.assertString(version, 'Rpc version expected');
-  goog.asserts.assertObject(params, 'Rpc params expected');
+five.testing.FakeAuth.prototype.receiveRequest_ = function(args) {
+  goog.asserts.assertObject(args, 'Args expected');
+  goog.asserts.assertString(args['path'], 'Path expected');
+  goog.asserts.assertString(args['method'], 'Method expected');
 
   var execute = goog.bind(function(callback) {
-    var result = this.requestHandler_.handleRpcRequest(name, version, params);
+    var result = this.requestHandler_.handleRequest(args);
     window.setTimeout(function() { callback(result); }, 0);
   }, this);
 

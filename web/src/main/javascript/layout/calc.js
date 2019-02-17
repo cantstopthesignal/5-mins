@@ -37,7 +37,7 @@ five.layout.Calc = function(params) {
 };
 goog.inherits(five.layout.Calc, goog.Disposable);
 
-/** @type {goog.debug.Logger} */
+/** @type {goog.log.Logger} */
 five.layout.Calc.prototype.logger_ = goog.log.getLogger(
     'five.layout.Calc');
 
