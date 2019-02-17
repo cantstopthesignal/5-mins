@@ -568,7 +568,12 @@ five.EventsTimeline.prototype.layoutTimeAxisPatches_ = function(
     layoutEvents) {
   goog.array.forEach(layoutEvents, function(layoutEvent) {
     var eventCard = layoutEvent.eventCard;
-    if (layoutEvent.hasTimeAxisPatch) {
+    var inRange =
+        goog.date.Date.compare(
+            layoutEvent.endTime, goog.asserts.assertObject(this.startDate_)) > 0 &&
+        goog.date.Date.compare(
+            layoutEvent.startTime, goog.asserts.assertObject(this.endDate_)) < 0;
+    if (layoutEvent.hasTimeAxisPatch && inRange) {
       var patch = eventCard.getTimeAxisPatch();
       if (!patch) {
         patch = new five.TimeAxisPatch();

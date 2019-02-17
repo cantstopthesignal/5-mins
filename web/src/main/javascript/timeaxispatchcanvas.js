@@ -29,6 +29,9 @@ five.TimeAxisPatchCanvas = function(width) {
 };
 goog.inherits(five.TimeAxisPatchCanvas, five.Component);
 
+/** @type {number} */
+five.TimeAxisPatchCanvas.MAX_UPSCALE_RATIO_ = 2;
+
 /** @type {Object} */
 five.TimeAxisPatchCanvas.prototype.ctx_;
 
@@ -214,7 +217,8 @@ five.TimeAxisPatchCanvas.prototype.doPaintCheckDevicePixelRatio_ = function() {
       this.ctx_['oBackingStorePixelRatio'] ||
       this.ctx_['backingStorePixelRatio'] || 1;
   var oldUpscaleRatio = this.upscaleRatio_;
-  this.upscaleRatio_ = devicePixelRatio / backingStoreRatio;
+  this.upscaleRatio_ = Math.min(devicePixelRatio / backingStoreRatio,
+      five.TimeAxisPatchCanvas.MAX_UPSCALE_RATIO_);
   if (oldUpscaleRatio != this.upscaleRatio_) {
     this.el.setAttribute('width', (this.width_ * this.upscaleRatio_) + 'px');
     this.el.style.width = this.width_ + 'px';
