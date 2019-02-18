@@ -80,16 +80,32 @@ five.testing.FakeCalendarApi.prototype.expectLoadCalendar1Events = function() {
   this.requestHandler_.handleRequest(argsMatcher).$returns(this.calendar1EventsResult_);
 };
 
-five.testing.FakeCalendarApi.prototype.expectEventCreate = function(event,
-    expectedResource, resultEvent) {
-  var expectedArgs = {
-    'path': 'https://www.googleapis.com/calendar/v3/calendars/' +
-        encodeURIComponent(this.calendar1Id_) + '/events',
-    'method': 'POST',
-    'params': {},
-    'body': expectedResource
-  };
-  this.requestHandler_.handleRequest(expectedArgs).$returns(resultEvent);
+/**
+ * @param {Object|goog.testing.mockmatchers.ArgumentMatcher} expectedResourceOrMatcher
+ * @param {!five.event.Event} resultEvent
+ */
+five.testing.FakeCalendarApi.prototype.expectEventCreate = function(
+    expectedResourceOrMatcher, resultEvent) {
+  var argsMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
+      goog.bind(function(args) {
+    var expectedResource;
+    if (expectedResourceOrMatcher instanceof goog.testing.mockmatchers.ArgumentMatcher) {
+      assertTrue(expectedResourceOrMatcher.matches(args['body']));
+      expectedResource = args['body'];
+    } else {
+      expectedResource = expectedResourceOrMatcher;
+    }
+    var expectedArgs = {
+      'path': 'https://www.googleapis.com/calendar/v3/calendars/' +
+          encodeURIComponent(this.calendar1Id_) + '/events',
+      'method': 'POST',
+      'params': {},
+      'body': expectedResource
+    };
+    assertObjectEquals(expectedArgs, args);
+    return true;
+  }, this));
+  this.requestHandler_.handleRequest(argsMatcher).$returns(resultEvent);
 };
 
 five.testing.FakeCalendarApi.prototype.expectEventPatch = function(event,

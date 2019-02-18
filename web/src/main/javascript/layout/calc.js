@@ -32,9 +32,7 @@ five.layout.Calc = function(params) {
   /** @type {!Array.<!five.layout.Event>} */
   this.eventsByDuration_ = [];
 
-  /** @type {five.layout.Params} */
-  this.params_ = params;
-  this.params_.copyTo(this);
+  this.copyParams_(params);
 };
 goog.inherits(five.layout.Calc, goog.Disposable);
 
@@ -159,6 +157,18 @@ five.layout.Calc.prototype.disposeInternal = function() {
   })
   delete this.horzSplits_;
   goog.base(this, 'disposeInternal');
+};
+
+five.layout.Calc.prototype.copyParams_ = function(params) {
+  this.distancePerHour = params.distancePerHour;
+  this.minDistancePerHour = params.minDistancePerHour;
+  this.minTimePointSpacing = params.minTimePointSpacing;
+  this.minEventHeight = params.minEventHeight;
+  this.layoutWidth = params.layoutWidth;
+  this.timeAxisPatchWidth = params.timeAxisPatchWidth;
+  this.patchMinYPosDiff = params.patchMinYPosDiff;
+  this.minTime = params.minTime;
+  this.maxTime = params.maxTime;
 };
 
 five.layout.Calc.prototype.calcTimeRange_ = function() {

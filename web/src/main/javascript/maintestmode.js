@@ -3,6 +3,7 @@
 goog.provide('five.mainTestMode');
 
 goog.require('goog.events');
+goog.require('goog.math.Coordinate');
 goog.require('goog.testing.events');
 
 
@@ -16,11 +17,41 @@ five.mainTestMode.init = function(mainStartFn, mainDisposeFn) {
   goog.exportSymbol('five.mainTestMode.dispose', mainDisposeFn);
 
   goog.exportSymbol('five.mainTestMode.fireClickSequence',
-      goog.testing.events.fireClickSequence);
+      function(target) {
+        goog.testing.events.fireClickSequence(target);
+      });
   goog.exportSymbol('five.mainTestMode.fireDoubleClickSequence',
-      goog.testing.events.fireDoubleClickSequence);
+      function(target) {
+        goog.testing.events.fireDoubleClickSequence(target);
+      });
   goog.exportSymbol('five.mainTestMode.fireKeySequence',
-      goog.testing.events.fireKeySequence);
+      function(target, keyCode) {
+        goog.testing.events.fireKeySequence(target, keyCode);
+      });
+  goog.exportSymbol('five.mainTestMode.fireMouseDownEvent',
+      function(target, opt_x, opt_y) {
+        var opt_coords;
+        if (opt_x !== undefined && opt_y !== undefined) {
+          opt_coords = new goog.math.Coordinate(opt_x, opt_y);
+        }
+        goog.testing.events.fireMouseDownEvent(target, undefined, opt_coords);
+      });
+  goog.exportSymbol('five.mainTestMode.fireMouseMoveEvent',
+      function(target, opt_x, opt_y) {
+        var opt_coords;
+        if (opt_x !== undefined && opt_y !== undefined) {
+          opt_coords = new goog.math.Coordinate(opt_x, opt_y);
+        }
+        goog.testing.events.fireMouseMoveEvent(target, opt_coords);
+      });
+  goog.exportSymbol('five.mainTestMode.fireMouseUpEvent',
+      function(target, opt_x, opt_y) {
+        var opt_coords;
+        if (opt_x !== undefined && opt_y !== undefined) {
+          opt_coords = new goog.math.Coordinate(opt_x, opt_y);
+        }
+        goog.testing.events.fireMouseUpEvent(target, undefined, opt_coords);
+      });
   goog.exportSymbol('five.mainTestMode.getTotalListenerCount',
       goog.events.getTotalListenerCount);
 };

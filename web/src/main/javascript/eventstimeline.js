@@ -282,6 +282,7 @@ five.EventsTimeline.prototype.disposeInternal = function() {
   goog.disposeAll(this.eventCards_);
   delete this.owner_;
   this.disposeGlobalPointerUp_();
+  this.clearGlobalClickCancel_();
   goog.base(this, 'disposeInternal');
 };
 
@@ -761,10 +762,10 @@ five.EventsTimeline.prototype.handlePointerDown_ = function(e) {
   this.clearGlobalClickCancel_();
   this.pointerDownTime_ = this.getPointerEventTime_(e);
   this.mouseDownShiftKey_ = e.shiftKey;
-  this.globalMouseUpListenerKey_ = goog.events.listen(window,
+  this.globalMouseUpListenerKey_ = goog.events.listen(document,
       goog.events.EventType.MOUSEUP,
       this.handleGlobalPointerUp_, false, this);
-  this.globalTouchEndListenerKey_ = goog.events.listen(window,
+  this.globalTouchEndListenerKey_ = goog.events.listen(document,
       goog.events.EventType.TOUCHEND,
       this.handleGlobalPointerUp_, false, this);
 };

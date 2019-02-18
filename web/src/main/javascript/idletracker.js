@@ -20,12 +20,12 @@ five.IdleTracker = function() {
   this.userActive_ = true;
 
   /** @type {goog.events.Key} */
-  this.globalMouseMoveListenerKey_ = goog.events.listen(window,
+  this.globalMouseMoveListenerKey_ = goog.events.listen(document,
       goog.events.EventType.MOUSEMOVE,
       this.handleUserActivity_, false, this);
 
   /** @type {goog.events.Key} */
-  this.globalKeyPressListenerKey_ = goog.events.listen(window,
+  this.globalKeyPressListenerKey_ = goog.events.listen(document,
       goog.events.EventType.KEYPRESS,
       this.handleUserActivity_, false, this);
 

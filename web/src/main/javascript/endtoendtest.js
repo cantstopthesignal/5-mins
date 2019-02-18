@@ -337,11 +337,13 @@ five.EndToEndTest.prototype.addChangeEventSummary = function(newSummary) {
     var eventCard = goog.asserts.assertObject(this.appDom.getElementsByClass(
         'event-card')[0]);
     this.fireAppDoubleClickSequence_(eventCard);
-    var summaryEl = this.appDom.getElementByClass('summary-input');
+    var summaryEl = goog.asserts.assertObject(this.appDom.getElementByClass(
+        'summary-input'));
     summaryEl.value = newSummary;
     this.fireAppKeySequence_(summaryEl, goog.events.KeyCodes.TAB);
-    this.fireAppKeySequence_(this.appDom.getElementByClass('dialog'),
-        goog.events.KeyCodes.ENTER);
+    var dialogEl = goog.asserts.assertObject(this.appDom.getElementByClass(
+        'dialog'));
+    this.fireAppKeySequence_(dialogEl, goog.events.KeyCodes.ENTER);
   }, this);
 };
 
@@ -379,6 +381,24 @@ five.EndToEndTest.prototype.fireAppDoubleClickSequence_ = function(var_args) {
 
 five.EndToEndTest.prototype.fireAppKeySequence_ = function(var_args) {
   var fn = goog.getObjectByName('five.mainTestMode.fireKeySequence',
+      this.appDom.getWindow());
+  fn.apply(null, arguments);
+};
+
+five.EndToEndTest.prototype.fireAppMouseDownEvent_ = function(var_args) {
+  var fn = goog.getObjectByName('five.mainTestMode.fireMouseDownEvent',
+      this.appDom.getWindow());
+  fn.apply(null, arguments);
+};
+
+five.EndToEndTest.prototype.fireAppMouseMoveEvent_ = function(var_args) {
+  var fn = goog.getObjectByName('five.mainTestMode.fireMouseMoveEvent',
+      this.appDom.getWindow());
+  fn.apply(null, arguments);
+};
+
+five.EndToEndTest.prototype.fireAppMouseUpEvent_ = function(var_args) {
+  var fn = goog.getObjectByName('five.mainTestMode.fireMouseUpEvent',
       this.appDom.getWindow());
   fn.apply(null, arguments);
 };
@@ -440,7 +460,7 @@ function testDuplicate() {
   var resultEvent = goog.object.unsafeClone(event);
   resultEvent['start'] = expectedResource['start'];
   resultEvent['end'] = expectedResource['end'];
-  test.fakeCalendarApi.expectEventCreate(event, expectedResource, resultEvent);
+  test.fakeCalendarApi.expectEventCreate(expectedResource, resultEvent);
 
   test.addReplayMocks();
   test.addAppStartupSequence();
@@ -484,6 +504,53 @@ function testChangeSummary() {
   test.addAppStartupSequence();
   test.addCheckSaveButtonVisible(false);
   test.addChangeEventSummary(event['summary'] + ' (edited)');
+  test.addSaveSequence();
+  test.addVerifyMocks();
+  test.waitForDeferred();
+}
+
+function testDragCreate() {
+  test.expectCalendarApiLoads();
+
+  var event = test.fakeCalendarApi.event1;
+  var start = new goog.date.DateTime(new Date(event['start']['dateTime']));
+  var end = new goog.date.DateTime(new Date(event['end']['dateTime']));
+  var resourceMatcher = new goog.testing.mockmatchers.ArgumentMatcher(
+      function(resource) {
+    var startTime = resource['start']['dateTime'];
+    var endTime = resource['end']['dateTime'];
+    var expectedResource = {
+      'summary': '<new>',
+      'start': {
+        'dateTime': startTime
+      },
+      'end': {
+        'dateTime': endTime
+      }
+    };
+    assertTrue(new Date(startTime).getTime() < new Date(endTime).getTime());
+    assertObjectEquals(expectedResource, resource);
+    return true;
+  });
+  var resultEvent = goog.object.unsafeClone(event);
+  test.fakeCalendarApi.expectEventCreate(resourceMatcher, resultEvent);
+
+  test.addReplayMocks();
+  test.addAppStartupSequence();
+  test.addCheckSaveButtonVisible(false);
+  test.addWaitForAsync('Creating drag event');
+  test.testDeferred.addCallback(function() {
+    var eventsTimeline = goog.asserts.assertObject(this.appDom.getElementsByClass(
+        'events-timeline')[0]);
+    var mouseCoord = goog.style.getClientPosition(eventsTimeline);
+    this.fireAppMouseDownEvent_(eventsTimeline, mouseCoord.x, mouseCoord.y);
+    mouseCoord.y += 100;
+    this.fireAppMouseMoveEvent_(eventsTimeline, mouseCoord.x, mouseCoord.y);
+    this.fireAppMouseUpEvent_(eventsTimeline, mouseCoord.x, mouseCoord.y);
+    var dialogEl = goog.asserts.assertObject(this.appDom.getElementByClass(
+        'dialog'));
+    this.fireAppKeySequence_(dialogEl, goog.events.KeyCodes.ENTER);
+  }, test);
   test.addSaveSequence();
   test.addVerifyMocks();
   test.waitForDeferred();

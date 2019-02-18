@@ -125,8 +125,7 @@ task compileJavascriptDebug(type: ClosureCompileTask) {
 }
 
 task compileJavascriptOptimized(type: ClosureCompileTask) {
-    // TODO: compilationLevel "ADVANCED_OPTIMIZATIONS"
-    compilationLevel "SIMPLE_OPTIMIZATIONS"
+    compilationLevel "ADVANCED_OPTIMIZATIONS"
     namespace "five.main"
     warningLevel "VERBOSE"
     destFile file("${javascriptOutputDir}/mainoptimized.js")

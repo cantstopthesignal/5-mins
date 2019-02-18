@@ -40,24 +40,4 @@ five.layout.Params = function() {
 
   /** @type {goog.date.DateTime} */
   this.maxTime = null;
-
-  this.lockFields_();
-};
-
-five.layout.Params.prototype.copyTo = function(dest) {
-  for (var f in this) {
-    if (this.hasOwnProperty(f)) {
-      goog.asserts.assert(this.fields_[f], 'Unexpected param ' + f);
-      dest[f] = this[f];
-    }
-  }
-};
-
-five.layout.Params.prototype.lockFields_ = function() {
-  this.fields_ = {};
-  for (var f in this) {
-    if (this.hasOwnProperty(f)) {
-      this.fields_[f] = true;
-    }
-  }
 };
