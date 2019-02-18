@@ -510,6 +510,12 @@ five.EventsTimeline.prototype.renderEvents_ = function() {
   }, this);
 };
 
+five.EventsTimeline.prototype.getCursorTime = function() {
+  if (this.cursorMarker_ && this.cursorMarker_.isVisible()) {
+    return this.cursorMarker_.getTime();
+  }
+};
+
 five.EventsTimeline.prototype.layout_ = function() {
   if (this.batchUpdateDepth_) {
     this.layoutNeeded_ = true;
@@ -694,15 +700,17 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     }
     event.type = five.EventsTimeline.EventType.EVENTS_SNAP_TO;
   } else if (e.keyCode == goog.events.KeyCodes.C) {
-    var startTime = five.util.roundToFiveMinutes(new goog.date.DateTime());
-    var endTime = startTime.clone();
-    if (e.shiftKey) {
-      startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -5));
-    } else {
-      endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+    if (!e.ctrlKey && !e.metaKey) {
+      var startTime = five.util.roundToFiveMinutes(new goog.date.DateTime());
+      var endTime = startTime.clone();
+      if (e.shiftKey) {
+        startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -5));
+      } else {
+        endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
+      }
+      event = new five.EventCreateEvent(startTime, endTime);
+      event.type = five.EventsTimeline.EventType.EVENT_CREATE;
     }
-    event = new five.EventCreateEvent(startTime, endTime);
-    event.type = five.EventsTimeline.EventType.EVENT_CREATE;
   } else if (e.keyCode == goog.events.KeyCodes.D) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
   } else if (e.keyCode == goog.events.KeyCodes.E) {

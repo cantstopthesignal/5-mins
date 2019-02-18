@@ -97,7 +97,9 @@ five.App.prototype.start = function() {
 
   this.eventHandler_.
       listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_).
-      listen(window, 'beforeunload', this.handleWindowBeforeUnload_);
+      listen(document, goog.events.EventType.COPY, this.handleCopy_).
+      listen(document, goog.events.EventType.PASTE, this.handlePaste_).
+      listen(window, goog.events.EventType.BEFOREUNLOAD, this.handleWindowBeforeUnload_);
 };
 
 /** @override */
@@ -142,6 +144,20 @@ five.App.prototype.showEventsView_ = function() {
 
 five.App.prototype.handleWindowResize_ = function() {
   this.resize();
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.App.prototype.handleCopy_ = function(e) {
+  if (e.target === document.body && this.eventsView_) {
+    this.eventsView_.handleDefaultCopy(e);
+  }
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.App.prototype.handlePaste_ = function(e) {
+  if (e.target === document.body && this.eventsView_) {
+    this.eventsView_.handleDefaultPaste(e);
+  }
 };
 
 five.App.prototype.resize = function() {

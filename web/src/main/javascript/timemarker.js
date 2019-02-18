@@ -27,6 +27,9 @@ five.TimeMarker = function(time, opt_theme) {
 };
 goog.inherits(five.TimeMarker, goog.events.EventTarget);
 
+/** @type {boolean} */
+five.TimeMarker.prototype.visible_ = true;
+
 /** @return {goog.date.DateTime} */
 five.TimeMarker.prototype.getTime = function() {
   return this.time_;
@@ -40,7 +43,12 @@ five.TimeMarker.prototype.setTime = function(time) {
   }, this);
 };
 
+five.TimeMarker.prototype.isVisible = function() {
+  return this.visible_;
+};
+
 five.TimeMarker.prototype.setVisible = function(visible) {
+  this.visible_ = visible;
   goog.array.forEach(this.components_, function(component) {
     component.setVisible(visible);
   }, this);

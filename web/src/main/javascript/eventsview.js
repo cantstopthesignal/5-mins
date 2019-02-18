@@ -88,6 +88,9 @@ five.EventsView.SCROLL_ANIMATION_DURATION_MS = 250;
 /** @type {number} */
 five.EventsView.DEFAULT_TIMELINE_Y_OFFSET = 500;
 
+/** @type {string} */
+five.EventsView.EVENTS_MIME_TYPE_ = 'application/vnd.5-mins.events+json';
+
 /** @type {goog.date.DateTime} */
 five.EventsView.prototype.viewDate_;
 
@@ -214,6 +217,101 @@ five.EventsView.prototype.focus = function() {
   if (this.columns_.length) {
     this.columns_[0].timeline.focus();
   }
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsView.prototype.handleDefaultCopy = function(e) {
+  if (!this.selectedEvents_.length) {
+    return;
+  }
+  e.preventDefault();
+  var clipboardData = e.getBrowserEvent().clipboardData;
+  clipboardData.setData('text/plain', this.selectedEvents_[0].getSummary());
+  clipboardData.setData(five.EventsView.EVENTS_MIME_TYPE_,
+      this.serializeEventsJson_(this.selectedEvents_));
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsView.prototype.handleDefaultPaste = function(e) {
+  e.preventDefault();
+  var clipboardData = e.getBrowserEvent().clipboardData;
+  var eventsJson = this.parseEventsJson_(
+      clipboardData.getData(five.EventsView.EVENTS_MIME_TYPE_));
+  var clipboardText = clipboardData.getData('text').trim();
+  if (!this.selectedEvents_.length && eventsJson) {
+    var cursorTime;
+    for (var i = 0; i < this.columns_.length; i++) {
+      cursorTime = this.columns_[i].timeline.getCursorTime();
+      if (cursorTime) {
+        break;
+      }
+    }
+    if (!cursorTime) {
+      return;
+    }
+    this.startBatchRenderUpdate_();
+    var minStartTime;
+    goog.array.forEach(eventsJson, function(eventJson) {
+      var startTime = new goog.date.DateTime(new Date(eventJson['startTime']));
+      if (!minStartTime || startTime < minStartTime) {
+        minStartTime = startTime;
+      }
+    });
+    var startTimeOffset = cursorTime.getTime() - minStartTime;
+    var newEvents = goog.array.map(eventsJson, function(eventJson) {
+      var startTime = new goog.date.DateTime(new Date(eventJson['startTime']+ startTimeOffset));
+      var endTime = new goog.date.DateTime(new Date(eventJson['endTime'] + startTimeOffset));
+      var newEvent = five.Event.createNew(startTime, endTime, eventJson['summary']);
+      this.addEvent_(newEvent);
+      return newEvent;
+    }, this);
+    this.finishBatchRenderUpdate_();
+    this.replaceSelectedEvents_(newEvents);
+    return;
+  } else if (this.selectedEvents_.length && clipboardText.length) {
+    goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+      selectedEvent.addMutation(new five.EventMutation.ChangeSummary(clipboardText));
+    });
+    goog.array.forEach(this.columns_, function(column) {
+      column.timeline.eventsChanged(this.selectedEvents_);
+    }, this);
+    return;
+  }
+};
+
+five.EventsView.prototype.serializeEventsJson_ = function(events) {
+  var json = goog.array.map(events, function(event) {
+    return {
+      'summary': event.getSummary(),
+      'startTime': event.getStartTime().getTime(),
+      'endTime': event.getEndTime().getTime()
+    };
+  });
+  return JSON.stringify(json);
+};
+
+five.EventsView.prototype.parseEventsJson_ = function(jsonString) {
+  if (!jsonString || !jsonString.length) {
+    return null;
+  }
+  var json;
+  try {
+    json = JSON.parse(jsonString);
+  } catch (ex) {
+    return null;
+  }
+  if (!goog.isArray(json)) {
+    return null;
+  }
+  var isEventJsonValid = function(eventJson) {
+    return goog.isString(eventJson['summary']) &&
+        goog.isNumber(eventJson['startTime']) &&
+        goog.isNumber(eventJson['endTime']);
+  };
+  if (!goog.array.every(json, isEventJsonValid)) {
+    return null;
+  }
+  return json;
 };
 
 /** @override */
