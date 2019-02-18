@@ -50,11 +50,10 @@ five.EditEventDialog = function(appContext, event, newCreate) {
   this.originalSummary_ = this.event_.getSummary();
 
   /** @type {!goog.date.DateTime} */
-  this.originalStartTime_ = goog.asserts.assertObject(
-      this.event_.getStartTime());
+  this.originalStartTime_ = this.event_.getStartTime();
 
   /** @type {!goog.date.DateTime} */
-  this.originalEndTime_ = goog.asserts.assertObject(this.event_.getEndTime());
+  this.originalEndTime_ = this.event_.getEndTime();
 
   /** @type {goog.date.DateTime} */
   this.lastStartTime_ = this.event_.getStartTime();

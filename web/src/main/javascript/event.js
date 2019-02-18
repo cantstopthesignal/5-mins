@@ -6,6 +6,7 @@ goog.provide('five.Event.EventType');
 goog.require('five.EventEditEvent');
 goog.require('five.EventMoveEvent');
 goog.require('five.EventMutation');
+goog.require('five.EventsProposeEvent');
 goog.require('five.EventSnapToEvent');
 goog.require('goog.array');
 goog.require('goog.date.Date');
@@ -52,6 +53,7 @@ five.Event.EventType = {
   EDIT: five.EventEditEvent.EventType.EDIT,
   MOVE: five.EventMoveEvent.EventType.MOVE,
   MUTATIONS_CHANGED: goog.events.getUniqueId('mutations_changed'),
+  PROPOSE: five.EventsProposeEvent.EventType.PROPOSE,
   SELECT: goog.events.getUniqueId('select'),
   SNAP_TO: five.EventSnapToEvent.EventType.SNAP_TO
 };
@@ -171,10 +173,10 @@ five.Event.prototype.selected_ = false;
 /** @type {boolean} */
 five.Event.prototype.proposed_ = false;
 
-/** @type {goog.date.DateTime} */
+/** @type {!goog.date.DateTime} */
 five.Event.prototype.startTime_;
 
-/** @type {goog.date.DateTime} */
+/** @type {!goog.date.DateTime} */
 five.Event.prototype.endTime_;
 
 /** @type {goog.date.DateTime} */
@@ -189,12 +191,12 @@ five.Event.prototype.mutatedSummary_;
 /** @type {five.Event} */
 five.Event.prototype.insertAfter_;
 
-/** @return {goog.date.DateTime} */
+/** @return {!goog.date.DateTime} */
 five.Event.prototype.getStartTime = function() {
   return this.mutatedStartTime_ || this.startTime_;
 };
 
-/** @return {goog.date.DateTime} */
+/** @return {!goog.date.DateTime} */
 five.Event.prototype.getEndTime = function() {
   return this.mutatedEndTime_ || this.endTime_;
 };
@@ -442,8 +444,10 @@ five.Event.prototype.mergeMutationsIntoData_ = function(eventData) {
 };
 
 five.Event.prototype.parseEventData_ = function() {
-  this.startTime_ = five.Event.parseEventDataDate(this.eventData_['start']);
-  this.endTime_ = five.Event.parseEventDataDate(this.eventData_['end']);
+  this.startTime_ = goog.asserts.assertObject(
+      five.Event.parseEventDataDate(this.eventData_['start']));
+  this.endTime_ = goog.asserts.assertObject(
+      five.Event.parseEventDataDate(this.eventData_['end']));
   goog.asserts.assert(this.stateIsValid_());
 };
 

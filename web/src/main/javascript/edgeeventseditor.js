@@ -28,6 +28,12 @@ goog.inherits(five.EdgeEventsEditor, five.EventsEditor);
 /** @type {Element} */
 five.EdgeEventsEditor.prototype.editButton_;
 
+/** @type {Element} */
+five.EdgeEventsEditor.prototype.proposeAboveButton_;
+
+/** @type {Element} */
+five.EdgeEventsEditor.prototype.proposeBelowButton_;
+
 five.EdgeEventsEditor.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classlist.add(this.el, 'edge-events-editor');
@@ -48,19 +54,24 @@ five.EdgeEventsEditor.prototype.createDom = function() {
   goog.dom.classlist.add(shadow, 'shadow');
   this.bottomButtonBar_.appendChild(shadow);
 
+  this.proposeAboveButton_ = this.createIconButton_(this.topButtonBar_);
+  goog.dom.classlist.add(this.proposeAboveButton_, 'propose-button');
+
+  var moveStartDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
+  var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
+  var moveDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
+  var moveUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
+
   this.editButton_ = this.createIconButton_(this.bottomButtonBar_);
   goog.dom.classlist.add(this.editButton_, 'edit-button');
   var dupButton = this.createIconButton_(this.bottomButtonBar_);
   goog.dom.classlist.add(dupButton, 'duplicate-button');
   var nowButton = this.createIconButton_(this.bottomButtonBar_);
   goog.dom.classlist.add(nowButton, 'now-button');
+  this.proposeBelowButton_ = this.createIconButton_(this.bottomButtonBar_);
+  goog.dom.classlist.add(this.proposeBelowButton_, 'propose-button');
   var deleteButton = this.createIconButton_(this.bottomButtonBar_);
   goog.dom.classlist.add(deleteButton, 'delete-button');
-
-  var moveStartDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
-  var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
-  var moveDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
-  var moveUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
 
   var moveEndDownButton = this.createArrowButton_(false, this.bottomButtonBar_, true);
   var moveEndUpButton = this.createArrowButton_(true, this.bottomButtonBar_, true);
@@ -112,7 +123,11 @@ five.EdgeEventsEditor.prototype.createDom = function() {
       listen(moveEndDownButton, goog.events.EventType.TOUCHMOVE,
           this.handleTouchMove_).
       listen(nowButton, goog.events.EventType.CLICK,
-          this.handleNowButtonClick_);
+          this.handleNowButtonClick_).
+      listen(this.proposeAboveButton_, goog.events.EventType.CLICK,
+          this.handleProposeAboveButtonClick_).
+      listen(this.proposeBelowButton_, goog.events.EventType.CLICK,
+          this.handleProposeBelowButtonClick_);
 };
 
 /** @type {boolean} */
@@ -163,6 +178,8 @@ five.EdgeEventsEditor.prototype.layout = function() {
   goog.asserts.assert(this.owner);
   goog.style.setElementShown(this.el, this.events.length > 0);
   goog.style.setElementShown(this.editButton_, this.events.length == 1);
+  goog.style.setElementShown(this.proposeAboveButton_, this.events.length == 1);
+  goog.style.setElementShown(this.proposeBelowButton_, this.events.length == 1);
   if (!this.events.length) {
     return;
   }
@@ -244,6 +261,22 @@ five.EdgeEventsEditor.prototype.handleEditButtonClick_ = function(e) {
  */
 five.EdgeEventsEditor.prototype.handleNowButtonClick_ = function(e) {
   this.dispatchEvent(five.EventSnapToEvent.now(five.EventSnapToEvent.Anchor.AUTO));
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.EdgeEventsEditor.prototype.handleProposeAboveButtonClick_ = function(e) {
+  goog.asserts.assert(this.events.length == 1);
+  this.dispatchEvent(new five.EventsProposeEvent(this.events[0].getStartTime()));
+};
+
+/**
+ * @param {goog.events.Event} e
+ */
+five.EdgeEventsEditor.prototype.handleProposeBelowButtonClick_ = function(e) {
+  goog.asserts.assert(this.events.length == 1);
+  this.dispatchEvent(new five.EventsProposeEvent(this.events[0].getEndTime()));
 };
 
 /**

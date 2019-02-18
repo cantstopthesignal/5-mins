@@ -469,9 +469,7 @@ five.EventsView.prototype.handleEventsTimelineEventSelectNeighborEvent_ = functi
    * @param {five.Event} b
    */
   var compareEvents = function(a, b) {
-    var res = goog.date.Date.compare(
-        goog.asserts.assertObject(a.getStartTime()),
-        goog.asserts.assertObject(b.getStartTime()));
+    var res = goog.date.Date.compare(a.getStartTime(), b.getStartTime());
     if (res != 0) {
       return res;
     }
@@ -484,8 +482,7 @@ five.EventsView.prototype.handleEventsTimelineEventSelectNeighborEvent_ = functi
         return;
       }
     } else {
-      if (normCompare(goog.date.Date.compare(
-          existingTime, goog.asserts.assertObject(event.getStartTime()))) > 0) {
+      if (normCompare(goog.date.Date.compare(existingTime, event.getStartTime())) > 0) {
         return;
       }
     }
@@ -590,8 +587,8 @@ five.EventsView.prototype.handleEventsTimelineEventsSnapTo_ = function(e) {
   if (e.dir == five.EventSnapToEvent.Dir.NOW) {
     var snapTime = five.util.roundToFiveMinutes(new goog.date.DateTime());
     goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
-      var startTime = goog.asserts.assertObject(selectedEvent.getStartTime());
-      var endTime = goog.asserts.assertObject(selectedEvent.getEndTime());
+      var startTime = selectedEvent.getStartTime();
+      var endTime = selectedEvent.getEndTime();
       if (goog.date.Date.compare(startTime, snapTime) >= 0 ||
           e.anchor == five.EventSnapToEvent.Anchor.START) {
         selectedEvent.addMutation(new five.EventMutation.SetTimeRange(snapTime, endTime));
@@ -614,6 +611,7 @@ five.EventsView.prototype.handleEventsTimelineEventsSnapTo_ = function(e) {
  * @param {!Array.<!five.Event>} snapEvents
  * @param {boolean} toPrevious
  * @param {boolean} anchorStart
+ * @return {boolean}
  */
 five.EventsView.prototype.snapEvents_ = function(snapEvents, toPrevious, anchorStart) {
   /**
@@ -626,14 +624,14 @@ five.EventsView.prototype.snapEvents_ = function(snapEvents, toPrevious, anchorS
   var inDirection = toPrevious ?
       function(value) { return value < 0; } :
       function(value) { return value > 0; };
+  var eventsChanged = false;
   goog.array.forEach(snapEvents, function(snapEvent) {
     var snapEventTime = anchorStart ? snapEvent.getStartTime() : snapEvent.getEndTime();
     var bestEvent = null;
     /** @type {goog.date.DateTime} */
     var bestEventTime = null;
     goog.array.forEach(this.events_, function(event) {
-      var eventTime = anchorStart ?
-          event.getEndTime() : event.getStartTime();
+      var eventTime = anchorStart ? event.getEndTime() : event.getStartTime();
       var timeDifference = eventTime.getTime() - snapEventTime.getTime();
       if (!inDirection(timeDifference) || Math.abs(five.util.msToMin(timeDifference)) > 12 * 60) {
         return;
@@ -647,21 +645,28 @@ five.EventsView.prototype.snapEvents_ = function(snapEvents, toPrevious, anchorS
       if (anchorStart) {
         snapEvent.addMutation(new five.EventMutation.SetTimeRange(
             goog.asserts.assertObject(bestEventTime),
-            goog.asserts.assertObject(snapEvent.getEndTime())));
+            snapEvent.getEndTime()));
       } else {
         snapEvent.addMutation(new five.EventMutation.SetTimeRange(
-            goog.asserts.assertObject(snapEvent.getStartTime()),
+            snapEvent.getStartTime(),
             goog.asserts.assertObject(bestEventTime)));
       }
+      eventsChanged = true;
     }
   }, this);
+  if (!eventsChanged) {
+    return false;
+  }
   goog.array.forEach(this.columns_, function(column) {
     column.timeline.eventsChanged(snapEvents);
-  }, this);
+  });
+  return true;
 };
 
-five.EventsView.prototype.handleEventsTimelineEventsPropose_ = function() {
-  this.proposeEvents_();
+/** @param {!five.EventsProposeEvent} e */
+five.EventsView.prototype.handleEventsTimelineEventsPropose_ = function(e) {
+  this.replaceSelectedEvents_([]);
+  this.proposeEvents_(e.time);
 };
 
 five.EventsView.prototype.handleEventsTimelineEventsRefresh_ = function() {
@@ -836,7 +841,7 @@ five.EventsView.prototype.startOrUpdateDragEvents = function(
       var dragRelativeTime = new goog.date.DateTime(new Date(
           dragEndTime.getTime() - this.dragEventsStartTime_.getTime()));
       dragRelativeTime = five.util.roundDurationToThirtyMinutes(
-          goog.asserts.assertObject(selectedEvent.getStartTime()), dragRelativeTime);
+          selectedEvent.getStartTime(), dragRelativeTime);
       eventDragEndTime = new goog.date.DateTime(new Date(
           dragRelativeTime.getTime() + this.dragEventsStartTime_.getTime()));
     }
@@ -1254,14 +1259,16 @@ five.EventsView.prototype.handleProposeClick_ = function(opt_e) {
     opt_e.preventDefault();
   }
 
-  this.proposeEvents_();
+  var time = five.util.roundToFiveMinutes(new goog.date.DateTime());
+  this.proposeEvents_(time);
 }
 
-five.EventsView.prototype.proposeEvents_ = function() {
+/** @param {!goog.date.DateTime} time */
+five.EventsView.prototype.proposeEvents_ = function(time) {
   var newProposedEvents = [];
 
   for (var i = 0; i < 4; i++) {
-    var startTime = five.util.roundToFiveMinutes(new goog.date.DateTime());
+    var startTime = time.clone();
     var endTime = startTime.clone();
     if (i == 0) {
       endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 5));
@@ -1272,7 +1279,12 @@ five.EventsView.prototype.proposeEvents_ = function() {
     }
     var proposedEvent = five.Event.createNew(startTime, endTime, '<new>');
     if (i == 2) {
-      this.snapEvents_([proposedEvent], true, true);
+      if (!this.snapEvents_([proposedEvent], true, true)) {
+        startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -55));
+        proposedEvent.addMutation(new five.EventMutation.SetTimeRange(
+            goog.asserts.assertObject(startTime),
+            goog.asserts.assertObject(endTime)));
+      }
     }
     proposedEvent.setProposed(true);
     this.addEvent_(proposedEvent);

@@ -70,12 +70,12 @@ five.EventCard.prototype.getEvent = function() {
   return this.event_;
 };
 
-/** @return {goog.date.DateTime} */
+/** @return {!goog.date.DateTime} */
 five.EventCard.prototype.getStartTime = function() {
   return this.event_.getStartTime();
 };
 
-/** @return {goog.date.DateTime} */
+/** @return {!goog.date.DateTime} */
 five.EventCard.prototype.getEndTime = function() {
   return this.event_.getEndTime();
 };

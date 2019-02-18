@@ -44,8 +44,8 @@ five.EventsSplitter.prototype.split = function() {
     return goog.date.Date.compare(a.time, b.time);
   });
   goog.array.forEach(this.inputEvents_, function(event) {
-    var startTime = goog.asserts.assertObject(event.getStartTime());
-    var endTime = goog.asserts.assertObject(event.getEndTime());
+    var startTime = event.getStartTime();
+    var endTime = event.getEndTime();
     goog.array.forEach(splitTimes, function(splitTime) {
       if (goog.date.Date.compare(splitTime.time, startTime) < 0 ||
           goog.date.Date.compare(splitTime.time, endTime) >= 0) {
@@ -57,7 +57,7 @@ five.EventsSplitter.prototype.split = function() {
   if (this.dedup_) {
     goog.array.forEach(this.inputEvents_, function(event) {
       var lastStartTime = event.getStartTime();
-      var endTime = goog.asserts.assertObject(event.getEndTime());
+      var endTime = event.getEndTime();
       var lastSplitEvent = event;
       var lastWasGap = false;
       goog.array.forEach(splitTimes, function(splitTime) {
@@ -90,7 +90,7 @@ five.EventsSplitter.prototype.split = function() {
   } else {
     goog.array.forEach(this.inputEvents_, function(event) {
       var lastStartTime = event.getStartTime();
-      var endTime = goog.asserts.assertObject(event.getEndTime());
+      var endTime = event.getEndTime();
       var lastSplitEvent = event;
       goog.array.forEach(splitTimes, function(splitTime) {
         if (goog.date.Date.compare(splitTime.time, lastStartTime) <= 0 ||

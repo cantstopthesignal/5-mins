@@ -10,6 +10,7 @@ goog.require('five.EventMoveEvent');
 goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventSnapToEvent');
 goog.require('five.EventsEditor');
+goog.require('five.EventsProposeEvent');
 goog.require('five.InlineEventsEditor');
 goog.require('five.PointerDownMoveControlEvent');
 goog.require('five.TimeAxis');
@@ -237,7 +238,9 @@ five.EventsTimeline.prototype.createDom = function() {
       listen(this.eventsEditor_, five.Event.EventType.DUPLICATE,
           this.handleEventsEditorDuplicate_).
       listen(this.eventsEditor_, five.Event.EventType.SNAP_TO,
-          this.handleEventsEditorSnapTo_);
+          this.handleEventsEditorSnapTo_).
+      listen(this.eventsEditor_, five.Event.EventType.PROPOSE,
+          this.handleEventsEditorPropose_);
 
   if (five.deviceParams.getEnableCursorTimeMarker() ||
       five.deviceParams.getEnableDragCreateEvent() ||
@@ -711,7 +714,9 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
     }
     event.type = five.EventsTimeline.EventType.EVENT_SELECT_NEIGHBOR;
   } else if (e.keyCode == goog.events.KeyCodes.P) {
-    event = five.EventsTimeline.EventType.EVENTS_PROPOSE;
+    var time = five.util.roundToFiveMinutes(new goog.date.DateTime());
+    event = new five.EventsProposeEvent(time);
+    event.type = five.EventsTimeline.EventType.EVENTS_PROPOSE;
   } else if (e.keyCode == goog.events.KeyCodes.S) {
     if (e.ctrlKey) {
       event = five.EventsTimeline.EventType.EVENTS_SAVE;
@@ -1039,5 +1044,11 @@ five.EventsTimeline.prototype.handleEventsEditorDuplicate_ = function(e) {
 /** @param {goog.events.Event} e */
 five.EventsTimeline.prototype.handleEventsEditorSnapTo_ = function(e) {
   e.type = five.EventsTimeline.EventType.EVENTS_SNAP_TO;
+  this.dispatchEvent(e);
+};
+
+/** @param {goog.events.Event} e */
+five.EventsTimeline.prototype.handleEventsEditorPropose_ = function(e) {
+  e.type = five.EventsTimeline.EventType.EVENTS_PROPOSE;
   this.dispatchEvent(e);
 };
