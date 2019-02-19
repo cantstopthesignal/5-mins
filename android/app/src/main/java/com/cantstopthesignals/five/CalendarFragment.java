@@ -56,7 +56,7 @@ public class CalendarFragment extends Fragment {
     private static final String TAG = "CalendarFragment";
 
     private static final Uri DEBUG_URI = Uri.parse("http://localhost:8888/?jsmode=uncompiled&Debug=true");
-    private static final Uri RELEASE_URI = Uri.parse("https://five-minutes-cssignal.appspot.com/");
+    private static final Uri RELEASE_URI = Uri.parse("https://5-mins.cssignal.com/");
 
     private static final String JAVASCRIPT_INTERFACE_NAME = "Android";
 
@@ -357,6 +357,7 @@ public class CalendarFragment extends Fragment {
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowContentAccess(true);
         webSettings.setAppCacheEnabled(true);
+        webSettings.setAppCachePath(getActivity().getCacheDir().getAbsolutePath());
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
         webSettings.setAllowUniversalAccessFromFileURLs(true);

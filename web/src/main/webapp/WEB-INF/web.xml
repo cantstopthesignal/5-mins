@@ -5,15 +5,15 @@
     xsi:schemaLocation="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
     version="2.5">
   <servlet>
-    <servlet-name>FiveMins</servlet-name>
-    <servlet-class>com.cantstopthesignals.five.FiveMinsServlet</servlet-class>
+    <servlet-name>ManifestText</servlet-name>
+    <servlet-class>com.cantstopthesignals.five.ManifestTextServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>FiveMins</servlet-name>
-    <url-pattern>/5mins</url-pattern>
+    <servlet-name>ManifestText</servlet-name>
+    <url-pattern>/manifest.txt</url-pattern>
   </servlet-mapping>
   <welcome-file-list>
-    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>WEB-INF/index.jsp</welcome-file>
   </welcome-file-list>
   <security-constraint>
     <web-resource-collection>

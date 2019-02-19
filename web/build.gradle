@@ -1,3 +1,4 @@
+import com.cantstopthesignals.checksumpaths.ChecksumPathsPropertyTask;
 import java.nio.file.Files
 
 buildscript {
@@ -38,6 +39,14 @@ appengine {
         promote = true
         project 'five-minutes-cssignal'
         version '1'
+    }
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ["$buildDir/generated-resources"]
+        }
     }
 }
 
@@ -147,6 +156,20 @@ war {
     from("${buildDir}/js", {
         into 'js'
     })
+}
+
+task createChecksumPropertyFile(type : ChecksumPathsPropertyTask) {
+    if (!project.hasProperty('noJsCompile')) {
+        dependsOn compileJavascriptDebug
+        dependsOn compileJavascriptOptimized
+    }
+
+    paths = [javascriptOutputDir, file('src/main/webapp')]
+    outputPropertyFile = file("$buildDir/generated-resources/checksum.properties")
+}
+
+if (!project.hasProperty('noJsCompile')) {
+    compileJava.dependsOn(createChecksumPropertyFile)
 }
 
 static void createSymlink(File destination, File source) {

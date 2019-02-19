@@ -10,11 +10,16 @@
     jsMode = JsMode.OPTIMIZED;
   }
   MobileMode mobileMode = MobileMode.fromRequest(request);
+
+  String manifestAttribute = "";
+  if (jsMode != JsMode.UNCOMPILED) {
+    manifestAttribute = "manifest=\"manifest.txt\"";
+  }
 %>
 
 <!DOCTYPE html>
 <!-- Copyright 2012 Cant Stop The Signals -->
-<html>
+<html <%= manifestAttribute %>>
   <head>
     <title>5 minutes</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
