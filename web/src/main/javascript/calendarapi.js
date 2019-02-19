@@ -4,6 +4,7 @@ goog.provide('five.CalendarApi');
 
 goog.require('five.BaseCalendarApi');
 goog.require('five.Service');
+goog.require('goog.async.DeferredList');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
 goog.require('goog.log');
@@ -145,10 +146,39 @@ five.CalendarApi.prototype.requestSync = function() {
 
 /**
  * @param {string} calendarId
+ * @param {!Array.<!five.BaseCalendarApi.EventOperation>} eventOperations
+ * @return {goog.async.Deferred}
+ */
+five.CalendarApi.prototype.applyEventOperations = function(calendarId, eventOperations) {
+  if (!eventOperations.length) {
+    return goog.async.Deferred.succeed();
+  }
+  var deferreds = goog.array.map(eventOperations, function(operation) {
+    switch (operation.getType()) {
+      case five.BaseCalendarApi.EventOperation.Type.CREATE:
+        this.createEvent_(calendarId, operation.eventData).
+            chainDeferred(operation.getDeferred());
+        break;
+      case five.BaseCalendarApi.EventOperation.Type.SAVE:
+        this.saveEvent_(calendarId, operation.eventData, operation.eventPatchData).
+            chainDeferred(operation.getDeferred());
+        break;
+      case five.BaseCalendarApi.EventOperation.Type.DELETE:
+        this.deleteEvent_(calendarId, operation.eventDeleteData).
+            chainDeferred(operation.getDeferred());
+        break;
+    };
+    return operation.getDeferred();
+  }, this);
+  return new goog.async.DeferredList(deferreds);
+};
+
+/**
+ * @param {string} calendarId
  * @param {Object} eventData
  * @return {goog.async.Deferred}
  */
-five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
+five.CalendarApi.prototype.createEvent_ = function(calendarId, eventData) {
   goog.asserts.assert(!eventData['id']);
   goog.asserts.assert(!eventData['etag']);
   var callback = function(resp) {
@@ -168,7 +198,7 @@ five.CalendarApi.prototype.createEvent = function(calendarId, eventData) {
  * @param {Object} eventPatchData
  * @return {goog.async.Deferred}
  */
-five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
+five.CalendarApi.prototype.saveEvent_ = function(calendarId, eventData,
     eventPatchData) {
   goog.asserts.assert(eventData['id']);
   goog.asserts.assert(eventPatchData['etag']);
@@ -189,7 +219,7 @@ five.CalendarApi.prototype.saveEvent = function(calendarId, eventData,
  * @param {Object} eventDeleteData
  * @return {goog.async.Deferred}
  */
-five.CalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
+five.CalendarApi.prototype.deleteEvent_ = function(calendarId, eventDeleteData) {
   goog.asserts.assert(eventDeleteData['id']);
   goog.asserts.assert(eventDeleteData['etag']);
   var callback = function(resp) {

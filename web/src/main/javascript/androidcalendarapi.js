@@ -106,73 +106,82 @@ five.AndroidCalendarApi.prototype.requestSync = function() {
 
 /**
  * @param {string} calendarId
- * @param {Object} eventData
+ * @param {!Array.<!five.BaseCalendarApi.EventOperation>} eventOperations
  * @return {goog.async.Deferred}
  */
-five.AndroidCalendarApi.prototype.createEvent = function(calendarId, eventData) {
-  goog.asserts.assert(!eventData['id']);
-  goog.asserts.assert(!eventData['originalId']);
-  goog.asserts.assert(!eventData['originalInstanceTime']);
-  goog.asserts.assert(!eventData['etag']);
-  var callback = function(respJson) {
-    var resp = JSON.parse(respJson);
-    goog.asserts.assert(resp['kind'] == 'calendar#event');
-    this.logger_.info('Event created');
-    return resp;
-  };
-  var errback = function(error) {
-    this.logger_.severe('Error creating event: ' + error, error);
-  };
-  return this.callApi_('createEvent', calendarId, JSON.stringify(eventData)).
-      addCallbacks(callback, errback, this);
-};
-
-/**
- * @param {string} calendarId
- * @param {Object} eventData
- * @param {Object} eventPatchData
- * @return {goog.async.Deferred}
- */
-five.AndroidCalendarApi.prototype.saveEvent = function(calendarId, eventData,
-    eventPatchData) {
-  if (!eventData['id']) {
-    goog.asserts.assert(eventData['originalId']);
-    goog.asserts.assert(eventData['originalInstanceTime']);
+five.AndroidCalendarApi.prototype.applyEventOperations = function(calendarId, eventOperations) {
+  if (!eventOperations.length) {
+    return goog.async.Deferred.succeed();
   }
-  var callback = function(respJson) {
-    var resp = JSON.parse(respJson);
-    goog.asserts.assert(resp['kind'] == 'calendar#event');
-    this.logger_.info('Event saved');
-    return resp;
+  var operationsJson = goog.array.map(eventOperations, function(operation) {
+    switch (operation.getType()) {
+      case five.BaseCalendarApi.EventOperation.Type.CREATE:
+        var eventData = operation.eventData;
+        goog.asserts.assert(!eventData['id']);
+        goog.asserts.assert(!eventData['originalId']);
+        goog.asserts.assert(!eventData['originalInstanceTime']);
+        goog.asserts.assert(!eventData['etag']);
+        return {
+          'type': 'create',
+          'eventData': eventData
+        };
+      case five.BaseCalendarApi.EventOperation.Type.SAVE:
+        var eventData = operation.eventData;
+        if (!eventData['id']) {
+          goog.asserts.assert(eventData['originalId']);
+          goog.asserts.assert(eventData['originalInstanceTime']);
+        }
+        return {
+          'type': 'save',
+          'eventData': eventData,
+          'eventPatchData': operation.eventPatchData
+        }
+      case five.BaseCalendarApi.EventOperation.Type.DELETE:
+        var eventDeleteData = operation.eventDeleteData;
+        if (!eventDeleteData['id']) {
+          goog.asserts.assert(eventDeleteData['originalId']);
+          goog.asserts.assert(eventDeleteData['originalInstanceTime']);
+        }
+        return {
+          'type': 'delete',
+          'eventDeleteData': eventDeleteData
+        };
+    };
+  }, this);
+  var callback = function(respArrayJson) {
+    var respArray = JSON.parse(respArrayJson);
+    goog.asserts.assert(goog.isArray(respArray));
+    goog.asserts.assert(eventOperations.length == respArray.length);
+    var successCount = 0;
+    for (var i = 0; i < respArray.length; i++) {
+      var operation = eventOperations[i];
+      var resp = respArray[i];
+      if (!resp || (goog.isObject(resp) && 'error' in resp)) {
+        operation.getDeferred().errback(JSON.stringify(resp));
+      } else {
+        operation.getDeferred().callback(resp);
+        successCount += 1;
+      }
+    }
+    if (successCount == 0) {
+      this.logger_.severe('Error applying event operations');
+    } else if (successCount < eventOperations.length) {
+      this.logger_.severe('Applied ' + successCount + ' out of ' + eventOperations.length +
+          ' event operations');
+    } else {
+      this.logger_.info('Applied ' + eventOperations.length + ' event operations');
+    }
+    return respArray;
   };
   var errback = function(error) {
-    this.logger_.severe('Error saving event: ' + error, error);
+    this.logger_.severe('Error applying event operations: ' + error, error);
+    goog.array.forEach(eventOperations, function(operation) {
+      operation.getDeferred().errback(error);
+    });
   };
-  return this.callApi_('saveEvent', calendarId, JSON.stringify(eventData),
-      JSON.stringify(eventPatchData)).
+  return this.callApi_('applyEventOperations', calendarId, JSON.stringify(operationsJson)).
       addCallbacks(callback, errback, this);
 };
-
-/**
- * @param {string} calendarId
- * @param {Object} eventDeleteData
- * @return {goog.async.Deferred}
- */
-five.AndroidCalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
-  if (!eventDeleteData['id']) {
-    goog.asserts.assert(eventDeleteData['originalId']);
-    goog.asserts.assert(eventDeleteData['originalInstanceTime']);
-  }
-  var callback = function(resp) {
-    this.logger_.info('Event deleted');
-  };
-  var errback = function(error) {
-    this.logger_.severe('Error deleting event: ' + error, error);
-  };
-  return this.callApi_('deleteEvent', calendarId, JSON.stringify(eventDeleteData)).
-      addCallbacks(callback, errback, this);
-};
-
 
 /**
  * @param {string} calendarId
@@ -199,11 +208,12 @@ five.AndroidCalendarApi.prototype.openEventEditor = function(calendarId, eventDa
  */
 five.AndroidCalendarApi.prototype.callApi_ = function(methodName, var_args) {
   var params = Array.prototype.slice.call(arguments, 1);
-  this.logger_.info(methodName);
   var d = new goog.async.Deferred();
   try {
     var resp = this.getInterface_()[methodName].apply(this.getInterface_(), params);
-    this.logger_.info('Response is ' + resp);
+    if (resp !== undefined) {
+      this.logger_.info('Response from [' + methodName + '] is ' + resp);
+    }
     d.callback(resp);
   } catch (e) {
     d.errback(e);
@@ -215,6 +225,5 @@ five.AndroidCalendarApi.prototype.getInterface_ = function() {
   if (!this.interface_) {
     this.interface_ = goog.getObjectByName('Android');
   }
-  this.logger_.info('interface=' + this.interface_);
   return this.interface_;
 }

@@ -5,6 +5,8 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -12,9 +14,11 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.provider.CalendarContract;
 import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
@@ -70,6 +74,7 @@ public class CalendarFragment extends Fragment {
             CalendarContract.Events.RDATE,
             CalendarContract.Events.ORIGINAL_ID,
             CalendarContract.Events.ORIGINAL_INSTANCE_TIME,
+            CalendarContract.Events.DELETED,
             CalendarContract.Events.STATUS,
             EVENTS_ETAG
     };
@@ -92,14 +97,14 @@ public class CalendarFragment extends Fragment {
     }
 
     private static class ButtonInfo {
-        public ButtonInfo(String id, int resId) {
+        ButtonInfo(String id, int resId) {
             this.id = id;
             this.resId = resId;
         }
 
         public final String id;
-        public final int resId;
-        public String jsCallback;
+        final int resId;
+        String jsCallback;
     }
 
     private ButtonInfo getButtonById(String buttonId) {
@@ -121,14 +126,14 @@ public class CalendarFragment extends Fragment {
     }
 
     private static class RunOnUiThreadSync<ReturnValue> implements Runnable {
-        public ReturnValue returnValue;
-        public RuntimeException exception;
+        ReturnValue returnValue;
+        RuntimeException exception;
 
         private final Activity mActivity;
         private final Callable<ReturnValue> mCallable;
         private final Semaphore mSemphore = new Semaphore(0);
 
-        public RunOnUiThreadSync(Activity activity, Callable<ReturnValue> callable) {
+        RunOnUiThreadSync(Activity activity, Callable<ReturnValue> callable) {
             mActivity = activity;
             mCallable = callable;
         }
@@ -145,7 +150,7 @@ public class CalendarFragment extends Fragment {
             mSemphore.release();
         }
 
-        public ReturnValue call() {
+        ReturnValue call() {
             mActivity.runOnUiThread(this);
             mSemphore.acquireUninterruptibly();
             if (exception != null) {
@@ -170,7 +175,7 @@ public class CalendarFragment extends Fragment {
         CalendarFragment mFragment;
 
         /** Instantiate the interface and set the context */
-        public WebAppInterface(CalendarFragment fragment) {
+        WebAppInterface(CalendarFragment fragment) {
             mFragment = fragment;
         }
 
@@ -266,43 +271,15 @@ public class CalendarFragment extends Fragment {
         }
 
         @JavascriptInterface
-        public String createEvent(long calendarId, String eventDataString) throws JSONException {
-            JSONObject eventData = new JSONObject(eventDataString);
-            Log.d(TAG,"createEvent(" + eventDataString + ")");
-            EventPatch eventPatch = EventPatch.fromJson(eventData);
+        public String applyEventOperations(long calendarId, String operationsString) throws JSONException {
+            JSONArray operationsData = new JSONArray(operationsString);
+            Log.d(TAG,"applyEventOperations(" + operationsString + ")");
+            EventOperations eventOperations = EventOperations.fromJson(operationsData);
             return mFragment.runOnUiThreadSync(() -> {
-                Event event = mFragment.createEvent(calendarId, eventPatch);
-                return event.toJson().toString();
+                EventOperationResults results = mFragment.applyEventOperations(
+                        calendarId, eventOperations);
+                return results.toJson().toString();
             });
-        }
-
-        @JavascriptInterface
-        public String saveEvent(final long calendarId, String eventDataString,
-                String eventPatchDataString) throws JSONException {
-            JSONObject eventData = new JSONObject(eventDataString);
-            Event event = Event.fromJson(eventData);
-            JSONObject eventPatchData = new JSONObject(eventPatchDataString);
-            EventPatch eventPatch = EventPatch.fromJson(eventPatchData);
-            Log.d(TAG,"saveEvent(" + calendarId + ", " + eventDataString + ", "
-                    + eventPatchDataString + ")");
-            return mFragment.runOnUiThreadSync(() -> {
-                Event savedEvent = mFragment.saveEvent(calendarId, event, eventPatch);
-                if (savedEvent == null) {
-                    throw new IllegalArgumentException("Could not save event");
-                }
-                return savedEvent.toJson().toString();
-            });
-        }
-
-        @JavascriptInterface
-        public void deleteEvent(long calendarId, String eventDataString) throws JSONException {
-            JSONObject eventData = new JSONObject(eventDataString);
-            Event event = Event.fromJson(eventData);
-            Log.d(TAG,"deleteEvent(" + calendarId + ", " + eventDataString + ")");
-            if (!mFragment.runOnUiThreadSync(
-                    () -> mFragment.deleteEvent(calendarId, event))) {
-                throw new RuntimeException("Could not delete event");
-            }
         }
 
         @JavascriptInterface
@@ -312,7 +289,7 @@ public class CalendarFragment extends Fragment {
             mFragment.runOnUiThreadSync(() -> mFragment.openEventEditor(calendarId, eventId));
         }
 
-        public void onEventsLoaded(List<Event> events) {
+        void onEventsLoaded(List<Event> events) {
             JSONObject result = new JSONObject();
             try {
                 result.put("kind", "calendar#events");
@@ -475,32 +452,98 @@ public class CalendarFragment extends Fragment {
                 new EventsLoaderCallback(startTime, endTime));
     }
 
-    private Event createEvent(long calendarId, EventPatch eventPatch) {
+    private EventOperationResults applyEventOperations(
+            long calendarId, EventOperations eventOperations) {
+        ArrayList<ContentProviderOperation> providerOperations = new ArrayList<>();
+        for (EventOperations.Operation operation : eventOperations.operations) {
+            switch (operation.getType()) {
+                case CREATE:
+                    providerOperations.add(getCreateEventOperation(
+                            calendarId, (EventOperations.Create) operation));
+                    break;
+                case SAVE:
+                    providerOperations.add(getSaveEventOperation(
+                            calendarId, (EventOperations.Save) operation));
+                    break;
+                case DELETE:
+                    providerOperations.add(getDeleteEventOperation(
+                            calendarId, (EventOperations.Delete) operation));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected type");
+            }
+        }
+
+        ContentResolver cr = getActivity().getContentResolver();
+        ContentProviderResult[] providerResults;
+        try {
+            providerResults = cr.applyBatch(CalendarContract.AUTHORITY, providerOperations);
+        } catch (OperationApplicationException e) {
+            throw new RuntimeException(e);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+
+        EventOperationResults results = new EventOperationResults();
+        for (int i = 0; i < eventOperations.operations.size(); i++) {
+            EventOperations.Operation operation = eventOperations.operations.get(i);
+            switch (operation.getType()) {
+                case CREATE:
+                    results.add(getCreateEventResult(providerResults[i]));
+                    break;
+                case SAVE:
+                    results.add(getSaveEventResult((EventOperations.Save) operation,
+                            providerResults[i]));
+                    break;
+                case DELETE:
+                    results.add(getDeleteEventResult((EventOperations.Delete) operation,
+                            providerResults[i]));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected type");
+            }
+        }
+
+        return results;
+    }
+
+    private ContentProviderOperation getCreateEventOperation(
+            long calendarId, EventOperations.Create createOperation) {
+        EventPatch eventPatch = createOperation.eventPatch;
         if (eventPatch.title == null || eventPatch.startTime == null
                 || eventPatch.endTime == null) {
             throw new IllegalArgumentException("Missing fields in create event patch");
         }
-        ContentResolver cr = getActivity().getContentResolver();
-        ContentValues values = new ContentValues();
-        values.put(CalendarContract.Events.TITLE, eventPatch.title);
-        values.put(CalendarContract.Events.DTSTART, eventPatch.startTime.getTimeInMillis());
-        values.put(CalendarContract.Events.DTEND, eventPatch.endTime.getTimeInMillis());
-        values.put(CalendarContract.Events.CALENDAR_ID, calendarId);
-        values.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
-        Uri eventUri = cr.insert(CalendarContract.Events.CONTENT_URI, values);
-        if (eventUri == null) {
-            throw new NullPointerException("eventUri is null");
-        }
-        Cursor cursor = cr.query(eventUri, EVENTS_PROJECTION, null, null,
-                null,null);
-        if (!cursor.moveToNext()) {
-            throw new RuntimeException("Could not find created event");
-        }
-        return eventFromCursor(cursor);
+        return ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
+                .withValue(CalendarContract.Events.TITLE, eventPatch.title)
+                .withValue(CalendarContract.Events.DTSTART, eventPatch.startTime.getTimeInMillis())
+                .withValue(CalendarContract.Events.DTEND, eventPatch.endTime.getTimeInMillis())
+                .withValue(CalendarContract.Events.CALENDAR_ID, calendarId)
+                .withValue(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().getID())
+                .build();
     }
 
-    private Event saveEvent(long calendarId, Event event, EventPatch eventPatch) {
+    private EventOperationResults.Result getCreateEventResult(ContentProviderResult operationResult) {
         ContentResolver cr = getActivity().getContentResolver();
+        if (operationResult.uri == null) {
+            throw new NullPointerException("eventUri is null");
+        }
+        Cursor cursor = cr.query(operationResult.uri, EVENTS_PROJECTION, null, null,
+                null,null);
+        if (!cursor.moveToNext()) {
+            return new EventOperationResults.Error("Could not find created event");
+        }
+        Event createdEvent = eventFromCursor(cursor);
+        if (createdEvent == null) {
+            return new EventOperationResults.Error("Unexpected created event cursor");
+        }
+        return new EventOperationResults.Save(createdEvent);
+    }
+
+    private ContentProviderOperation getSaveEventOperation(
+            long calendarId, EventOperations.Save saveOperation) {
+        Event event = saveOperation.event;
+        EventPatch eventPatch = saveOperation.eventPatch;
         ContentValues values = new ContentValues();
         if (eventPatch.title != null) {
             values.put(CalendarContract.Events.TITLE, eventPatch.title);
@@ -512,7 +555,6 @@ public class CalendarFragment extends Fragment {
         if (eventPatch.endTime != null) {
             values.put(CalendarContract.Events.DTEND, eventPatch.endTime.getTimeInMillis());
         }
-        Uri eventUri;
         if (event.id != null) {
             String where = CalendarContract.Events.CALENDAR_ID + "=? AND "
                     + CalendarContract.Events._ID + "=?";
@@ -523,14 +565,11 @@ public class CalendarFragment extends Fragment {
                 where += " AND " + EVENTS_ETAG + "=?";
                 selectionArgs.add(event.etag);
             }
-            int rowsUpdated = cr.update(CalendarContract.Events.CONTENT_URI, values, where,
-                    selectionArgs.toArray(new String[selectionArgs.size()]));
-            if (rowsUpdated > 1) {
-                throw new IllegalStateException("Updated more than one row!");
-            } else if (rowsUpdated == 0) {
-                return null;
-            }
-            eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
+
+            return ContentProviderOperation.newUpdate(CalendarContract.Events.CONTENT_URI)
+                    .withValues(values)
+                    .withSelection(where, selectionArgs.toArray(new String[selectionArgs.size()]))
+                    .build();
         } else {
             if (event.originalId == null) {
                 throw new NullPointerException("event.originalId is null");
@@ -552,21 +591,47 @@ public class CalendarFragment extends Fragment {
             values.put(CalendarContract.Events.ORIGINAL_ID, event.originalId);
             values.put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME,
                     event.originalInstanceTime.getTimeInMillis());
-            eventUri = cr.insert(CalendarContract.Events.CONTENT_URI, values);
+
+            return ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
+                    .withValues(values)
+                    .build();
+        }
+    }
+
+    private EventOperationResults.Result getSaveEventResult(
+            EventOperations.Save saveOperation, ContentProviderResult operationResult) {
+        Event event = saveOperation.event;
+        Uri eventUri;
+        if (event.id != null) {
+            int rowsUpdated = operationResult.count;
+            if (rowsUpdated > 1) {
+                throw new IllegalStateException("Updated more than one row!");
+            } else if (rowsUpdated == 0) {
+                return new EventOperationResults.Error("Expected to update a row during save");
+            }
+            eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id);
+        } else {
+            eventUri = operationResult.uri;
             if (eventUri == null) {
                 throw new NullPointerException("eventUri is null (repeated instance)!");
             }
         }
+        ContentResolver cr = getActivity().getContentResolver();
         Cursor cursor = cr.query(eventUri, EVENTS_PROJECTION, null, null,
                 null,null);
         if (!cursor.moveToNext()) {
-            throw new RuntimeException("Could not find saved or created event");
+            return new EventOperationResults.Error("Could not find saved or created event");
         }
-        return eventFromCursor(cursor);
+        Event savedEvent = eventFromCursor(cursor);
+        if (savedEvent == null) {
+            return new EventOperationResults.Error("Unexpected saved event cursor");
+        }
+        return new EventOperationResults.Save(savedEvent);
     }
 
-    private boolean deleteEvent(long calendarId, Event event) {
-        ContentResolver cr = getActivity().getContentResolver();
+    private ContentProviderOperation getDeleteEventOperation(
+            long calendarId, EventOperations.Delete deleteOperation) {
+        Event event = deleteOperation.event;
         if (event.originalId == null) {
             if (event.id == null) {
                 throw new NullPointerException("event.id is null");
@@ -582,12 +647,11 @@ public class CalendarFragment extends Fragment {
                 where += " AND " + EVENTS_ETAG + "=?";
                 selectionArgs.add(event.etag);
             }
-            int rowsUpdated = cr.update(CalendarContract.Events.CONTENT_URI, values, where,
-                    selectionArgs.toArray(new String[selectionArgs.size()]));
-            if (rowsUpdated > 1) {
-                throw new IllegalStateException("Deleted more than one row!");
-            }
-            return rowsUpdated > 0;
+
+            return ContentProviderOperation.newUpdate(CalendarContract.Events.CONTENT_URI)
+                    .withValues(values)
+                    .withSelection(where, selectionArgs.toArray(new String[selectionArgs.size()]))
+                    .build();
         } else if (event.id == null) {
             if (event.originalInstanceTime == null) {
                 throw new NullPointerException("event.originalInstanceTime is null");
@@ -603,11 +667,10 @@ public class CalendarFragment extends Fragment {
             values.put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME,
                     event.originalInstanceTime.getTimeInMillis());
             values.put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED);
-            Uri eventUri = cr.insert(CalendarContract.Events.CONTENT_URI, values);
-            if (eventUri == null) {
-                throw new NullPointerException("eventUri is null (repeated instance)!");
-            }
-            return true;
+
+            return ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
+                    .withValues(values)
+                    .build();
         } else {
             if (event.id == null) {
                 throw new NullPointerException("event.id is null");
@@ -623,14 +686,38 @@ public class CalendarFragment extends Fragment {
                 where += " AND " + EVENTS_ETAG + "=?";
                 selectionArgs.add(event.etag);
             }
-            int rowsUpdated = cr.update(CalendarContract.Events.CONTENT_URI, values, where,
-                    selectionArgs.toArray(new String[selectionArgs.size()]));
+
+            return ContentProviderOperation.newUpdate(CalendarContract.Events.CONTENT_URI)
+                    .withValues(values)
+                    .withSelection(where, selectionArgs.toArray(new String[selectionArgs.size()]))
+                    .build();
+        }
+    }
+
+    private EventOperationResults.Result getDeleteEventResult(
+            EventOperations.Delete deleteOperation, ContentProviderResult operationResult) {
+        Event event = deleteOperation.event;
+        if (event.originalId == null) {
+            int rowsUpdated = operationResult.count;
+            if (rowsUpdated > 1) {
+                throw new IllegalStateException("Deleted more than one row!");
+            }
+            return new EventOperationResults.Delete();
+        } else if (event.id == null) {
+            Uri eventUri = operationResult.uri;
+            if (eventUri == null) {
+                return new EventOperationResults.Error("eventUri is null (repeated instance)!");
+            }
+            return new EventOperationResults.Delete();
+        } else {
+            int rowsUpdated = operationResult.count;
             if (rowsUpdated > 1) {
                 throw new IllegalStateException("Updated more than one row (repeated instance)!");
             } else if (rowsUpdated == 0) {
-                throw new IllegalStateException("Expected to update one row (repeated instance)!");
+                return new EventOperationResults.Error(
+                        "Expected to update one row (repeated instance)!");
             }
-            return true;
+            return new EventOperationResults.Delete();
         }
     }
 
@@ -748,7 +835,12 @@ public class CalendarFragment extends Fragment {
         int originalInstanceTimeIndex = cursor.getColumnIndexOrThrow(
                 CalendarContract.Events.ORIGINAL_INSTANCE_TIME);
         int statusIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.STATUS);
+        int deletedIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DELETED);
         int etagIndex = cursor.getColumnIndexOrThrow(EVENTS_ETAG);
+
+        if (cursor.getInt(deletedIndex) != 0) {
+            return null;
+        }
 
         int status = cursor.getInt(statusIndex);
 
@@ -783,7 +875,6 @@ public class CalendarFragment extends Fragment {
                 originalId,
                 originalInstanceTime);
     }
-
 
     private RecurringEvent recurringEventFromCursor(Cursor cursor) {
         int idIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events._ID);

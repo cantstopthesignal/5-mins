@@ -84,11 +84,12 @@ five.AndroidAppApi.prototype.setButtonVisible = function(buttonId, isVisible) {
  */
 five.AndroidAppApi.prototype.callApi_ = function(methodName, var_args) {
   var params = Array.prototype.slice.call(arguments, 1);
-  this.logger_.info(methodName);
   var d = new goog.async.Deferred();
   try {
     var resp = this.getInterface_()[methodName].apply(this.getInterface_(), params);
-    this.logger_.info('Response is ' + resp);
+    if (resp !== undefined) {
+      this.logger_.info('Response from [' + methodName + '] is ' + resp);
+    }
     d.callback(resp);
   } catch (e) {
     d.errback(e);
@@ -100,6 +101,5 @@ five.AndroidAppApi.prototype.getInterface_ = function() {
   if (!this.interface_) {
     this.interface_ = goog.getObjectByName('Android');
   }
-  this.logger_.info('interface=' + this.interface_);
   return this.interface_;
 }
