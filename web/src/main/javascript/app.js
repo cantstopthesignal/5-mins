@@ -52,11 +52,20 @@ five.App = function() {
 };
 goog.inherits(five.App, goog.events.EventTarget);
 
+five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_ =
+    'New app available. Refresh page to update.';
+
+/** @type {number} */
+five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_DURATION_ = 2000;
+
 /** @type {goog.log.Logger} */
 five.App.prototype.logger_ = goog.log.getLogger('five.App');
 
 /** @type {five.AppBar} */
 five.App.prototype.appBar_;
+
+/** @type {five.NotificationManager} */
+five.App.prototype.notificationManager_;
 
 /** @type {five.CalendarChooser} */
 five.App.prototype.calendarChooser_;
@@ -82,8 +91,8 @@ five.App.prototype.start = function() {
   this.appBar_ = new five.AppBar();
   this.appBar_.render(this.appEl_);
 
-  var notificationManager = new five.NotificationManager(this.appBar_);
-  notificationManager.register(this.appContext_);
+  this.notificationManager_ = new five.NotificationManager(this.appBar_);
+  this.notificationManager_.register(this.appContext_);
 
   if (five.device.isWebView()) {
     this.calendarApi_.loadCalendarData().
@@ -99,7 +108,8 @@ five.App.prototype.start = function() {
       listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_).
       listen(document, goog.events.EventType.COPY, this.handleCopy_).
       listen(document, goog.events.EventType.PASTE, this.handlePaste_).
-      listen(window, goog.events.EventType.BEFOREUNLOAD, this.handleWindowBeforeUnload_);
+      listen(window, goog.events.EventType.BEFOREUNLOAD, this.handleWindowBeforeUnload_).
+      listen(window.applicationCache, 'updateready', this.handleAppCacheUpdateReady_);
 };
 
 /** @override */
@@ -185,4 +195,11 @@ five.App.prototype.handleWindowBeforeUnload_ = function(e) {
       return message;
     }
   }
+};
+
+five.App.prototype.handleAppCacheUpdateReady_ = function() {
+  this.notificationManager_.show(
+      five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_,
+      five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_DURATION_,
+      five.NotificationManager.Level.INFO);
 };
