@@ -11,8 +11,9 @@
   }
   MobileMode mobileMode = MobileMode.fromRequest(request);
 
+  boolean offlineEnabled = !"0".equals(request.getParameter("offlineEnabled"));
   String manifestAttribute = "";
-  if (jsMode != JsMode.UNCOMPILED) {
+  if (jsMode != JsMode.UNCOMPILED && offlineEnabled) {
     manifestAttribute = "manifest=\"manifest.txt\"";
   }
 %>
