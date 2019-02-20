@@ -6,6 +6,7 @@ goog.require('five.AndroidAppApi');
 goog.require('five.Button');
 goog.require('five.Component');
 goog.require('five.DayBanner');
+goog.require('five.DurationKeyMonitor');
 goog.require('five.EditEventDialog');
 goog.require('five.Event');
 goog.require('five.EventCreateEvent');
@@ -65,6 +66,10 @@ five.EventsView = function(appContext, calendarManager, appBar) {
     this.androidAppApi_ = five.AndroidAppApi.get(this.appContext_);
   }
 
+  /** @type {!five.DurationKeyMonitor} */
+  this.durationKeyMonitor_ = new five.DurationKeyMonitor();
+  this.registerDisposable(this.durationKeyMonitor_);
+
   this.initDefaultViewDate_();
   this.updateViewDate_();
 
@@ -90,6 +95,9 @@ five.EventsView.DEFAULT_TIMELINE_Y_OFFSET = 500;
 
 /** @type {string} */
 five.EventsView.EVENTS_MIME_TYPE_ = 'application/vnd.5-mins.events+json';
+
+/** @type {number} */
+five.EventsView.MAX_ENTERED_DURATION_MINUTES_ = 720;
 
 /** @type {goog.date.DateTime} */
 five.EventsView.prototype.viewDate_;
@@ -185,7 +193,11 @@ five.EventsView.prototype.createDom = function() {
   this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime(),
       five.TimeMarkerTheme.NOW);
 
-  this.registerListenersForScrollElement_();
+  this.eventHandler.
+      listen(this.scrollEl_, goog.events.EventType.SCROLL, this.handleScroll_).
+      listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
+      listen(this.durationKeyMonitor_, five.DurationKeyMonitor.EventType.DURATION_ENTERED,
+          this.handleDurationEntered_);
 };
 
 five.EventsView.prototype.render = function(parentEl) {
@@ -800,16 +812,41 @@ five.EventsView.prototype.handleDayBannerClick_ = function(e) {
   dialog.show();
 };
 
-five.EventsView.prototype.registerListenersForScrollElement_ = function() {
-  this.eventHandler.
-      listen(this.scrollEl_, goog.events.EventType.SCROLL, this.handleScroll_);
-};
-
 /** @param {goog.events.BrowserEvent} e */
 five.EventsView.prototype.handleScroll_ = function(e) {
   this.updateViewDate_();
   this.updateAdditionalTimelineAlignments_();
   this.updateVisibleRegion_();
+};
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsView.prototype.handleKeyDown_ = function(e) {
+  if (e.keyCode >= goog.events.KeyCodes.ZERO && e.keyCode <= goog.events.KeyCodes.NINE) {
+    this.durationKeyMonitor_.handleNumberKey(e.keyCode - goog.events.KeyCodes.ZERO);
+  } else if (e.keyCode == goog.events.KeyCodes.SEMICOLON) {
+    this.durationKeyMonitor_.handleColonKey();
+  } else {
+    return;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+/** @param {!five.DurationKeyMonitor.DurationEnteredEvent} e */
+five.EventsView.prototype.handleDurationEntered_ = function(e) {
+  if (e.minutes <= 0 || e.minutes % 5 != 0 || !this.selectedEvents_.length ||
+      e.minutes > five.EventsView.MAX_ENTERED_DURATION_MINUTES_) {
+    return;
+  }
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    var startTime = selectedEvent.getStartTime();
+    var endTime = startTime.clone();
+    endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, e.minutes));
+    selectedEvent.addMutation(new five.EventMutation.SetTimeRange(startTime, endTime));
+  });
+  goog.array.forEach(this.columns_, function(column) {
+    column.timeline.eventsChanged(this.selectedEvents_);
+  }, this);
 };
 
 five.EventsView.prototype.updateAdditionalTimelineAlignments_ = function() {
