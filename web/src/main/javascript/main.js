@@ -31,6 +31,9 @@ five.main.start = function() {
   goog.asserts.assert(!five.main.app_);
   five.main.app_ = new five.App();
   five.main.app_.start();
+  if (!five.main.maybeTestMode()) {
+    (window['loadGoogleAnalytics'] || function() {})();
+  }
 };
 
 five.main.dispose = function() {
