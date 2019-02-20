@@ -56,6 +56,7 @@ five.CalendarManager = function(appContext, calendarData) {
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
+  this.registerDisposable(this.eventHandler);
 
   /** @type {Object} */
   this.eventLoadingLocks_ = {};
@@ -69,6 +70,9 @@ five.CalendarManager = function(appContext, calendarData) {
     this.eventHandler.listen(this.idleTracker_, five.IdleTracker.EventType.ACTIVE,
         this.handleUserActive_);
   }
+
+  this.eventHandler.listen(window, goog.events.EventType.ONLINE,
+      this.handleOnLine_);
 };
 goog.inherits(five.CalendarManager, goog.events.EventTarget);
 
@@ -109,6 +113,10 @@ five.CalendarManager.EventLoadingLock.prototype.disposeInternal = function() {
   if (this.lockId_) {
     this.calendarManager_.unlockEventLoading_(this.lockId_);
   }
+  if (this.newNetworkDelayTimeoutId_) {
+    window.clearTimeout(this.newNetworkDelayTimeoutId_);
+    delete this.newNetworkDelayTimeoutId_;
+  }
   goog.base(this, 'disposeInternal');
 };
 
@@ -130,11 +138,20 @@ five.CalendarManager.OPEN_EVENTS_EDITOR_ERROR_ =
 five.CalendarManager.EVENTS_APPLY_OPERATIONS_ERROR_ =
     'Error applying event changes. Please try again.';
 
+five.CalendarManager.REFRESHING_EVENTS_NOTIFICATION_ =
+    'Refreshing events...';
+
+/** @type {number} */
+five.CalendarManager.REFRESHING_EVENTS_NOTIFICATION_DURATION_ = 1000;
+
 five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_ =
     'Events refreshed.';
 
 /** @type {number} */
 five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_DURATION_ = 1000;
+
+/** @type {number} */
+five.CalendarManager.NEW_NETWORK_ONLINE_DELAY_MS_ = 2000;
 
 /** @type {goog.log.Logger} */
 five.CalendarManager.prototype.logger_ = goog.log.getLogger(
@@ -157,6 +174,9 @@ five.CalendarManager.prototype.hasMutations_ = false;
 
 /** @type {boolean} */
 five.CalendarManager.prototype.needIdleRefresh_ = false;
+
+/** @type {number} */
+five.CalendarManager.prototype.newNetworkDelayTimeoutId_;
 
 /** @override */
 five.CalendarManager.prototype.disposeInternal = function() {
@@ -479,9 +499,19 @@ five.CalendarManager.prototype.handleUserActive_ = function() {
   this.checkIdleRefresh_();
 };
 
+five.CalendarManager.prototype.handleOnLine_ = function() {
+  this.newNetworkDelayTimeoutId_ = window.setTimeout(
+      goog.bind(this.checkIdleRefresh_, this),
+      five.CalendarManager.NEW_NETWORK_ONLINE_DELAY_MS_);
+};
+
 five.CalendarManager.prototype.checkIdleRefresh_ = function() {
-  if (this.canRefreshEvents_() && this.needIdleRefresh_) {
+  if (this.canRefreshEvents_() && this.needIdleRefresh_ && navigator.onLine) {
     this.needIdleRefresh_ = false;
+    this.notificationManager_.show(
+        five.CalendarManager.REFRESHING_EVENTS_NOTIFICATION_,
+        five.CalendarManager.REFRESHING_EVENTS_NOTIFICATION_DURATION_,
+        five.NotificationManager.Level.INFO);
     this.refreshEvents_().addCallback(function() {
       this.notificationManager_.show(
           five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_,
