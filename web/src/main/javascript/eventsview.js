@@ -825,6 +825,10 @@ five.EventsView.prototype.handleKeyDown_ = function(e) {
     this.durationKeyMonitor_.handleNumberKey(e.keyCode - goog.events.KeyCodes.ZERO);
   } else if (e.keyCode == goog.events.KeyCodes.SEMICOLON) {
     this.durationKeyMonitor_.handleColonKey();
+  } else if (e.keyCode == goog.events.KeyCodes.A) {
+    this.proposeRelativeToSelection_(true);
+  } else if (e.keyCode == goog.events.KeyCodes.B) {
+    this.proposeRelativeToSelection_(false);
   } else {
     return;
   }
@@ -1427,6 +1431,16 @@ five.EventsView.prototype.proposeEvents_ = function(time) {
   }
 
   this.replaceProposedEvents_(newProposedEvents);
+};
+
+five.EventsView.prototype.proposeRelativeToSelection_ = function(after) {
+  if (this.selectedEvents_.length != 1) {
+    return;
+  }
+  var time = after ? this.selectedEvents_[0].getEndTime() :
+      this.selectedEvents_[0].getStartTime();
+  this.replaceSelectedEvents_([]);
+  this.proposeEvents_(time);
 };
 
 /** @param {goog.events.Event=} opt_e */
