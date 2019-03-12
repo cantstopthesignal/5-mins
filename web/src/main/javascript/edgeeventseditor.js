@@ -54,27 +54,31 @@ five.EdgeEventsEditor.prototype.createDom = function() {
   goog.dom.classlist.add(shadow, 'shadow');
   this.bottomButtonBar_.appendChild(shadow);
 
+  // top left buttons
   this.proposeAboveButton_ = this.createIconButton_(this.topButtonBar_);
   goog.dom.classlist.add(this.proposeAboveButton_, 'propose-button');
 
+  // top right buttons
   var moveStartDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
   var moveStartUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
   var moveDownButton = this.createArrowButton_(false, this.topButtonBar_, true);
   var moveUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
 
-  this.editButton_ = this.createIconButton_(this.bottomButtonBar_);
-  goog.dom.classlist.add(this.editButton_, 'edit-button');
-  var dupButton = this.createIconButton_(this.bottomButtonBar_);
-  goog.dom.classlist.add(dupButton, 'duplicate-button');
-  var nowButton = this.createIconButton_(this.bottomButtonBar_);
-  goog.dom.classlist.add(nowButton, 'now-button');
+  // bottom left buttons
   this.proposeBelowButton_ = this.createIconButton_(this.bottomButtonBar_);
   goog.dom.classlist.add(this.proposeBelowButton_, 'propose-button');
+  var dupButton = this.createIconButton_(this.bottomButtonBar_);
+  goog.dom.classlist.add(dupButton, 'duplicate-button');
+  this.editButton_ = this.createIconButton_(this.bottomButtonBar_);
+  goog.dom.classlist.add(this.editButton_, 'edit-button');
   var deleteButton = this.createIconButton_(this.bottomButtonBar_);
   goog.dom.classlist.add(deleteButton, 'delete-button');
 
+  // bottom right buttons
   var moveEndDownButton = this.createArrowButton_(false, this.bottomButtonBar_, true);
   var moveEndUpButton = this.createArrowButton_(true, this.bottomButtonBar_, true);
+  var nowButton = this.createIconButton_(this.bottomButtonBar_, true);
+  goog.dom.classlist.add(nowButton, 'now-button');
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.CLICK, this.handleClick_).
