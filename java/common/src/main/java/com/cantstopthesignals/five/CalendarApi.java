@@ -19,10 +19,13 @@ import com.google.api.services.calendar.model.Events;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 class CalendarApi {
     /** Application name. */
@@ -99,58 +102,177 @@ class CalendarApi {
                 .build();
     }
 
+    private static class TimeSegmentedEventLoader
+            extends CheckedIterator<com.google.api.services.calendar.model.Event, IOException> {
+        private final com.google.api.services.calendar.Calendar service;
+        private final String calendarId;
+        private final Calendar startTime;
+        private final Calendar endTime;
+
+        private Set<String> previousEventIds = new HashSet<>();
+        private Iterator<com.google.api.services.calendar.model.Event> batch;
+        private Calendar batchEndTime;
+
+        TimeSegmentedEventLoader(com.google.api.services.calendar.Calendar service,
+                                 String calendarId, Calendar startTime, Calendar endTime) {
+            this.service = service;
+            this.calendarId = calendarId;
+            this.startTime = startTime;
+            this.endTime = endTime;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (hasException()) {
+                return false;
+            }
+            if (batch == null || (!batch.hasNext() && batchEndTime != null)) {
+                try {
+                    loadBatch();
+                } catch (IOException e) {
+                    setException(e);
+                    return false;
+                }
+            }
+            return batch.hasNext();
+        }
+
+        @Override
+        public com.google.api.services.calendar.model.Event next() {
+            return batch.next();
+        }
+
+        private void loadBatch() throws IOException {
+            ArrayList<com.google.api.services.calendar.model.Event> batchEvents = new ArrayList<>();
+            while (batchEvents.isEmpty()) {
+                Calendar batchStartTime;
+                if (batchEndTime != null) {
+                    batchStartTime = batchEndTime;
+                } else {
+                    batchStartTime = startTime;
+                }
+                batchEndTime = (Calendar) batchStartTime.clone();
+                batchEndTime.add(Calendar.MONTH, 3);
+                if (batchEndTime.after(endTime)) {
+                    batchEndTime = endTime;
+                }
+                PagedEventLoader batchLoader = new PagedEventLoader(
+                    service, calendarId, batchStartTime, batchEndTime);
+                while (batchLoader.hasNext()) {
+                    com.google.api.services.calendar.model.Event event = batchLoader.next();
+                    if (!previousEventIds.contains(event.getId())) {
+                        batchEvents.add(event);
+                        previousEventIds.add(event.getId());
+                    }
+                }
+                batchLoader.checkException();
+                if (batchEndTime.equals(endTime)) {
+                    batchEndTime = null;
+                    break;
+                }
+            }
+            batch = batchEvents.iterator();
+        }
+    }
+
+    private static class PagedEventLoader
+            extends CheckedIterator<com.google.api.services.calendar.model.Event, IOException> {
+        private final com.google.api.services.calendar.Calendar service;
+        private final String calendarId;
+        private final Calendar startTime;
+        private final Calendar endTime;
+
+        private Iterator<com.google.api.services.calendar.model.Event> batch;
+        private String nextPageToken;
+
+        PagedEventLoader(com.google.api.services.calendar.Calendar service,
+                         String calendarId, Calendar startTime, Calendar endTime) {
+            this.service = service;
+            this.calendarId = calendarId;
+            this.startTime = startTime;
+            this.endTime = endTime;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (hasException()) {
+                return false;
+            }
+            if (batch == null || (!batch.hasNext() && nextPageToken != null)) {
+                try {
+                    loadBatch();
+                } catch (IOException e) {
+                    setException(e);
+                    return false;
+                }
+            }
+            return batch.hasNext();
+        }
+
+        @Override
+        public com.google.api.services.calendar.model.Event next() {
+            return batch.next();
+        }
+
+        private void loadBatch() throws IOException {
+            int retriesLeft = MAX_REQUEST_RETRIES;
+            Events eventsResult;
+            while (true) {
+                try {
+                    eventsResult = service.events().list(calendarId)
+                        .setMaxResults(250)
+                        .setTimeMin(new DateTime(startTime.getTimeInMillis()))
+                        .setTimeMax(new DateTime(endTime.getTimeInMillis()))
+                        .setOrderBy("startTime")
+                        .setSingleEvents(true)
+                        .setPageToken(nextPageToken)
+                        .execute();
+                    break;
+                } catch (IOException e) {
+                    if ((retriesLeft--) < 0) {
+                        throw e;
+                    }
+                }
+            }
+            batch = eventsResult.getItems().iterator();
+            nextPageToken = eventsResult.getNextPageToken();
+        }
+    }
+
+    private static class EventConverter extends CheckedIterator<Event, IOException> {
+        private CheckedIterator<com.google.api.services.calendar.model.Event, IOException> iterator;
+
+        EventConverter(CheckedIterator<
+                com.google.api.services.calendar.model.Event, IOException> iterator) {
+            this.iterator = iterator;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (hasException()) {
+                return false;
+            }
+            boolean hasNext = iterator.hasNext();
+            try {
+                iterator.checkException();
+            } catch (IOException e) {
+                setException(e);
+                return false;
+            }
+            return hasNext;
+        }
+
+        @Override
+        public Event next() {
+            return new Event(iterator.next());
+        }
+    }
+
     static CheckedIterator<Event, IOException> loadEvents(
             com.google.api.services.calendar.Calendar service,
             String calendarId, Calendar startTime, Calendar endTime) {
-        return new CheckedIterator<Event, IOException>() {
-            Iterator<com.google.api.services.calendar.model.Event> batch;
-            String nextPageToken;
-
-            @Override
-            public boolean hasNext() {
-                if (hasException()) {
-                    return false;
-                }
-                if (batch == null || (!batch.hasNext() && nextPageToken != null)) {
-                    try {
-                        loadBatch();
-                    } catch (IOException e) {
-                        setException(e);
-                        return false;
-                    }
-                }
-                return batch.hasNext();
-            }
-
-            @Override
-            public Event next() {
-                return new Event(batch.next());
-            }
-
-            private void loadBatch() throws IOException {
-                int retriesLeft = MAX_REQUEST_RETRIES;
-                Events eventsResult;
-                while (true) {
-                    try {
-                        eventsResult = service.events().list(calendarId)
-                                .setMaxResults(250)
-                                .setTimeMin(new DateTime(startTime.getTimeInMillis()))
-                                .setTimeMax(new DateTime(endTime.getTimeInMillis()))
-                                .setOrderBy("startTime")
-                                .setSingleEvents(true)
-                                .setPageToken(nextPageToken)
-                                .execute();
-                        break;
-                    } catch (IOException e) {
-                        if ((retriesLeft--) < 0) {
-                            throw e;
-                        }
-                    }
-                }
-                batch = eventsResult.getItems().iterator();
-                nextPageToken = eventsResult.getNextPageToken();
-            }
-        };
+        return new EventConverter(
+            new TimeSegmentedEventLoader(service, calendarId, startTime, endTime));
     }
 
     static void printAvailableCalendars(com.google.api.services.calendar.Calendar service) throws IOException {
