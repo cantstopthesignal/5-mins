@@ -55,7 +55,7 @@ five.EdgeEventsEditor.prototype.createDom = function() {
   this.bottomButtonBar_.appendChild(shadow);
 
   // top left buttons
-  this.proposeAboveButton_ = this.createIconButton_(this.topButtonBar_);
+  this.proposeAboveButton_ = this.createIconButton_(this.topButtonBar_, false);
   goog.dom.classlist.add(this.proposeAboveButton_, 'propose-button');
 
   // top right buttons
@@ -65,13 +65,13 @@ five.EdgeEventsEditor.prototype.createDom = function() {
   var moveUpButton = this.createArrowButton_(true, this.topButtonBar_, true);
 
   // bottom left buttons
-  this.proposeBelowButton_ = this.createIconButton_(this.bottomButtonBar_);
+  this.proposeBelowButton_ = this.createIconButton_(this.bottomButtonBar_, false);
   goog.dom.classlist.add(this.proposeBelowButton_, 'propose-button');
-  var dupButton = this.createIconButton_(this.bottomButtonBar_);
+  var dupButton = this.createIconButton_(this.bottomButtonBar_, false);
   goog.dom.classlist.add(dupButton, 'duplicate-button');
-  this.editButton_ = this.createIconButton_(this.bottomButtonBar_);
+  this.editButton_ = this.createIconButton_(this.bottomButtonBar_, false);
   goog.dom.classlist.add(this.editButton_, 'edit-button');
-  var deleteButton = this.createIconButton_(this.bottomButtonBar_);
+  var deleteButton = this.createIconButton_(this.bottomButtonBar_, false);
   goog.dom.classlist.add(deleteButton, 'delete-button');
 
   // bottom right buttons
@@ -140,17 +140,17 @@ five.EdgeEventsEditor.prototype.mouseDownTop_ = true;
 /**
  * @param {boolean} up
  * @param {Element} parentEl
- * @param {boolean=} opt_floatRight
+ * @param {boolean} floatRight
  */
 five.EdgeEventsEditor.prototype.createArrowButton_ = function(up,
-    parentEl, opt_floatRight) {
+    parentEl, floatRight) {
   var button = document.createElement('button');
   goog.dom.classlist.add(button, 'button');
   var arrow = document.createElement('div');
   goog.dom.classlist.add(arrow, 'arrow');
   goog.dom.classlist.add(arrow, up ? 'up' : 'down');
   button.appendChild(arrow);
-  if (opt_floatRight) {
+  if (floatRight) {
     button.style.cssFloat = 'right';
   }
   parentEl.appendChild(button);
@@ -159,13 +159,13 @@ five.EdgeEventsEditor.prototype.createArrowButton_ = function(up,
 
 /**
  * @param {Element} parentEl
- * @param {boolean=} opt_floatRight
+ * @param {boolean} floatRight
  */
 five.EdgeEventsEditor.prototype.createIconButton_ = function(parentEl,
-    opt_floatRight) {
+    floatRight) {
   var button = document.createElement('button');
   goog.dom.classlist.add(button, 'button');
-  if (opt_floatRight) {
+  if (floatRight) {
     button.style.cssFloat = 'right';
   }
   parentEl.appendChild(button);
