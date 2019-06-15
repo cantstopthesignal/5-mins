@@ -150,7 +150,7 @@ a:hover {
 }
 .edit-event-dialog {
   max-width: calc(100vw - 20px);
-  width: 400px !important;
+  width: 415px !important;
 }
 .edit-event-dialog .editor-row {
   margin-top: 8px;
@@ -175,7 +175,7 @@ a:hover {
 .summary-input {
   font-size: 16px;
   padding: 4px;
-  width: 300px;
+  width: 315px;
 }
 .date-input,
 .time-input {

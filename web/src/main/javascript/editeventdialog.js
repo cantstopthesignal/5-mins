@@ -75,12 +75,6 @@ five.EditEventDialog.INVALID_START_TIME_ERROR_ = 'Invalid start time.';
 
 five.EditEventDialog.INVALID_END_TIME_ERROR_ = 'Invalid end time.';
 
-five.EditEventDialog.DATE_PATTERN_ = "yyyy'/'MM'/'dd";
-
-five.EditEventDialog.TIME_PATTERN_ = "h':'mma";
-
-five.EditEventDialog.TIME_PATTERN_HOURS_ = "ha";
-
 five.EditEventDialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
   var contentEl = this.getContentEl();

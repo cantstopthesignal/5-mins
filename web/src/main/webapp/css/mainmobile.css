@@ -9,3 +9,11 @@ body {
   font-size: 20px;
   width: calc(100% - 10px);
 }
+.date-input {
+  width: 95px;
+  padding: 6px 0 6px 0;
+}
+.time-input {
+  width: 80px;
+  padding: 6px 0 6px 0;
+}
