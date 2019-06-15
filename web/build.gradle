@@ -51,6 +51,7 @@ sourceSets {
 }
 
 ext.javascriptSourceDir = file('src/main/javascript')
+ext.cssSourceDir = file('src/main/webapp/css')
 ext.javascriptOutputDir = file("${buildDir}/js")
 ext.javascriptDepsFile = file("${buildDir}/deps.js")
 ext.libraryDir = file('lib')
@@ -195,6 +196,7 @@ static void deleteIfExists(File file) {
 
 void createOrDestroyDebugTree(boolean create) {
     File debugDir = file("${explodeWar.destinationDir}/debug");
+    deleteIfExists(file("${debugDir}/src/css"));
     deleteIfExists(file("${debugDir}/src/javascript"));
     deleteIfExists(file("${debugDir}/src/deps.js"));
     deleteIfExists(file("${debugDir}/src"));
@@ -204,6 +206,7 @@ void createOrDestroyDebugTree(boolean create) {
         debugDir.mkdir();
         createSymlink(ext.libraryDir, file("${debugDir}/lib"));
         file("${debugDir}/src").mkdir();
+        createSymlink(ext.cssSourceDir, file("${debugDir}/src/css"));
         createSymlink(ext.javascriptDepsFile, file("${debugDir}/src/deps.js"));
         createSymlink(ext.javascriptSourceDir, file("${debugDir}/src/javascript"));
     }

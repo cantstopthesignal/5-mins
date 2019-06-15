@@ -6,11 +6,13 @@ goog.require('five.device');
 
 
 five.mainCssLoader.load = function() {
-  function loadStylesheet(filename) {
+  var pathPrefix = five.device.isJsModeUncompiled() ? '/debug/src' : '';
+
+  function loadStylesheet(path) {
     var stylesheetEl = document.createElement('link');
     stylesheetEl.setAttribute('rel', 'stylesheet');
     stylesheetEl.setAttribute('type', 'text/css');
-    stylesheetEl.setAttribute('href', filename);
+    stylesheetEl.setAttribute('href', pathPrefix + path);
     document.head.appendChild(stylesheetEl);
   }
 
