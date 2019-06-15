@@ -177,10 +177,20 @@ a:hover {
   padding: 4px;
   width: 300px;
 }
-.date-time-input {
+.date-input,
+.time-input {
   font-size: 12px;
-  padding: 3px;
-  width: 80px;
+  font-family: Arial;
+  padding: 2px;
+}
+.date-input::-webkit-clear-button {
+  display: none;
+}
+.date-input::-webkit-datetime-edit {
+  margin-right: -20px;
+}
+.time-input::-webkit-datetime-edit {
+  margin-right: -10px;
 }
 .events-summary-dialog {
   max-height: calc(100vh - 20px);
