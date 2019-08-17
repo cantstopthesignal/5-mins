@@ -2,6 +2,7 @@
 <resources>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="action_events_debug">Events debug</string>
     <string name="action_save">Save</string>
     <string name="action_now">Now</string>
     <string name="action_refresh">Refresh</string>

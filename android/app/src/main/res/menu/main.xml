@@ -2,6 +2,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.cantstopthesignals.five.MainActivity" >
+    <item android:id="@+id/action_events_debug"
+        android:title="@string/action_events_debug"
+        android:icon="@drawable/ic_save"
+        android:visible="false"
+        app:showAsAction="never" />
     <item android:id="@+id/action_save"
         android:title="@string/action_save"
         android:icon="@drawable/ic_save"

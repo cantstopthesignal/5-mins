@@ -20,7 +20,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.CalendarContract;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,6 +35,7 @@ import android.webkit.WebViewClient;
 
 import com.android.calendarcommon2.DateException;
 import com.android.calendarcommon2.Duration;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -91,6 +91,7 @@ public class CalendarFragment extends Fragment {
     private FloatingActionButton mFab;
     private Menu mMenu;
     private List<ButtonInfo> mButtonInfos = new ArrayList<>();
+    private EventsDebugFragment mEventsDebugFragment;
 
     public boolean matchesCalendar(CalendarInfo calendarInfo) {
         return mCalendarInfo.equals(calendarInfo);
@@ -277,6 +278,11 @@ public class CalendarFragment extends Fragment {
             return mFragment.runOnUiThreadSync(() -> {
                 EventOperationResults results = mFragment.applyEventOperations(
                         calendarId, eventOperations);
+
+                if (mFragment.mEventsDebugFragment != null) {
+                    mFragment.mEventsDebugFragment.handleEventOperationResults(results);
+                }
+
                 return results.toJson().toString();
             });
         }
@@ -352,6 +358,14 @@ public class CalendarFragment extends Fragment {
         mWebView.setWebViewClient(new WebViewClient());
         mWebView.setWebChromeClient(new WebChromeClient());
 
+        if (BuildConfig.DEBUG) {
+            mEventsDebugFragment = new EventsDebugFragment();
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.events_debug, mEventsDebugFragment)
+                    .hide(mEventsDebugFragment)
+                    .commitAllowingStateLoss();
+        }
+
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowContentAccess(true);
@@ -390,6 +404,13 @@ public class CalendarFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         mMenu = menu;
 
+        if (BuildConfig.DEBUG) {
+            MenuItem menuItem = mMenu.findItem(R.id.action_events_debug);
+            if (menuItem != null) {
+                menuItem.setVisible(true);
+            }
+        }
+
         refreshButtonVisibility();
     }
 
@@ -397,6 +418,9 @@ public class CalendarFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_clear_cache) {
             reload(true);
+            return true;
+        } else if (item.getItemId() == R.id.action_events_debug) {
+            toggleEventsDebug();
             return true;
         }
 
@@ -451,6 +475,16 @@ public class CalendarFragment extends Fragment {
             mWebView.clearCache(true);
         }
         mWebView.loadUrl(getWebUri().toString());
+    }
+
+    private void toggleEventsDebug() {
+        if (mEventsDebugFragment.isHidden()) {
+            getFragmentManager().beginTransaction().show(mEventsDebugFragment)
+                    .commitAllowingStateLoss();
+        } else {
+            getFragmentManager().beginTransaction().hide(mEventsDebugFragment)
+                    .commitAllowingStateLoss();
+        }
     }
 
     private static Uri getWebUri() {
@@ -721,13 +755,13 @@ public class CalendarFragment extends Fragment {
             if (rowsUpdated > 1) {
                 throw new IllegalStateException("Deleted more than one row!");
             }
-            return new EventOperationResults.Delete();
+            return new EventOperationResults.Delete(event.id, event.originalId);
         } else if (event.id == null) {
             Uri eventUri = operationResult.uri;
             if (eventUri == null) {
                 return new EventOperationResults.Error("eventUri is null (repeated instance)!");
             }
-            return new EventOperationResults.Delete();
+            return new EventOperationResults.Delete(event.id, event.originalId);
         } else {
             int rowsUpdated = operationResult.count;
             if (rowsUpdated > 1) {
@@ -736,7 +770,7 @@ public class CalendarFragment extends Fragment {
                 return new EventOperationResults.Error(
                         "Expected to update one row (repeated instance)!");
             }
-            return new EventOperationResults.Delete();
+            return new EventOperationResults.Delete(event.id, event.originalId);
         }
     }
 
@@ -836,6 +870,10 @@ public class CalendarFragment extends Fragment {
 
             Log.d(TAG, events.size() + " events loaded");
             Collections.sort(events);
+
+            if (mEventsDebugFragment != null) {
+                mEventsDebugFragment.onEventsLoaded(events);
+            }
 
             mWebAppInterface.onEventsLoaded(events);
         }
