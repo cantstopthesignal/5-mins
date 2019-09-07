@@ -35,13 +35,13 @@ five.EventTheme = function(bgColor, borderColor, selectedBgColor,
 };
 
 /** @type {!five.EventTheme} */
-five.EventTheme.BLUE = new five.EventTheme('rgba(200, 200, 255, 0.8)', '#88f',
-    'rgba(150, 150, 220, 0.8)', '#66d', 'rgba(150, 220, 150, 0.8)', '#4b4',
-    'rgba(100, 180, 100, 0.8)', '#292');
+five.EventTheme.BLUE = new five.EventTheme('rgba(100, 100, 180, 0.8)', '#77e',
+    'rgba(80, 80, 170, 0.8)', '#55c', 'rgba(80, 160, 80, 0.8)', '#4a4',
+    'rgba(60, 140, 60, 0.8)', '#393');
 
 /** @type {!five.EventTheme} */
-five.EventTheme.ORANGE = new five.EventTheme('rgba(255, 173, 70, 0.8)', '#CB7403',
-    'rgba(225, 141, 38, 0.8)', '#aB5400', 'rgba(150, 220, 150, 0.8)', '#4b4',
+five.EventTheme.ORANGE = new five.EventTheme('rgba(225, 141, 38, 0.8)', '#ed9225',
+    'rgba(199, 121, 28, 0.8)', '#e68b1b00', 'rgba(80, 160, 80, 0.8)', '#4a4',
     'rgba(100, 180, 100, 0.8)', '#292');
 
 /** @type {!five.EventTheme} */

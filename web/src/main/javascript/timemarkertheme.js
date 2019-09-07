@@ -15,12 +15,12 @@ five.TimeMarkerTheme = function(color, labelColor) {
 };
 
 /** @type {!five.TimeMarkerTheme} */
-five.TimeMarkerTheme.NOW = new five.TimeMarkerTheme('rgba(255, 0, 0, 0.4)',
-    'rgba(255, 0, 0, 0.8)');
+five.TimeMarkerTheme.NOW = new five.TimeMarkerTheme('rgba(255, 100, 100, 0.4)',
+    'rgba(255, 100, 100, 0.8)');
 
 /** @type {!five.TimeMarkerTheme} */
-five.TimeMarkerTheme.CURSOR = new five.TimeMarkerTheme('rgba(0, 0, 255, 0.2)',
-    'rgba(0, 0, 255, 0.8)');
+five.TimeMarkerTheme.CURSOR = new five.TimeMarkerTheme('rgba(140, 140, 255, 0.4)',
+    'rgba(140, 140, 255, 0.8)');
 
 /** @type {!five.TimeMarkerTheme} */
 five.TimeMarkerTheme.DEFAULT = new five.TimeMarkerTheme('rgba(0, 255, 0, 0.4)',
