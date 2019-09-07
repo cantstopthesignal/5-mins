@@ -20,7 +20,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.CalendarContract;
-import android.support.design.widget.FloatingActionButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -100,11 +100,13 @@ public class CalendarFragment extends Fragment {
         ButtonInfo(String id, int resId) {
             this.id = id;
             this.resId = resId;
+            this.isVisible = true;
         }
 
         public final String id;
         final int resId;
         String jsCallback;
+        boolean isVisible;
     }
 
     private ButtonInfo getButtonById(String buttonId) {
@@ -198,11 +200,7 @@ public class CalendarFragment extends Fragment {
                     }
                     buttonInfo = new ButtonInfo(buttonId, resId);
                     mFragment.mButtonInfos.add(buttonInfo);
-                    if (buttonInfo.resId == R.id.action_propose) {
-                        mFragment.mFab.show();
-                    } else {
-                        mFragment.mMenu.findItem(buttonInfo.resId).setVisible(true);
-                    }
+                    mFragment.refreshButtonVisibility();
                 }
                 buttonInfo.jsCallback = jsCallback;
             });
@@ -218,6 +216,7 @@ public class CalendarFragment extends Fragment {
                 if (mFragment.mMenu == null) {
                     throw new IllegalStateException("Menu is null");
                 }
+                buttonInfo.isVisible = isVisible;
                 mFragment.mMenu.findItem(buttonInfo.resId).setVisible(isVisible);
             });
         }
@@ -390,6 +389,8 @@ public class CalendarFragment extends Fragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         mMenu = menu;
+
+        refreshButtonVisibility();
     }
 
     @Override
@@ -414,6 +415,23 @@ public class CalendarFragment extends Fragment {
             return true;
         }
         return false;
+    }
+
+    private void refreshButtonVisibility() {
+        for (ButtonInfo buttonInfo : mButtonInfos) {
+            if (buttonInfo.resId == R.id.action_propose) {
+                if (buttonInfo.isVisible) {
+                    mFab.show();
+                } else {
+                    mFab.hide();
+                }
+            } else {
+                MenuItem menuItem = mMenu.findItem(buttonInfo.resId);
+                if (menuItem != null) {
+                    menuItem.setVisible(buttonInfo.isVisible);
+                }
+            }
+        }
     }
 
     private void reload(boolean clearCache) {

@@ -17,11 +17,11 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.CalendarContract.Calendars;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -33,7 +33,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.AccountPicker;
 
@@ -165,6 +164,9 @@ public class NavigationDrawerFragment extends Fragment
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 selectCalendar(mCalendars[position].id);
+                if (mDrawerLayout != null) {
+                    mDrawerLayout.closeDrawer(mFragmentContainerView);
+                }
             }
         });
 
@@ -281,19 +283,17 @@ public class NavigationDrawerFragment extends Fragment
                 break;
             }
         }
-        if (calendarInfo != null) {
-            if (mCurrentCalendarId != calendarId) {
-                mCurrentCalendarId = calendarId;
-                SharedPreferences sp = PreferenceManager
-                        .getDefaultSharedPreferences(getActivity());
-                sp.edit().putLong(PREF_SELECTED_CALENDAR_ID, calendarInfo.id).apply();
-            }
-            if (mCalendarListView != null) {
-                mCalendarListView.setItemChecked(position, true);
-            }
-            if (mDrawerLayout != null) {
-                mDrawerLayout.closeDrawer(mFragmentContainerView);
-            }
+        if (calendarInfo == null) {
+            return;
+        }
+
+        mCurrentCalendarId = calendarId;
+        SharedPreferences sp = PreferenceManager
+                .getDefaultSharedPreferences(getActivity());
+        sp.edit().putLong(PREF_SELECTED_CALENDAR_ID, calendarInfo.id).apply();
+
+        if (mCalendarListView != null) {
+            mCalendarListView.setItemChecked(position, true);
         }
         if (mCallbacks != null) {
             mCallbacks.onNavigationDrawerCalendarSelected(calendarInfo);
