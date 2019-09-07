@@ -151,7 +151,7 @@ five.EditEventDialog.prototype.createDom = function() {
   this.eventHandler.
       listen(this.el, goog.events.EventType.KEYUP, this.handleKeyUp_).
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
-      listen(this.summaryInputEl_, goog.events.EventType.KEYUP,
+      listen(this.summaryInputEl_, goog.events.EventType.INPUT,
           this.handleSummaryChanged_).
       listen(this.startTimePicker_,
           five.EditEventDialog.TimePicker_.EventType.CHANGE,

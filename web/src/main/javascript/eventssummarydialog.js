@@ -92,7 +92,7 @@ five.EventsSummaryDialog.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.KEYUP, this.handleKeyUp_).
-      listen(this.filterInputEl_, goog.events.EventType.KEYUP,
+      listen(this.filterInputEl_, goog.events.EventType.INPUT,
           this.handleFilterChanged_);
 };
 
