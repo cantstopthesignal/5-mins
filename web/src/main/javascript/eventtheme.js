@@ -36,13 +36,13 @@ five.EventTheme = function(bgColor, borderColor, selectedBgColor,
 
 /** @type {!five.EventTheme} */
 five.EventTheme.BLUE = new five.EventTheme('rgba(100, 100, 180, 0.8)', '#77e',
-    'rgba(80, 80, 170, 0.8)', '#55c', 'rgba(80, 160, 80, 0.8)', '#4a4',
-    'rgba(60, 140, 60, 0.8)', '#393');
+    'rgba(68, 68, 145, 0.8)', '#55c', 'rgba(80, 160, 80, 0.8)', '#4a4',
+    'rgba(55, 130, 55, 0.8)', '#2a8a2a');
 
 /** @type {!five.EventTheme} */
 five.EventTheme.ORANGE = new five.EventTheme('rgba(225, 141, 38, 0.8)', '#ed9225',
-    'rgba(199, 121, 28, 0.8)', '#e68b1b00', 'rgba(80, 160, 80, 0.8)', '#4a4',
-    'rgba(100, 180, 100, 0.8)', '#292');
+    'rgba(193, 117, 25, 0.8)', '#d17f16', 'rgba(80, 160, 80, 0.8)', '#4a4',
+    'rgba(55, 130, 55, 0.8)', '#2a8a2a');
 
 /** @type {!five.EventTheme} */
 five.EventTheme.DEFAULT = five.EventTheme.BLUE;
