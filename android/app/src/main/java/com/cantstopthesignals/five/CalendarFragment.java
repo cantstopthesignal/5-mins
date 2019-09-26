@@ -872,7 +872,7 @@ public class CalendarFragment extends Fragment {
             Collections.sort(events);
 
             if (mEventsDebugFragment != null) {
-                mEventsDebugFragment.onEventsLoaded(events);
+                mEventsDebugFragment.onEventsLoaded(events, mStartTime, mEndTime);
             }
 
             mWebAppInterface.onEventsLoaded(events);

@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,7 +112,7 @@ public class EventsDebugFragment extends Fragment {
                 .apply();
     }
 
-    public void onEventsLoaded(List<Event> events) {
+    public void onEventsLoaded(List<Event> events, Calendar startTime, Calendar endTime) {
         Map<Long, Event> currentEvents = new HashMap<>();
         for (Event event : events) {
             if (event.id == null) {
@@ -128,7 +129,11 @@ public class EventsDebugFragment extends Fragment {
             if (currentEvents.containsKey(id)) {
                 newBackups.put(id, currentEvents.get(id));
             } else {
-                mDeletedEvents.add(mEventsBackup.get(id));
+                Event deletedEvent = mEventsBackup.get(id);
+                if (!deletedEvent.startTime.after(endTime) &&
+                        !deletedEvent.endTime.before(startTime)) {
+                    mDeletedEvents.add(deletedEvent);
+                }
             }
         }
         mEventsBackup = newBackups;
