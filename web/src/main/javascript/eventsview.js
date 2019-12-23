@@ -775,7 +775,6 @@ five.EventsView.prototype.snapEvents_ = function(snapEvents, toPrevious, anchorS
 
 /** @param {!five.EventsProposeEvent} e */
 five.EventsView.prototype.handleEventsTimelineEventsPropose_ = function(e) {
-  this.replaceSelectedEvents_([]);
   this.proposeEvents_(e.time);
 };
 
@@ -1404,6 +1403,8 @@ five.EventsView.prototype.handleProposeClick_ = function(opt_e) {
 
 /** @param {!goog.date.DateTime} time */
 five.EventsView.prototype.proposeEvents_ = function(time) {
+  this.replaceSelectedEvents_([]);
+
   var newProposedEvents = [];
 
   for (var i = 0; i < 4; i++) {
@@ -1439,7 +1440,6 @@ five.EventsView.prototype.proposeRelativeToSelection_ = function(after) {
   }
   var time = after ? this.selectedEvents_[0].getEndTime() :
       this.selectedEvents_[0].getStartTime();
-  this.replaceSelectedEvents_([]);
   this.proposeEvents_(time);
 };
 
