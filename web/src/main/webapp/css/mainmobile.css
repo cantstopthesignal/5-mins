@@ -5,6 +5,15 @@ body {
 .edit-event-dialog {
   top: 72px;
 }
+.edit-event-dialog .editor-row {
+  margin-top: 16px;
+}
+.edit-event-dialog .button {
+  margin-top: 16px;
+}
+.edit-event-dialog div.todo {
+  margin-top: 16px;
+}
 .summary-input {
   font-size: 20px;
   width: calc(100% - 10px);
