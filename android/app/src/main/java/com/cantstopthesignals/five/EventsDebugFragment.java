@@ -38,12 +38,14 @@ public class EventsDebugFragment extends Fragment {
 
     private Map<Long, Event> mEventsBackup = new HashMap<>();
     private List<Event> mDeletedEvents = new ArrayList<>();
+    private Set<Long> mTrackedEventIds = new HashSet<>();
     private SharedPreferences mEventTextSharedPreferences = null;
     private static SimpleDateFormat sDateTimeFormat =
             new SimpleDateFormat("MM-dd HH:mm:ss", Locale.US);
 
     private final String BACKUP_EVENTS_KEY = "EVENTS";
     private final String DELETED_KEY = "DELETED";
+    private final String TRACKED_KEY = "TRACKED";
 
     public EventsDebugFragment() {
     }
@@ -79,6 +81,8 @@ public class EventsDebugFragment extends Fragment {
                 BACKUP_EVENTS_KEY, new HashSet<String>());
         Set<String> deletedEvents = mEventTextSharedPreferences.getStringSet(
                 DELETED_KEY, new HashSet<String>());
+        Set<String> trackedEventIdStrings = mEventTextSharedPreferences.getStringSet(
+                TRACKED_KEY, new HashSet<String>());
         try {
             for (String backupStr : backup) {
                 Event event = Event.fromJson(new JSONObject(backupStr));
@@ -91,11 +95,15 @@ public class EventsDebugFragment extends Fragment {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+        for (String trackedEventIdString : trackedEventIdStrings) {
+            mTrackedEventIds.add(Long.valueOf(trackedEventIdString));
+        }
     }
 
     private void saveEventTextSharedPreferences() {
         Set<String> backup = new HashSet<>();
         Set<String> deletedEvents = new HashSet<>();
+        Set<String> trackedEventIdStrings = new HashSet<>();
         try {
             for (Event event : mEventsBackup.values()) {
                 backup.add(event.toJson().toString());
@@ -106,9 +114,13 @@ public class EventsDebugFragment extends Fragment {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+        for (Long trackedEventId : mTrackedEventIds) {
+            trackedEventIdStrings.add(Long.toString(trackedEventId));
+        }
         mEventTextSharedPreferences.edit()
                 .putStringSet(BACKUP_EVENTS_KEY, backup)
                 .putStringSet(DELETED_KEY, deletedEvents)
+                .putStringSet(TRACKED_KEY, trackedEventIdStrings)
                 .apply();
     }
 
@@ -131,8 +143,11 @@ public class EventsDebugFragment extends Fragment {
             } else {
                 Event deletedEvent = mEventsBackup.get(id);
                 if (!deletedEvent.startTime.after(endTime) &&
-                        !deletedEvent.endTime.before(startTime)) {
+                        !deletedEvent.endTime.before(startTime) &&
+                        mTrackedEventIds.contains(id)) {
                     mDeletedEvents.add(deletedEvent);
+                } else {
+                    mTrackedEventIds.remove(id);
                 }
             }
         }
@@ -161,8 +176,7 @@ public class EventsDebugFragment extends Fragment {
                 }
                 deletedStr += "\"" + deletedEvent.title + "\"";
             }
-            String msg = "5-mins";
-            if (!deletedStr.isEmpty()) {
+            String msg = "5-mins";            if (!deletedStr.isEmpty()) {
                 msg += "; " + mDeletedEvents.size() + " deleted: " + deletedStr;
             }
             if (showToast) {
@@ -175,6 +189,14 @@ public class EventsDebugFragment extends Fragment {
             textView.setLayoutParams(new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             textView.setText(msg + "\n");
+            mContentView.addView(textView);
+        }
+
+        if (!mTrackedEventIds.isEmpty()) {
+            TextView textView = new TextView(getActivity());
+            textView.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            textView.setText(mTrackedEventIds.size() + " tracked\n");
             mContentView.addView(textView);
         }
 
@@ -209,6 +231,7 @@ public class EventsDebugFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 mDeletedEvents.clear();
+                mTrackedEventIds.clear();
                 saveEventTextSharedPreferences();
 
                 hide();
@@ -243,6 +266,7 @@ public class EventsDebugFragment extends Fragment {
                     numCreate++;
                 }
                 mEventsBackup.put(saveResult.event.id, saveResult.event);
+                mTrackedEventIds.add(saveResult.event.id);
             } else if (result instanceof  EventOperationResults.Delete) {
                 EventOperationResults.Delete deleteResult = (EventOperationResults.Delete) result;
                 if (deleteResult.eventId != null) {
@@ -252,6 +276,7 @@ public class EventsDebugFragment extends Fragment {
                     } else {
                         numDeleteUnmatch++;
                     }
+                    mTrackedEventIds.remove(deleteResult.eventId);
                 } else {
                     numDeleteNull++;
                 }
