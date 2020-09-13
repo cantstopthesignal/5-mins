@@ -127,18 +127,32 @@ class ClosureGenerateDepsTask extends DefaultTask {
     }
 }
 
-task compileJavascriptDebug(type: ClosureCompileTask) {
+task compileJavascriptMainDebug(type: ClosureCompileTask) {
     compilationLevel "WHITESPACE_ONLY"
     namespace "five.main"
     warningLevel "VERBOSE"
-    destFile file("${javascriptOutputDir}/maindebug.js")
+    destFile file("${javascriptOutputDir}/main-debug.js")
 }
 
-task compileJavascriptOptimized(type: ClosureCompileTask) {
+task compileJavascriptMainOptimized(type: ClosureCompileTask) {
     compilationLevel "ADVANCED_OPTIMIZATIONS"
     namespace "five.main"
     warningLevel "VERBOSE"
-    destFile file("${javascriptOutputDir}/mainoptimized.js")
+    destFile file("${javascriptOutputDir}/main-optimized.js")
+}
+
+task compileJavascriptServiceWorkerDebug(type: ClosureCompileTask) {
+    compilationLevel "WHITESPACE_ONLY"
+    namespace "five.serviceWorkerMain"
+    warningLevel "VERBOSE"
+    destFile file("${javascriptOutputDir}/serviceWorker-debug.js")
+}
+
+task compileJavascriptServiceWorkerOptimized(type: ClosureCompileTask) {
+    compilationLevel "ADVANCED_OPTIMIZATIONS"
+    namespace "five.serviceWorkerMain"
+    warningLevel "VERBOSE"
+    destFile file("${javascriptOutputDir}/serviceWorker-optimized.js")
 }
 
 task generateJavascriptDeps(type: ClosureGenerateDepsTask) {
@@ -146,12 +160,14 @@ task generateJavascriptDeps(type: ClosureGenerateDepsTask) {
     destFile javascriptDepsFile
 }
 
-compileJavascriptDebug.dependsOn(generateJavascriptDeps)
+compileJavascriptMainDebug.dependsOn(generateJavascriptDeps)
 
 war {
     if (!project.hasProperty('noJsCompile')) {
-        dependsOn compileJavascriptDebug
-        dependsOn compileJavascriptOptimized
+        dependsOn compileJavascriptMainDebug
+        dependsOn compileJavascriptMainOptimized
+        dependsOn compileJavascriptServiceWorkerDebug
+        dependsOn compileJavascriptServiceWorkerOptimized
     }
     exclude "js"
     from("${buildDir}/js", {
@@ -161,8 +177,10 @@ war {
 
 task createChecksumPropertyFile(type : ChecksumPathsPropertyTask) {
     if (!project.hasProperty('noJsCompile')) {
-        dependsOn compileJavascriptDebug
-        dependsOn compileJavascriptOptimized
+        dependsOn compileJavascriptMainDebug
+        dependsOn compileJavascriptMainOptimized
+        dependsOn compileJavascriptServiceWorkerDebug
+        dependsOn compileJavascriptServiceWorkerOptimized
     }
 
     paths = [javascriptOutputDir, file('src/main/webapp')]

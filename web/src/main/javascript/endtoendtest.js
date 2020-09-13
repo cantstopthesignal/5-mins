@@ -186,7 +186,7 @@ five.EndToEndTest.prototype.addLoadApp = function() {
     url.setParameterValue('jsmode', this.jsMode);
     url.setParameterValue('Debug', 'true');
     url.setParameterValue('test', '1');
-    url.setParameterValue('offlineEnabled', '0');
+    url.setParameterValue('serviceWorkerEnabled', '0');
     url.setParameterValue('touch', new goog.Uri(window.location.href)
         .getParameterValue('touch'));
     this.appFrame.src = url.toString();

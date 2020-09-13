@@ -10,17 +10,11 @@
     jsMode = JsMode.OPTIMIZED;
   }
   MobileMode mobileMode = MobileMode.fromRequest(request);
-
-  boolean offlineEnabled = !"0".equals(request.getParameter("offlineEnabled"));
-  String manifestAttribute = "";
-  if (jsMode != JsMode.UNCOMPILED && offlineEnabled) {
-    manifestAttribute = "manifest=\"manifest.txt\"";
-  }
 %>
 
 <!DOCTYPE html>
 <!-- Copyright 2012 Cant Stop The Signals -->
-<html <%= manifestAttribute %>>
+<html>
   <head>
     <title>5 minutes</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -45,7 +39,7 @@
           %><script type="text/javascript">CLOSURE_NO_DEPS = true;</script><%
         }
         %>
-        <script type="text/javascript" src="js/main<%= jsMode.getName() %>.js"></script>
+        <script type="text/javascript" src="js/main-<%= jsMode.getName() %>.js"></script>
         <%
       }
     %>

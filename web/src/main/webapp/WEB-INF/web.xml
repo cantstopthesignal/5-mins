@@ -8,9 +8,17 @@
     <servlet-name>ManifestText</servlet-name>
     <servlet-class>com.cantstopthesignals.five.ManifestTextServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>ServiceWorkerJavascript</servlet-name>
+    <servlet-class>com.cantstopthesignals.five.ServiceWorkerJavascriptServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>ManifestText</servlet-name>
     <url-pattern>/manifest.txt</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ServiceWorkerJavascript</servlet-name>
+    <url-pattern>/js/serviceWorker.js</url-pattern>
   </servlet-mapping>
   <welcome-file-list>
     <welcome-file>WEB-INF/index.jsp</welcome-file>

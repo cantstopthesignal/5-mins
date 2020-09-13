@@ -11,6 +11,8 @@ goog.require('five.CalendarChooser');
 goog.require('five.CalendarManager');
 goog.require('five.EventsView');
 goog.require('five.NotificationManager');
+goog.require('goog.Uri');
+goog.require('five.device');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.events.EventHandler');
@@ -52,6 +54,7 @@ five.App = function() {
 };
 goog.inherits(five.App, goog.events.EventTarget);
 
+/** @type {string} */
 five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_ =
     'New app available. Refresh page to update.';
 
@@ -104,12 +107,17 @@ five.App.prototype.start = function() {
     this.auth_.start();
   }
 
+  if (five.device.isServiceWorkerEnabled()) {
+    this.installServiceWorker_();
+  }
+
   this.eventHandler_.
       listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_).
       listen(document, goog.events.EventType.COPY, this.handleCopy_).
       listen(document, goog.events.EventType.PASTE, this.handlePaste_).
       listen(window, goog.events.EventType.BEFOREUNLOAD, this.handleWindowBeforeUnload_).
-      listen(window.applicationCache, 'updateready', this.handleAppCacheUpdateReady_);
+      listen(navigator.serviceWorker, goog.events.EventType.MESSAGE,
+        this.handleServiceWorkerMessage_);
 };
 
 /** @override */
@@ -156,6 +164,31 @@ five.App.prototype.handleWindowResize_ = function() {
   this.resize();
 };
 
+five.App.prototype.installServiceWorker_ = function() {
+  if (!('serviceWorker' in navigator)) {
+    this.logger_.severe('Service workers not available');
+    return;
+  }
+
+  var serviceWorkerUri = new goog.Uri('/js/serviceWorker.js?jsmode=' + five.device.getJsMode());
+  if (five.device.isDebug()) {
+    serviceWorkerUri.setParameterValue("Debug", "true");
+  }
+  navigator.serviceWorker.register(serviceWorkerUri.toString(), { scope: '/' }).
+    then(function(registration) {
+      this.logger_.info('ServiceWorker registration successful, scope: ' + registration.scope);
+      return navigator.serviceWorker.ready;
+    }.bind(this), function(err) {
+      this.logger_.severe('ServiceWorker registration failed: ' + err, err);
+    }.bind(this)).
+    then(function() {
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage(
+          {'command': 'checkAppUpdateAvailable'});
+      }
+    }.bind(this));
+};
+
 /** @param {goog.events.BrowserEvent} e */
 five.App.prototype.handleCopy_ = function(e) {
   if (e.target === document.body && this.eventsView_) {
@@ -197,9 +230,12 @@ five.App.prototype.handleWindowBeforeUnload_ = function(e) {
   }
 };
 
-five.App.prototype.handleAppCacheUpdateReady_ = function() {
-  this.notificationManager_.show(
-      five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_,
-      five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_DURATION_,
-      five.NotificationManager.Level.INFO);
+five.App.prototype.handleServiceWorkerMessage_ = function(e) {
+  var event = e.getBrowserEvent();
+  if (event.data['command'] == 'updateAvailable') {
+    this.notificationManager_.show(
+        five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_,
+        five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_DURATION_,
+        five.NotificationManager.Level.INFO);
+  }
 };

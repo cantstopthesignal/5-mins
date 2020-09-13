@@ -45,13 +45,37 @@ five.device.isWebView = function() {
   return five.device.isWebView_;
 };
 
+/** @return {string} */
+five.device.getJsMode = function() {
+  if (!goog.isDef(five.device.jsMode_)) {
+    var param = five.device.getUriParam_('jsmode');
+    five.device.jsMode_ = param || 'optimized';
+  }
+  return five.device.jsMode_;
+};
+
 /** @return {boolean} */
 five.device.isJsModeUncompiled = function() {
-  if (!goog.isDef(five.device.isJsModeUncompiled_)) {
-    var param = five.device.getUriParam_('jsmode');
-    five.device.isJsModeUncompiled_ = param == 'uncompiled';
+  return five.device.getJsMode() == 'uncompiled';
+};
+
+/** @return {boolean} */
+five.device.isServiceWorkerEnabled = function() {
+  if (!goog.isDef(five.device.isServiceWorkerEnabled_)) {
+    var param = five.device.getUriParam_('serviceWorkerEnabled');
+    five.device.isServiceWorkerEnabled_ = (param !== '0') &&
+      !five.device.isJsModeUncompiled();
   }
-  return five.device.isJsModeUncompiled_;
+  return five.device.isServiceWorkerEnabled_;
+};
+
+/** @return {boolean} */
+five.device.isDebug = function() {
+  if (!goog.isDef(five.device.isDebug_)) {
+    var param = five.device.getUriParam_('Debug');
+    five.device.isDebug_ = param == 'true';
+  }
+  return five.device.isDebug_;
 };
 
 five.device.getUriParam_ = function(name) {
@@ -71,7 +95,13 @@ five.device.isMobile_;
 five.device.isWebView_;
 
 /** @type {boolean} */
-five.device.isJsModeUncompiled_;
+five.device.isDebug_;
+
+/** @type {string} */
+five.device.jsMode_;
+
+/** @type {boolean} */
+five.device.isServiceWorkerEnabled_;
 
 /** @type {goog.Uri} */
 five.device.uri_;
