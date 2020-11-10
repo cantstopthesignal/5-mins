@@ -445,15 +445,15 @@ a:hover {
 .event-card.attached-to-patch {
   border-left-width: 0;
 }
-.event-card > .date-range {
+.event-card > div > .date-range {
   color: #e8e8e8a0;
   font-size: 11px;
   font-weight: bold;
 }
-.event-card.short-height > .date-range {
+.event-card.short-height > div > .date-range {
   margin-bottom: -2px;
 }
-.event-card.micro-height > .date-range {
+.event-card.micro-height > div > .date-range {
   display: inline;
   margin-right: 5px;
 }

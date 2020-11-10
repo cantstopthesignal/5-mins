@@ -60,10 +60,16 @@ five.EventCard.prototype.rect_;
 five.EventCard.prototype.wasAttachedToPatch_;
 
 /** @type {Element} */
+five.EventCard.prototype.contentEl_;
+
+/** @type {Element} */
 five.EventCard.prototype.dateRangeEl_;
 
 /** @type {Element} */
 five.EventCard.prototype.summaryEl_;
+
+/** @type {boolean} */
+five.EventCard.prototype.straddlingVisibleTop_ = false;
 
 /** @return {!five.Event} */
 five.EventCard.prototype.getEvent = function() {
@@ -125,11 +131,13 @@ five.EventCard.prototype.getThemeForSummaryType_ = function(summaryType) {
 five.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classlist.add(this.el, 'event-card');
+  this.contentEl_ = document.createElement('div');
+  this.el.appendChild(this.contentEl_);
   this.dateRangeEl_ = document.createElement('div');
   goog.dom.classlist.add(this.dateRangeEl_, 'date-range');
-  this.el.appendChild(this.dateRangeEl_);
+  this.contentEl_.appendChild(this.dateRangeEl_);
   this.summaryEl_ = document.createElement('span');
-  this.el.appendChild(this.summaryEl_);
+  this.contentEl_.appendChild(this.summaryEl_);
 
   this.updateDisplay();
   this.updateThemeDisplay_();
@@ -246,6 +254,24 @@ five.EventCard.prototype.timeAxisPatchUpdated = function() {
   }
   goog.dom.classlist.enable(this.el, 'attached-to-patch', attachedToPatch);
   this.wasAttachedToPatch_ = attachedToPatch;
+};
+
+five.EventCard.prototype.updateVisibleRegion = function(visibleRect) {
+  var straddlingVisibleTop = (this.rect_.top < visibleRect.top &&
+    this.rect_.top + this.rect_.height > visibleRect.top);
+  if (straddlingVisibleTop) {
+    var contentHeight = this.contentEl_.offsetHeight;
+    var paddingTop = '';
+    if (this.rect_.height - contentHeight > 20) {
+      paddingTop = Math.max(0, visibleRect.top - this.rect_.top) + 3 + 8;
+      paddingTop = Math.min(paddingTop, this.rect_.height - contentHeight - 3);
+    }
+    this.el.style.paddingTop = paddingTop + 'px';
+    this.straddlingVisibleTop_ = true;
+  } else if (this.straddlingVisibleTop_) {
+    this.el.style.paddingTop = '';
+    this.straddlingVisibleTop_ = false;
+  }
 };
 
 /**

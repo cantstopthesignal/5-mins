@@ -614,6 +614,9 @@ five.EventsTimeline.prototype.layoutTimeMarkers_ = function() {
 
 five.EventsTimeline.prototype.updateVisibleRegion = function(visibleRect) {
   this.timeAxis_.updateVisibleRegion(visibleRect);
+  goog.array.forEach(this.eventCards_, function(eventCard) {
+    eventCard.updateVisibleRegion(visibleRect);
+  }, this);
 };
 
 /** @return {?Object} */
