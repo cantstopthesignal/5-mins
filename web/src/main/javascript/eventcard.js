@@ -56,6 +56,9 @@ five.EventCard.prototype.proposed_ = false;
 /** @type {goog.math.Rect} */
 five.EventCard.prototype.rect_;
 
+/** @type {goog.math.Rect} */
+five.EventCard.prototype.visibleRect_;
+
 /** @type {boolean} */
 five.EventCard.prototype.wasAttachedToPatch_;
 
@@ -214,6 +217,7 @@ five.EventCard.prototype.setRect = function(rect) {
         rect.height >= five.deviceParams.getEventCardMinLargeHeight());
   }
   this.rect_ = rect;
+  this.updateVisibleRegion_();
 };
 
 /** @return {goog.math.Rect} */
@@ -256,14 +260,22 @@ five.EventCard.prototype.timeAxisPatchUpdated = function() {
   this.wasAttachedToPatch_ = attachedToPatch;
 };
 
-five.EventCard.prototype.updateVisibleRegion = function(visibleRect) {
-  var straddlingVisibleTop = (this.rect_.top < visibleRect.top &&
-    this.rect_.top + this.rect_.height > visibleRect.top);
+five.EventCard.prototype.setVisibleRect = function(visibleRect) {
+  this.visibleRect_ = visibleRect;
+  this.updateVisibleRegion_();
+};
+
+five.EventCard.prototype.updateVisibleRegion_ = function() {
+  if (!this.rect_ || !this.visibleRect_) {
+    return;
+  }
+  var straddlingVisibleTop = (this.rect_.top < this.visibleRect_.top &&
+    this.rect_.top + this.rect_.height > this.visibleRect_.top);
   if (straddlingVisibleTop) {
     var contentHeight = this.contentEl_.offsetHeight;
     var paddingTop = '';
     if (this.rect_.height - contentHeight > 20) {
-      paddingTop = Math.max(0, visibleRect.top - this.rect_.top) + 3 + 8;
+      paddingTop = Math.max(0, this.visibleRect_.top - this.rect_.top) + 3 + 8;
       paddingTop = Math.min(paddingTop, this.rect_.height - contentHeight - 3);
     }
     this.el.style.paddingTop = paddingTop + 'px';

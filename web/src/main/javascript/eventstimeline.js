@@ -174,6 +174,9 @@ five.EventsTimeline.prototype.layoutNeeded_ = false;
 /** @type {five.EventsView} */
 five.EventsTimeline.prototype.owner_;
 
+/** @type {goog.math.Rect} */
+five.EventsTimeline.prototype.visibleRect_;
+
 /** @param {five.EventsView} owner */
 five.EventsTimeline.prototype.setOwner = function(owner) {
   this.owner_ = owner;
@@ -334,6 +337,7 @@ five.EventsTimeline.prototype.setEvents = function(events) {
   goog.disposeAll(this.eventCards_);
   this.eventCards_ = goog.array.map(events, function(event) {
     var eventCard = new five.EventCard(event);
+    eventCard.setVisibleRect(this.visibleRect_);
     this.registerListenersForEventCard_(eventCard);
     return eventCard;
   }, this);
@@ -347,6 +351,7 @@ five.EventsTimeline.prototype.setEvents = function(events) {
 /** @param {!five.Event} event */
 five.EventsTimeline.prototype.addEvent = function(event) {
   var eventCard = new five.EventCard(event);
+  eventCard.setVisibleRect(this.visibleRect_);
   this.registerListenersForEventCard_(eventCard);
   var insertAfterEvent = event.getInsertAfter();
   var insertAfterIndex = -1;
@@ -613,9 +618,10 @@ five.EventsTimeline.prototype.layoutTimeMarkers_ = function() {
 };
 
 five.EventsTimeline.prototype.updateVisibleRegion = function(visibleRect) {
+  this.visibleRect_ = visibleRect;
   this.timeAxis_.updateVisibleRegion(visibleRect);
   goog.array.forEach(this.eventCards_, function(eventCard) {
-    eventCard.updateVisibleRegion(visibleRect);
+    eventCard.setVisibleRect(visibleRect);
   }, this);
 };
 
