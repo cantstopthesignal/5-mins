@@ -70,6 +70,8 @@ public class CalendarFragment extends Fragment {
             CalendarContract.Events.DTSTART,
             CalendarContract.Events.DTEND,
             CalendarContract.Events.DURATION,
+            CalendarContract.Events.EVENT_TIMEZONE,
+            CalendarContract.Events.EVENT_END_TIMEZONE,
             CalendarContract.Events.RRULE,
             CalendarContract.Events.RDATE,
             CalendarContract.Events.ORIGINAL_ID,
@@ -888,6 +890,10 @@ public class CalendarFragment extends Fragment {
         int titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.TITLE);
         int dtStartIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTSTART);
         int dtEndIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTEND);
+        int eventTimezoneIndex = cursor.getColumnIndexOrThrow(
+                CalendarContract.Events.EVENT_TIMEZONE);
+        int eventEndTimezoneIndex = cursor.getColumnIndexOrThrow(
+                CalendarContract.Events.EVENT_END_TIMEZONE);
         int originalIdIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.ORIGINAL_ID);
         int originalInstanceTimeIndex = cursor.getColumnIndexOrThrow(
                 CalendarContract.Events.ORIGINAL_INSTANCE_TIME);
@@ -903,6 +909,10 @@ public class CalendarFragment extends Fragment {
 
         Calendar startTime = Calendar.getInstance();
         startTime.setTimeInMillis(cursor.getLong(dtStartIndex));
+        String startTimeZoneString = cursor.getString(eventTimezoneIndex);
+        if (startTimeZoneString != null) {
+            startTime.setTimeZone(TimeZone.getTimeZone(startTimeZoneString));
+        }
         Calendar endTime = Calendar.getInstance();
 
         if (status == CalendarContract.Events.STATUS_CANCELED) {
@@ -910,6 +920,11 @@ public class CalendarFragment extends Fragment {
             endTime.add(Calendar.HOUR, 1);
         } else if (!cursor.isNull(dtEndIndex)) {
             endTime.setTimeInMillis(cursor.getLong(dtEndIndex));
+            String endTimeZoneString = cursor.getString(eventEndTimezoneIndex);
+            endTime.setTimeZone(
+                    endTimeZoneString != null ?
+                    TimeZone.getTimeZone(endTimeZoneString) :
+                    startTime.getTimeZone());
         } else {
             return null;
         }
@@ -920,6 +935,7 @@ public class CalendarFragment extends Fragment {
             originalId = cursor.getLong(originalIdIndex);
             originalInstanceTime = Calendar.getInstance();
             originalInstanceTime.setTimeInMillis(cursor.getLong(originalInstanceTimeIndex));
+            originalInstanceTime.setTimeZone(startTime.getTimeZone());
         }
 
         return new Event(
@@ -937,6 +953,8 @@ public class CalendarFragment extends Fragment {
         int idIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events._ID);
         int titleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.TITLE);
         int dtStartIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTSTART);
+        int eventTimezoneIndex = cursor.getColumnIndexOrThrow(
+                CalendarContract.Events.EVENT_TIMEZONE);
         int durationIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.DURATION);
         int rruleIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.RRULE);
         int rdateIndex = cursor.getColumnIndexOrThrow(CalendarContract.Events.RDATE);
@@ -947,6 +965,10 @@ public class CalendarFragment extends Fragment {
 
         Calendar startTime = Calendar.getInstance();
         startTime.setTimeInMillis(cursor.getLong(dtStartIndex));
+        String startTimeZoneString = cursor.getString(eventTimezoneIndex);
+        if (startTimeZoneString != null) {
+            startTime.setTimeZone(TimeZone.getTimeZone(startTimeZoneString));
+        }
 
         Duration duration = new Duration();
         try {
