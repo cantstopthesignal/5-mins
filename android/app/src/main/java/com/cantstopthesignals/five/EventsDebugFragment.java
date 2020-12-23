@@ -2,11 +2,14 @@ package com.cantstopthesignals.five;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -202,16 +205,39 @@ public class EventsDebugFragment extends Fragment {
 
         int index = 0;
         for (Event deletedEvent : mDeletedEvents) {
-            TextView textView = new TextView(getActivity());
-            textView.setLayoutParams(new LinearLayout.LayoutParams(
+            LinearLayout deletedRow = new LinearLayout(getActivity());
+            deletedRow.setBackgroundColor(
+                    (index % 2) == 0 ? Color.argb(255, 80, 80, 80) : 0);
+            deletedRow.setLayoutParams(new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            deletedRow.setOrientation(LinearLayout.HORIZONTAL);
+            TextView textView = new TextView(getActivity());
+            LinearLayout.LayoutParams textViewLayoutParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            textViewLayoutParams.weight = 1;
+            textViewLayoutParams.gravity = Gravity.CENTER_VERTICAL;
+            textView.setLayoutParams(textViewLayoutParams);
             textView.setText("Deleted Event " + deletedEvent.id + " " +
                     sDateTimeFormat.format(deletedEvent.startTime.getTime()) + " - " +
                     sDateTimeFormat.format(deletedEvent.endTime.getTime()) + ": " +
                     deletedEvent.title);
-            textView.setBackgroundColor(
-                    (index % 2) == 0 ? Color.argb(255, 80, 80, 80) : 0);
-            mContentView.addView(textView);
+            deletedRow.addView(textView);
+            Button restoreButton = new Button(getActivity());
+            LinearLayout.LayoutParams restoreButtonLayoutParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            restoreButtonLayoutParams.gravity = Gravity.CENTER_VERTICAL;
+            restoreButton.setLayoutParams(restoreButtonLayoutParams);
+            restoreButton.setText("Restore");
+            restoreButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    hide();
+
+                    restoreEvent(deletedEvent);
+                }
+            });
+            deletedRow.addView(restoreButton);
+            mContentView.addView(deletedRow);
             index++;
         }
 
@@ -249,6 +275,17 @@ public class EventsDebugFragment extends Fragment {
         closeButton.setText("Close");
         closeButton.setOnClickListener(v -> hide());
         buttonBar.addView(closeButton);
+    }
+
+    private void restoreEvent(Event deletedEvent) {
+        Intent intent = new Intent(Intent.ACTION_INSERT)
+                .setData(CalendarContract.Events.CONTENT_URI)
+                .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, deletedEvent.startTime.getTimeInMillis())
+                .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, deletedEvent.endTime.getTimeInMillis())
+                .putExtra(CalendarContract.Events.TITLE, deletedEvent.title);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(intent);
     }
 
     public void handleEventOperationResults(EventOperationResults results) {
