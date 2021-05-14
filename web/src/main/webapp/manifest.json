@@ -5,22 +5,26 @@
     {
       "src": "/images/logo32.png",
       "type": "image/png",
-      "sizes": "32x32"
+      "sizes": "32x32",
+      "purpose": "any maskable"
     },
     {
       "src": "/images/logo128.png",
       "type": "image/png",
-      "sizes": "128x128"
+      "sizes": "128x128",
+      "purpose": "any maskable"
     },
     {
       "src": "/images/logo256.png",
       "type": "image/png",
-      "sizes": "256x256"
+      "sizes": "256x256",
+      "purpose": "any maskable"
     },
     {
       "src": "/images/logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
