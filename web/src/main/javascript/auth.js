@@ -17,7 +17,12 @@ goog.require('goog.log');
  * @extends {goog.events.EventTarget}
  */
 five.Auth = function() {
+  /** @type {!goog.async.Deferred} */
   this.authDeferred_ = new goog.async.Deferred();
+
+  /** @type {goog.events.EventHandler} */
+  this.eventHandler_ = new goog.events.EventHandler(this);
+  this.registerDisposable(this.eventHandler_);
 };
 goog.inherits(five.Auth, goog.events.EventTarget);
 
@@ -91,6 +96,9 @@ five.Auth.prototype.loadGapiJavascriptClientAndAuth_ = function() {
   scriptEl.type = "text/javascript";
   scriptEl.src = "https://apis.google.com/js/client.js?onload=" +
       encodeURIComponent(callbackName);
+  this.eventHandler_.
+      listen(scriptEl, goog.events.EventType.ERROR, this.handleLoadGapiJavascriptClientError_);
+
   document.body.appendChild(scriptEl);
 };
 
@@ -104,6 +112,10 @@ five.Auth.prototype.handleGapiClientLoad_ = function() {
 five.Auth.prototype.handleGapiAuthInit_ = function() {
   this.logger_.info('handleGapiAuthInit_');
   window.setTimeout(goog.bind(this.checkAuth_, this), 1);
+};
+
+five.Auth.prototype.handleLoadGapiJavascriptClientError_ = function(err) {
+  this.logger_.severe('Error loading gapi javascript client: ' + err, err);
 };
 
 five.Auth.prototype.checkAuth_ = function() {
