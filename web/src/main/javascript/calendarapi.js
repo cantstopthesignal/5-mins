@@ -3,7 +3,6 @@
 goog.provide('five.CalendarApi');
 
 goog.require('five.BaseCalendarApi');
-goog.require('five.Service');
 goog.require('goog.async.DeferredList');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
@@ -18,7 +17,6 @@ goog.require('goog.log');
  * @constructor
  * @param {five.Auth} auth
  * @extends {five.BaseCalendarApi}
- * @implements {five.Service}
  */
 five.CalendarApi = function(auth) {
   goog.base(this);
@@ -27,8 +25,6 @@ five.CalendarApi = function(auth) {
   this.auth_ = auth;
 };
 goog.inherits(five.CalendarApi, five.BaseCalendarApi);
-
-five.CalendarApi.SERVICE_ID = 's' + goog.getUid(five.CalendarApi);
 
 /** @type {goog.date.DateTime} */
 five.CalendarApi.prototype.startDate_;
@@ -42,23 +38,9 @@ five.CalendarApi.prototype.nextSyncToken_;
 /** @type {Object} */
 five.CalendarApi.prototype.eventsData_;
 
-/**
- * @param {!five.AppContext} appContext
- * @return {!five.CalendarApi}
- */
-five.CalendarApi.get = function(appContext) {
-  return /** @type {!five.CalendarApi} */ (goog.asserts.assertObject(
-      appContext.get(five.CalendarApi.SERVICE_ID)));
-};
-
 /** @type {goog.log.Logger} */
 five.CalendarApi.prototype.logger_ = goog.log.getLogger(
     'five.CalendarApi');
-
-/** @param {!five.AppContext} appContext */
-five.CalendarApi.prototype.register = function(appContext) {
-  appContext.register(five.CalendarApi.SERVICE_ID, this);
-};
 
 /** @return {goog.async.Deferred} */
 five.CalendarApi.prototype.loadCalendarList = function() {
@@ -141,7 +123,11 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
 five.CalendarApi.prototype.registerEventsListener = function(callback) {
 };
 
+/**
+ * @return {goog.async.Deferred}
+ */
 five.CalendarApi.prototype.requestSync = function() {
+  return goog.async.Deferred.succeed(true);
 };
 
 /**

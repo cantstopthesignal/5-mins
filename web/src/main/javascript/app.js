@@ -6,11 +6,11 @@ goog.require('five.AndroidAppApi');
 goog.require('five.AndroidCalendarApi');
 goog.require('five.AppBar');
 goog.require('five.Auth');
-goog.require('five.CalendarApi');
 goog.require('five.CalendarChooser');
 goog.require('five.CalendarManager');
 goog.require('five.EventsView');
 goog.require('five.NotificationManager');
+goog.require('five.OfflineCalendarApi');
 goog.require('goog.Uri');
 goog.require('five.device');
 goog.require('goog.asserts');
@@ -39,7 +39,7 @@ five.App = function() {
   if (five.device.isWebView()) {
     this.calendarApi_ = new five.AndroidCalendarApi();
   } else {
-    this.calendarApi_ = new five.CalendarApi(this.auth_);
+    this.calendarApi_ = new five.OfflineCalendarApi(this.auth_);
   }
   this.calendarApi_.register(this.appContext_);
 

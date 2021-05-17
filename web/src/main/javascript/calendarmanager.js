@@ -7,6 +7,7 @@ goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('five.IdleTracker');
 goog.require('five.NotificationManager');
+goog.require('five.OfflineCalendarApi');
 goog.require('goog.asserts');
 goog.require('goog.async.DeferredList');
 goog.require('goog.date.Date');
@@ -34,7 +35,7 @@ five.CalendarManager = function(appContext, calendarData) {
   if (five.device.isWebView()) {
     this.calendarApi_ = five.AndroidCalendarApi.get(this.appContext_);
   } else {
-    this.calendarApi_ = five.CalendarApi.get(this.appContext_);
+    this.calendarApi_ = five.OfflineCalendarApi.get(this.appContext_);
   }
 
   /** @type {five.IdleTracker} */
@@ -122,6 +123,9 @@ five.CalendarManager.EventLoadingLock.prototype.disposeInternal = function() {
 
 five.CalendarManager.EVENTS_LOAD_ERROR_ =
     'Error loading events. Please try again.';
+
+five.CalendarManager.EVENTS_LOAD_CACHED_ =
+    'Events loaded from cache. Please try again.';
 
 five.CalendarManager.EVENTS_SAVE_ERROR_ =
     'Error saving events. Please try again.';
@@ -231,6 +235,10 @@ five.CalendarManager.prototype.refreshEvents_ = function() {
   return this.calendarApi_.loadEvents(this.calendarData_['id'], this.startDate_,
       this.endDate_).
       addCallback(function(resp) {
+        if (resp[five.BaseCalendarApi.CACHED_RESPONSE_KEY]) {
+          this.notificationManager_.show(five.CalendarManager.EVENTS_LOAD_CACHED_,
+            undefined, five.NotificationManager.Level.INFO);
+        }
         this.handleEventsChanged_(resp);
         this.requestEnded_();
         return this.events_;

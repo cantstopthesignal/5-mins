@@ -97,7 +97,8 @@ five.NotificationManager.prototype.hide = function() {
 five.NotificationManager.prototype.reposition = function() {
   var width = this.el.offsetWidth;
   var height = this.el.offsetHeight;
-  if (width > this.appBar_.el.offsetWidth / 2) {
+  var appBarButtonBarWidth = this.appBar_.getButtonBar().el.offsetWidth;
+  if (width > this.appBar_.el.offsetWidth - appBarButtonBarWidth * 2) {
     goog.style.setStyle(this.el, 'top', this.appBar_.el.offsetHeight + 'px');
     goog.style.setStyle(this.el, 'marginTop', '');
   } else {

@@ -19,6 +19,9 @@ five.BaseCalendarApi = function() {
 };
 goog.inherits(five.BaseCalendarApi, goog.events.EventTarget);
 
+/** @type {!string} */
+five.BaseCalendarApi.CACHED_RESPONSE_KEY = 'cachedResponse';
+
 /**
  * @constructor
  * @param {!five.BaseCalendarApi.EventOperation.Type} type
