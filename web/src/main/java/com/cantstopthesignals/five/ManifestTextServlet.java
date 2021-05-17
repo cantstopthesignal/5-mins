@@ -71,10 +71,13 @@ public class ManifestTextServlet extends HttpServlet {
     if (absoluteFile.isFile()) {
       writer.println("/" + relativeFile.toString());
     } else {
-      List<String> childFilenames = new ArrayList<>(Arrays.asList(absoluteFile.list()));
-      childFilenames.sort(null);
-      for (String childFilename : childFilenames) {
-        printWarFiles(writer, rootDir, new File(relativeFile, childFilename));
+      String[] childFilenamesArray = absoluteFile.list();
+      if (childFilenamesArray != null) {
+        List<String> childFilenames = new ArrayList<>(Arrays.asList(childFilenamesArray));
+        childFilenames.sort(null);
+        for (String childFilename : childFilenames) {
+          printWarFiles(writer, rootDir, new File(relativeFile, childFilename));
+        }
       }
     }
   }
