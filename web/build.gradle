@@ -163,6 +163,7 @@ task generateJavascriptDeps(type: ClosureGenerateDepsTask) {
 compileJavascriptMainDebug.dependsOn(generateJavascriptDeps)
 
 war {
+    dependsOn generateJavascriptDeps
     if (!project.hasProperty('noJsCompile')) {
         dependsOn compileJavascriptMainDebug
         dependsOn compileJavascriptMainOptimized
