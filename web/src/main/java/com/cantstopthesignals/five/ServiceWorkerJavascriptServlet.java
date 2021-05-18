@@ -28,7 +28,7 @@ public class ServiceWorkerJavascriptServlet extends HttpServlet {
       jsMode = JsMode.OPTIMIZED;
     }
 
-    String fileName = jsMode == JsMode.DEBUG ?
+    String fileName = jsMode == JsMode.OPTIMIZED ?
         "js/serviceWorker-optimized.js" :
         "js/serviceWorker-debug.js";
 
@@ -36,6 +36,10 @@ public class ServiceWorkerJavascriptServlet extends HttpServlet {
     File filePath = new File(rootDir, fileName);
 
     OutputStream outputStream = resp.getOutputStream();
+
+    if (jsMode == JsMode.DEBUG) {
+      outputStream.write("CLOSURE_NO_DEPS = true;\n".getBytes());
+    }
 
     InputStream inputStream = new FileInputStream(filePath);
     byte[] buffer = new byte[1024];
