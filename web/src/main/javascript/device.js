@@ -37,7 +37,7 @@ five.device.isWebView = function() {
   if (!goog.isDef(five.device.isWebView_)) {
     var param = five.device.getUriParam_('webview');
     if (param) {
-      five.device.isWebView_ = param == 'true' || param == '1';
+      five.device.isWebView_ = (param == 'true' || param == '1');
     } else {
       five.device.isWebView_ = !!('Android' in window);
     }
@@ -63,8 +63,11 @@ five.device.isJsModeUncompiled = function() {
 five.device.isServiceWorkerEnabled = function() {
   if (!goog.isDef(five.device.isServiceWorkerEnabled_)) {
     var param = five.device.getUriParam_('serviceWorkerEnabled');
-    five.device.isServiceWorkerEnabled_ = (param !== '0') &&
-      !five.device.isJsModeUncompiled();
+    if (goog.isDef(param)) {
+      five.device.isServiceWorkerEnabled_ = (param == 'true' || param == '1');
+    } else {
+      five.device.isServiceWorkerEnabled_ = !five.device.isJsModeUncompiled();
+    }
   }
   return five.device.isServiceWorkerEnabled_;
 };
