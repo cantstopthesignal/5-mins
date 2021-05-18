@@ -1403,6 +1403,7 @@ five.EventsView.prototype.handleProposeClick_ = function(opt_e) {
 
 /** @param {!goog.date.DateTime} time */
 five.EventsView.prototype.proposeEvents_ = function(time) {
+  var selectedEvent = this.selectedEvents_.length == 1 && this.selectedEvents_[0];
   this.replaceSelectedEvents_([]);
 
   var newProposedEvents = [];
@@ -1417,7 +1418,8 @@ five.EventsView.prototype.proposeEvents_ = function(time) {
     } else if (i == 3) {
       endTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, 60));
     }
-    var proposedEvent = five.Event.createNew(startTime, endTime, '<new>');
+    var summary = selectedEvent ? selectedEvent.getSummary() : '<new>';
+    var proposedEvent = five.Event.createNew(startTime, endTime, summary);
     if (i == 2) {
       if (!this.snapEvents_([proposedEvent], true, true)) {
         startTime.add(new goog.date.Interval(goog.date.Interval.MINUTES, -55));
