@@ -29,6 +29,11 @@ five.IdleTracker = function() {
       goog.events.EventType.KEYPRESS,
       this.handleUserActivity_, false, this);
 
+  /** @type {goog.events.Key} */
+  this.visibilityChangedListenerKey_ = goog.events.listen(document,
+      goog.events.EventType.VISIBILITYCHANGE,
+      this.handleVisibilityChange_, false, this);
+
   /** @type {number} */
   this.idleIntervalId_ = window.setInterval(goog.bind(this.handleIdleInterval_, this),
       five.IdleTracker.IDLE_CHECK_INTERVAL_MS_);
@@ -63,6 +68,12 @@ five.IdleTracker.prototype.handleIdleInterval_ = function() {
   }
 };
 
+five.IdleTracker.prototype.handleVisibilityChange_ = function() {
+  if (document.visibilityState == 'visible') {
+    this.handleUserActivity_();
+  }
+};
+
 /** @override */
 five.IdleTracker.prototype.disposeInternal = function() {
   if (this.globalMouseMoveListenerKey_) {
@@ -72,6 +83,10 @@ five.IdleTracker.prototype.disposeInternal = function() {
   if (this.globalKeyPressListenerKey_) {
     goog.events.unlistenByKey(this.globalKeyPressListenerKey_);
     delete this.globalKeyPressListenerKey_;
+  }
+  if (this.visibilityChangedListenerKey_) {
+    goog.events.unlistenByKey(this.visibilityChangedListenerKey_);
+    delete this.visibilityChangedListenerKey_;
   }
   if (this.idleIntervalId_) {
     window.clearInterval(this.idleIntervalId_);
