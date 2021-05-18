@@ -17,10 +17,10 @@ goog.require('goog.log');
  */
 five.ServiceWorker = function() {
   /** @type {goog.async.Deferred} */
-  this.dbDeferred_ = new goog.async.Deferred();
+  this.dbDeferred_;
 
   /** @type {goog.async.Deferred} */
-  this.lastManifestDeferred_ = new goog.async.Deferred();
+  this.lastManifestDeferred_;
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
@@ -53,36 +53,49 @@ five.ServiceWorker.prototype.start = function() {
       listen(self, goog.events.EventType.MESSAGE, this.handleMessage_);
 };
 
-five.ServiceWorker.prototype.loadDbAndLastManifest_ = function() {
-  var dbDeferred = goog.db.openDatabase(
+/** @return {goog.async.Deferred} */
+five.ServiceWorker.prototype.getDb_ = function() {
+  if (this.dbDeferred_) {
+    return this.dbDeferred_.branch();
+  }
+
+  this.dbDeferred_ = goog.db.openDatabase(
     five.ServiceWorker.LAST_MANIFEST_DB_NAME, 1,
     function(ev, db, tx) {
       db.createObjectStore(five.ServiceWorker.LAST_MANIFEST_DB_STORE_NAME);
     });
-  dbDeferred.addCallbacks(function(db) {
-      var getTx = db.createTransaction([five.ServiceWorker.LAST_MANIFEST_DB_STORE_NAME]);
-      var request = getTx.objectStore(five.ServiceWorker.LAST_MANIFEST_DB_STORE_NAME).
-        get(five.ServiceWorker.LAST_MANIFEST_DB_VALUE_KEY);
-      request.addCallbacks(function(result) {
-          this.lastManifestDeferred_.callback(result || null);
-        }, function(err) {
-          this.logger_.severe('Failed to read last manifest value: ' + err, err);
-        }, this);
-    }, function(err) {
-      this.logger_.severe('Failed to open last manifest database: ' + err, err);
-    }, this);
+  this.dbDeferred_.addErrback(function(err) {
+    this.logger_.severe('Failed to open database: ' + err, err);
+  }, this);
 
-  dbDeferred.chainDeferred(goog.asserts.assertObject(this.dbDeferred_));
+  return this.dbDeferred_.branch();
+};
+
+five.ServiceWorker.prototype.getLastManifestDeferred_ = function() {
+  if (this.lastManifestDeferred_) {
+    return this.lastManifestDeferred_.branch();
+  }
+
+  this.lastManifestDeferred_ = this.getDb_().addCallback(function(db) {
+    var getTx = db.createTransaction([five.ServiceWorker.LAST_MANIFEST_DB_STORE_NAME]);
+    var store = getTx.objectStore(five.ServiceWorker.LAST_MANIFEST_DB_STORE_NAME);
+    var request = store.get(five.ServiceWorker.LAST_MANIFEST_DB_VALUE_KEY);
+    return request.addErrback(function(err) {
+      this.logger_.severe('Failed to read last manifest value: ' + err, err);
+    }, this);
+  }, this);
+
+  return this.lastManifestDeferred_.branch();
 };
 
 five.ServiceWorker.prototype.saveLastManifest_ = function(lastManifestData) {
-  this.dbDeferred_.addCallback(function(db) {
+  this.getDb_().addCallback(function(db) {
     var putTx = db.createTransaction(
       [five.ServiceWorker.LAST_MANIFEST_DB_STORE_NAME],
       goog.db.Transaction.TransactionMode.READ_WRITE);
     var store = putTx.objectStore(five.ServiceWorker.LAST_MANIFEST_DB_STORE_NAME);
-    store.put(lastManifestData, five.ServiceWorker.LAST_MANIFEST_DB_VALUE_KEY);
-    putTx.wait().addErrback(function(err) {
+    var request = store.put(lastManifestData, five.ServiceWorker.LAST_MANIFEST_DB_VALUE_KEY);
+    request.addErrback(function(err) {
       this.logger_.severe('Failed to store last manifest value: ' + err, err);
     }, this);
   }, this);
@@ -91,13 +104,12 @@ five.ServiceWorker.prototype.saveLastManifest_ = function(lastManifestData) {
 five.ServiceWorker.prototype.handleInstall_ = function(e) {
   this.logger_.info('handleInstall_');
 
-  self['skipWaiting']();
+  var event = e.getBrowserEvent();
+  event.waitUntil(self['skipWaiting']());
 };
 
 five.ServiceWorker.prototype.handleActivate_ = function(e) {
   this.logger_.info('handleActivate_');
-
-  this.loadDbAndLastManifest_();
 
   var event = e.getBrowserEvent();
   event.waitUntil(self['clients'].claim());
@@ -138,7 +150,7 @@ five.ServiceWorker.prototype.handleMessage_ = function(e) {
     fetch('/manifest.txt')
       .then(response => response.text())
       .then(function(manifestData) {
-        this.lastManifestDeferred_.addCallback(function(lastManifestData) {
+        this.getLastManifestDeferred_().addCallback(function(lastManifestData) {
           if (manifestData && lastManifestData != manifestData) {
             this.saveLastManifest_(manifestData);
           }
