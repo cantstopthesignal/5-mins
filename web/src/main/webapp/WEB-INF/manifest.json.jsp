@@ -7,7 +7,7 @@
     jsMode = JsMode.OPTIMIZED;
   }
   String appName = (jsMode == JsMode.OPTIMIZED ? "5 minutes" : "5 debug");
-  String startUrl = (jsMode == JsMode.OPTIMIZED ? "/" : "/?jsmode=" + jsMode.getName());
+  String startUrl = (request.getQueryString() != null ? "/?" + request.getQueryString() : "/");
 %>
 {
   "short_name": "<%= appName %>",

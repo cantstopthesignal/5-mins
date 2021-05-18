@@ -19,7 +19,8 @@
     <title>5 minutes</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta rel="icon" href="/images/logo32.png" sizes="32x32" />
-    <link rel="manifest" href="/manifest.json?jsmode=<%= jsMode.getName() %>" />
+    <link rel="manifest" href="/manifest.json<%=
+        request.getQueryString() != null ? "?" + request.getQueryString() : "" %>" />
     <%
       if (mobileMode == MobileMode.TRUE) {
         %>
