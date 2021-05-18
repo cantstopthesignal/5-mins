@@ -26,9 +26,8 @@ five.Auth = function() {
 };
 goog.inherits(five.Auth, goog.events.EventTarget);
 
-five.Auth.GAPI_API_KEY = 'AIzaSyDh5fbf_pmhJko-6SBua7ptbjnrNl9Jer4';
 five.Auth.GAPI_CLIENT_ID = '446611198518.apps.googleusercontent.com';
-five.Auth.GAPI_SCOPES = ['https://www.googleapis.com/auth/calendar'];
+five.Auth.GAPI_SCOPES = 'https://www.googleapis.com/auth/calendar';
 
 /** @type {goog.debug.Logger} */
 five.Auth.prototype.logger_ = goog.log.getLogger('five.Auth');
@@ -57,7 +56,7 @@ five.Auth.prototype.restart = function() {
     return;
   }
   this.authDeferred_ = new goog.async.Deferred();
-  this.checkAuth_();
+  this.checkAuth_(true);
   goog.asserts.assert(!this.authDeferred_.hasFired());
 };
 
@@ -83,7 +82,7 @@ five.Auth.prototype.disposeInternal = function() {
 
 five.Auth.prototype.loadGapiJavascriptClientAndAuth_ = function() {
   if (goog.getObjectByName('gapi.client') &&
-      goog.getObjectByName('gapi.auth')) {
+      goog.getObjectByName('gapi.auth2')) {
     this.logger_.info('loadGapiJavascriptClientAndAuth_ already present');
     this.handleGapiClientLoad_();
     return;
@@ -93,8 +92,9 @@ five.Auth.prototype.loadGapiJavascriptClientAndAuth_ = function() {
       goog.bind(this.handleGapiClientLoad_, this));
   var scriptEl = document.createElement("script");
   scriptEl.async = true;
+  scriptEl.defer = true;
   scriptEl.type = "text/javascript";
-  scriptEl.src = "https://apis.google.com/js/client.js?onload=" +
+  scriptEl.src = "https://apis.google.com/js/api.js?onload=" +
       encodeURIComponent(callbackName);
   this.eventHandler_.
       listen(scriptEl, goog.events.EventType.ERROR, this.handleLoadGapiJavascriptClientError_);
@@ -104,44 +104,62 @@ five.Auth.prototype.loadGapiJavascriptClientAndAuth_ = function() {
 
 five.Auth.prototype.handleGapiClientLoad_ = function() {
   this.logger_.info('handleGapiClientLoad_');
-  goog.getObjectByName('gapi.client.setApiKey')(five.Auth.GAPI_API_KEY);
-  goog.getObjectByName('gapi.auth.init')(
-      goog.bind(this.handleGapiAuthInit_, this));
+  goog.getObjectByName('gapi.load')('client:auth2',
+      goog.bind(this.handleGapiLoad_, this));
 };
 
-five.Auth.prototype.handleGapiAuthInit_ = function() {
-  this.logger_.info('handleGapiAuthInit_');
-  window.setTimeout(goog.bind(this.checkAuth_, this), 1);
+five.Auth.prototype.handleGapiLoad_ = function() {
+  this.logger_.info('handleGapiLoad_');
+  var initParams = {
+    'client_id': five.Auth.GAPI_CLIENT_ID,
+    'scope': five.Auth.GAPI_SCOPES
+  };
+  goog.getObjectByName('gapi.auth2.init')(initParams)
+    .then(this.checkAuth_.bind(this, false))
+    .catch(function(err) {
+      this.logger_.severe('Error initializing google api client: ' + err, err);
+    }.bind(this));
 };
 
 five.Auth.prototype.handleLoadGapiJavascriptClientError_ = function(err) {
   this.logger_.severe('Error loading gapi javascript client: ' + err, err);
 };
 
-five.Auth.prototype.checkAuth_ = function() {
-  this.logger_.info('checkAuth_');
-  goog.getObjectByName('gapi.auth.authorize')({
-    'client_id': five.Auth.GAPI_CLIENT_ID,
-    'scope': five.Auth.GAPI_SCOPES,
-    'immediate': true
-  }, goog.bind(this.handleAuthResult_, this));
+five.Auth.prototype.checkAuth_ = function(refresh) {
+  this.logger_.info('checkAuth_ refresh=' + refresh);
+  var authInstance = goog.getObjectByName('gapi.auth2.getAuthInstance')();
+  if (authInstance['isSignedIn']['get']()) {
+    if (refresh) {
+      authInstance['currentUser']['get']()['reloadAuthResponse']()
+        .then(this.handleAuthResult_.bind(this))
+        .catch(function(err) {
+          this.logger_.severe('Error reloading auth: ' + err, err);
+        }.bind(this));
+    } else {
+      this.handleAuthResult_();
+    }
+  } else {
+    this.fullAuth_();
+  }
 };
 
 five.Auth.prototype.fullAuth_ = function() {
   this.logger_.info('fullAuth_');
   if (!this.connectDialog_) {
     this.connectDialog_ = new five.Auth.ConnectDialog_(
-        goog.bind(this.handleAuthResult_, this));
+        this.handleAuthResult_.bind(this));
     this.registerDisposable(this.connectDialog_);
   }
   this.connectDialog_.show();
 };
 
-five.Auth.prototype.handleAuthResult_ = function(authResult) {
-  var authorized = authResult && 'access_token' in authResult;
+five.Auth.prototype.handleAuthResult_ = function() {
+  var authInstance = goog.getObjectByName('gapi.auth2.getAuthInstance')();
+  var authorized = authInstance['isSignedIn']['get']();
   if (authorized) {
     this.logger_.info('handleAuthResult_: authorized');
-    this.setAuthRefreshTimer_(parseInt(authResult['expires_in'], 10));
+    var authResponse = authInstance['currentUser']['get']()['getAuthResponse']();
+    this.setAuthRefreshTimer_(parseInt(authResponse['expires_in'], 10));
   } else {
     this.logger_.info('handleAuthResult_: not authorized or no result');
   }
@@ -170,7 +188,7 @@ five.Auth.prototype.setAuthRefreshTimer_ = function(expireTimeSecs) {
   this.clearAuthRefreshTimer_();
   var refreshDelaySecs = Math.max(5 * 60, expireTimeSecs - 5 * 60);
   this.authRefreshTimeoutId_ = window.setTimeout(
-      goog.bind(this.checkAuth_, this), refreshDelaySecs * 1000);
+      this.checkAuth_.bind(this, true), refreshDelaySecs * 1000);
 };
 
 five.Auth.prototype.invalidateToken_ = function() {
@@ -192,6 +210,9 @@ five.Auth.ConnectDialog_ = function(authResultCallback) {
 };
 goog.inherits(five.Auth.ConnectDialog_, five.Dialog);
 
+/** @type {goog.debug.Logger} */
+five.Auth.ConnectDialog_.prototype.logger_ = goog.log.getLogger('five.Auth.ConnectDialog_');
+
 five.Auth.ConnectDialog_.prototype.createDom = function() {
   goog.base(this, 'createDom');
 
@@ -200,8 +221,13 @@ five.Auth.ConnectDialog_.prototype.createDom = function() {
   var headerEl = document.createElement('div');
   goog.dom.classlist.add(headerEl, 'title');
   headerEl.appendChild(document.createTextNode(
-      '5 mins needs your authorization to read your calendar'));
+      '5 mins needs your authorization to access your calendar'));
   contentEl.appendChild(headerEl);
+  var messageEl = document.createElement('div');
+  messageEl.appendChild(document.createTextNode(
+      'This application helps you to manage your schedule to a precision of five minutes. ' +
+      'You can drag and drop, duplicate events, and add future events with ease.'));
+  contentEl.appendChild(messageEl);
 
   var connectButtonEl = document.createElement('div');
   goog.dom.classlist.add(connectButtonEl, 'button');
@@ -212,9 +238,10 @@ five.Auth.ConnectDialog_.prototype.createDom = function() {
 };
 
 five.Auth.ConnectDialog_.prototype.handleConnectClick_ = function() {
-  goog.getObjectByName('gapi.auth.authorize')({
-    'client_id': five.Auth.GAPI_CLIENT_ID,
-    'scope': five.Auth.GAPI_SCOPES,
-    'immediate': false
-  }, this.authResultCallback_);
+  var authInstance = goog.getObjectByName('gapi.auth2.getAuthInstance')();
+  authInstance['signIn']()
+    .then(this.authResultCallback_.bind(this))
+    .catch(function(err) {
+      this.logger_.severe('Error requesting google auth sign in: ' + err, err);
+    }.bind(this));
 };

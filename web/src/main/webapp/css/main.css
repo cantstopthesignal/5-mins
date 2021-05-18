@@ -145,7 +145,7 @@ a:hover {
 .dialog .button {
   border: 1px solid #aaa;
   margin-right: 5px;
-  margin-top: 5px;
+  margin-top: 10px;
 }
 .dialog-background {
   background-color: rgba(0, 0, 0, 0.2);
