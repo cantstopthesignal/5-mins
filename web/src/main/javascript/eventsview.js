@@ -15,6 +15,7 @@ goog.require('five.EventSelectNeighborEvent');
 goog.require('five.EventsSplitter');
 goog.require('five.EventsSummaryDialog');
 goog.require('five.EventsTimeline');
+goog.require('five.FloatingActionButton');
 goog.require('five.TimeMarker');
 goog.require('five.TimeMarkerTheme');
 goog.require('goog.asserts');
@@ -30,7 +31,8 @@ goog.require('goog.fx.easing');
 
 /**
  * @param {!five.AppContext} appContext
- * @param calendarManager {five.CalendarManager}
+ * @param {five.CalendarManager} calendarManager
+ * @param {five.AppBar} appBar
  * @constructor
  * @extends {five.Component}
  */
@@ -164,8 +166,8 @@ five.EventsView.prototype.createDom = function() {
         this.handleNowClick_);
 
     if (five.device.isMobile()) {
-      var proposeButton = new five.Button('Propose');
-      this.appBar_.getButtonBar().addButton(proposeButton);
+      var proposeButton = new five.FloatingActionButton('propose-button');
+      proposeButton.render(this.el);
       this.eventHandler.listen(proposeButton.el, goog.events.EventType.CLICK,
           this.handleProposeClick_);
     }
