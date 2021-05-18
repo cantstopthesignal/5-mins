@@ -41,6 +41,12 @@ five.OfflineCalendarApi.EVENTS_DB_STORE_NAME_ = 'events';
 /** @type {!string} */
 five.OfflineCalendarApi.EVENTS_DB_VALUE_KEY = 'value';
 
+/** @type {!string} */
+five.OfflineCalendarApi.PENDING_MUTATIONS_DB_STORE_NAME_ = 'pendingMutations';
+
+/** @type {!string} */
+five.OfflineCalendarApi.PENDING_MUTATIONS_DB_VALUE_KEY = 'value';
+
 /** @type {goog.async.Deferred} */
 five.OfflineCalendarApi.prototype.dbDeferred_;
 
@@ -113,6 +119,40 @@ five.OfflineCalendarApi.prototype.applyEventOperations = function(calendarId, ev
   return this.calendarApi_.applyEventOperations(calendarId, eventOperations);
 };
 
+/**
+ * @param {Object} pendingMutationsData
+ * @return {goog.async.Deferred}
+ */
+five.OfflineCalendarApi.prototype.savePendingMutations = function(pendingMutationsData) {
+  return this.getDb_().addCallback(function(db) {
+    var putTx = db.createTransaction(
+      [five.OfflineCalendarApi.PENDING_MUTATIONS_DB_STORE_NAME_],
+      goog.db.Transaction.TransactionMode.READ_WRITE);
+    var store = putTx.objectStore(
+      five.OfflineCalendarApi.PENDING_MUTATIONS_DB_STORE_NAME_);
+    store.put(pendingMutationsData, five.OfflineCalendarApi.PENDING_MUTATIONS_DB_VALUE_KEY);
+    return putTx.wait().addErrback(function(err) {
+      this.logger_.severe('Failed to store pending mutations: ' + err, err);
+    }, this);
+  }, this);
+};
+
+/**
+ * @return {goog.async.Deferred}
+ */
+five.OfflineCalendarApi.prototype.loadPendingMutations = function() {
+  return this.getDb_().addCallback(function(db) {
+    var getTx = db.createTransaction(
+      [five.OfflineCalendarApi.PENDING_MUTATIONS_DB_STORE_NAME_]);
+    var request = getTx.objectStore(
+      five.OfflineCalendarApi.PENDING_MUTATIONS_DB_STORE_NAME_).
+      get(five.OfflineCalendarApi.PENDING_MUTATIONS_DB_VALUE_KEY);
+    return request.addErrback(function(err) {
+      this.logger_.severe('Failed to read pending mutations: ' + err, err);
+    }, this);
+  }, this);
+};
+
 /** @return {goog.async.Deferred} */
 five.OfflineCalendarApi.prototype.getDb_ = function() {
   if (this.dbDeferred_) {
@@ -120,9 +160,14 @@ five.OfflineCalendarApi.prototype.getDb_ = function() {
   }
 
   this.dbDeferred_ = goog.db.openDatabase(
-      five.OfflineCalendarApi.DB_NAME_, 1,
+      five.OfflineCalendarApi.DB_NAME_, 2,
       function(ev, db, tx) {
-        db.createObjectStore(five.OfflineCalendarApi.EVENTS_DB_STORE_NAME_);
+        if (ev.oldVersion < 1) {
+          db.createObjectStore(five.OfflineCalendarApi.EVENTS_DB_STORE_NAME_);
+        }
+        if (ev.oldVersion < 2) {
+          db.createObjectStore(five.OfflineCalendarApi.PENDING_MUTATIONS_DB_STORE_NAME_);
+        }
       });
   this.dbDeferred_.addErrback(function(err) {
     this.logger_.severe('Failed to open database: ' + err, err);

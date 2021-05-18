@@ -83,6 +83,20 @@ five.Event.createNew = function(startTime, endTime, summary) {
   return new five.Event(eventData, true);
 };
 
+/**
+ * @param {Object} state
+ * @return {!five.Event}
+ */
+five.Event.fromPreservedState = function(state) {
+  var isNew = state['isNew'];
+  var eventData = state['eventData'];
+  var event = new five.Event(eventData, isNew);
+  for (var mutationState of state['mutations']) {
+    event.addMutation(five.EventMutation.fromPreservedState(mutationState));
+  }
+  return event;
+};
+
 /** @return {!goog.date.DateTime} */
 five.Event.parseEventDataDate = function(dateData) {
   if ('dateTime' in dateData) {
@@ -406,6 +420,17 @@ five.Event.prototype.startDelete = function() {
   deleteData['originalInstanceTime'] = this.eventData_['originalInstanceTime'];
   deleteData['etag'] = this.eventData_['etag'];
   return deleteData;
+};
+
+/** @return {Object} */
+five.Event.prototype.preserveState = function() {
+  return {
+    'isNew': this.isNew_,
+    'eventData': this.eventData_,
+    'mutations': goog.array.map(this.mutations_, function(mutation) {
+        return mutation.preserveState();
+      })
+  }
 };
 
 /** @return {boolean} Whether the current state of this event is valid. */

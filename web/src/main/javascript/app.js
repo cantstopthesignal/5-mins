@@ -185,6 +185,8 @@ five.App.prototype.installServiceWorker_ = function() {
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage(
           {'command': 'checkAppUpdateAvailable'});
+      } else {
+        this.logger_.warning('ServiceWorker controller not set');
       }
     }.bind(this));
 };

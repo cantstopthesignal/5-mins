@@ -132,3 +132,18 @@ five.BaseCalendarApi.prototype.applyEventOperations = goog.abstractMethod;
  * @return {goog.async.Deferred}
  */
 five.BaseCalendarApi.prototype.openEventEditor = goog.abstractMethod;
+
+/**
+ * @param {Object} pendingMutationsData
+ * @return {goog.async.Deferred}
+ */
+five.BaseCalendarApi.prototype.savePendingMutations = function(pendingMutationsData) {
+  return goog.async.Deferred.succeed(null);
+};
+
+/**
+ * @return {goog.async.Deferred}
+ */
+five.BaseCalendarApi.prototype.loadPendingMutations = function() {
+  return goog.async.Deferred.succeed(null);
+};
