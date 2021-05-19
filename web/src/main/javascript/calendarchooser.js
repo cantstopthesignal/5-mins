@@ -3,34 +3,37 @@
 goog.provide('five.CalendarChooser');
 
 goog.require('five.Dialog')
+goog.require('five.OfflineCalendarApi')
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classlist');
-goog.require('goog.net.Cookies');
 
 /**
  * @constructor
+ * @param {!five.OfflineCalendarApi} calendarApi
+ * @param {!Object} listResp
  * @extends {five.Dialog}
  */
-five.CalendarChooser = function(listResp) {
+five.CalendarChooser = function(calendarApi, listResp) {
   goog.base(this);
 
+  /** @type {!five.OfflineCalendarApi} */
+  this.calendarApi_ = calendarApi;
+
+  /** @type {!Object} */
   this.listResp_ = listResp;
 
   /** @type {Array.<Object>} */
   this.calendars_ = this.listResp_['items'] || [];
 
-  /** @type {goog.net.Cookies} */
-  this.cookies_ = new goog.net.Cookies(document);
-
   /** @type {goog.async.Deferred} */
-  this.choiceDeferred_ = new goog.async.Deferred();
+  this.choiceDeferred_;
 };
 goog.inherits(five.CalendarChooser, five.Dialog);
 
-five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE = "FIVEMINS_CALENDAR";
-
-five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE = -1;
+/** @type {goog.log.Logger} */
+five.CalendarChooser.prototype.logger_ = goog.log.getLogger(
+    'five.CalendarChooser');
 
 /** @type {Element} */
 five.CalendarChooser.prototype.containerEl_;
@@ -39,26 +42,33 @@ five.CalendarChooser.prototype.containerEl_;
 five.CalendarChooser.prototype.calendarId_;
 
 five.CalendarChooser.prototype.chooseCalendar = function() {
-  if (!this.choiceDeferred_.hasFired()) {
-    this.maybeChooseCalendarFromCookie_();
+  if (this.choiceDeferred_) {
+    return this.choiceDeferred_.branch();
   }
-  if (!this.choiceDeferred_.hasFired()) {
-    this.maybeChooseOnlyCalendar_();
-  }
-  if (!this.choiceDeferred_.hasFired()) {
-    this.showChooserUi_();
-  }
+
+  this.choiceDeferred_ = this.maybeChooseOnlyCalendar_()
+      .addCallback(function(calendarId) {
+        if (calendarId) {
+          return calendarId;
+        }
+        return this.calendarApi_.loadCurrentCalendarId();
+      }, this)
+      .addCallback(function(calendarId) {
+        if (calendarId) {
+          return calendarId;
+        }
+        return this.showChooserUi_();
+      }, this)
+      .addCallback(function(calendarId) {
+        var calendar = this.getCalendarById_(calendarId);
+        goog.asserts.assert(calendar);
+        return calendar;
+      }, this);
   return this.choiceDeferred_.branch();
 };
 
-five.CalendarChooser.prototype.fireCalendarChoice_ = function(calendarId) {
-  goog.asserts.assert(!this.choiceDeferred_.hasFired());
-  var calendar = this.getCalendarById_(calendarId);
-  goog.asserts.assert(calendar);
-  this.choiceDeferred_.callback(calendar);
-}
-
 five.CalendarChooser.prototype.showChooserUi_ = function() {
+  var deferred = new goog.async.Deferred();
   this.createDom();
   this.containerEl_ = document.createElement('div');
   goog.dom.classlist.add(this.containerEl_, 'calendar-chooser');
@@ -73,51 +83,36 @@ five.CalendarChooser.prototype.showChooserUi_ = function() {
     goog.dom.classlist.add(calendarEl, 'button');
     goog.dom.classlist.add(calendarEl, 'calendar-entry');
     this.eventHandler.listen(calendarEl, goog.events.EventType.CLICK,
-        goog.partial(this.handleCalendarClick_, ownedCalendar['id']));
+        goog.partial(this.handleCalendarClick_, deferred, ownedCalendar['id']));
     var calendarNameEl = document.createTextNode(ownedCalendar['summary']);
     calendarEl.appendChild(calendarNameEl);
     this.containerEl_.appendChild(calendarEl);
   }
   this.getContentEl().appendChild(this.containerEl_);
   this.show();
+  return deferred;
 };
 
-five.CalendarChooser.prototype.handleCalendarClick_ = function(calendarId) {
-  this.setCalendarChoiceCookie_(calendarId);
-  this.fireCalendarChoice_(calendarId);
-};
-
-five.CalendarChooser.prototype.setCalendarChoiceCookie_ = function(
-    calendarId) {
+five.CalendarChooser.prototype.handleCalendarClick_ = function(deferred, calendarId) {
   goog.asserts.assert(calendarId);
-  var secure = (window.location.protocol != 'http:');
-  this.cookies_.set(five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE,
-      encodeURIComponent(calendarId),
-      five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE_MAX_AGE,
-      /* opt_path */ undefined, /* opt_domain */ undefined,
-      /* opt_secure */ secure);
+  this.calendarApi_.saveCurrentCalendarId(calendarId)
+      .addCallback(function() {
+        return calendarId;
+      }, this)
+      .chainDeferred(deferred);
 };
 
 five.CalendarChooser.prototype.maybeChooseOnlyCalendar_ = function() {
   var ownedCalendars = this.getOwnedCalendars_();
   if (ownedCalendars.length == 1) {
-    this.fireCalendarChoice_(ownedCalendars[0]['id']);
+    var calendarId = ownedCalendars[0]['id'];
+    goog.asserts.assert(calendarId);
+    return this.calendarApi_.saveCurrentCalendarId(calendarId)
+        .addCallback(function() {
+          return calendarId;
+        }, this);
   }
-};
-
-five.CalendarChooser.prototype.maybeChooseCalendarFromCookie_ = function() {
-  var calendarIdFromCookie = this.cookies_.get(
-      five.CalendarChooser.FIVEMINS_CALENDAR_COOKIE);
-  if (calendarIdFromCookie) {
-    calendarIdFromCookie = decodeURIComponent(calendarIdFromCookie);
-    var ownedCalendars = this.getOwnedCalendars_();
-    for (var i = 0; i < ownedCalendars.length; i++) {
-      var ownedCalendar = ownedCalendars[i];
-      if (ownedCalendar['id'] == calendarIdFromCookie) {
-        this.fireCalendarChoice_(calendarIdFromCookie)
-      }
-    }
-  }
+  return goog.async.Deferred.succeed(null);
 };
 
 five.CalendarChooser.prototype.getOwnedCalendars_ = function() {

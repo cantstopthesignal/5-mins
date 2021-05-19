@@ -130,7 +130,9 @@ five.App.prototype.chooseCalendar_ = function() {
   return this.calendarApi_.loadCalendarList().
       addCallback(function(resp) {
         goog.asserts.assert(!this.calendarChooser_);
-        this.calendarChooser_ = new five.CalendarChooser(resp);
+        goog.asserts.assertInstanceof(this.calendarApi_, five.OfflineCalendarApi);
+        var offlineCalendarApi = /** @type {!five.OfflineCalendarApi} */ (this.calendarApi_);
+        this.calendarChooser_ = new five.CalendarChooser(offlineCalendarApi, resp);
         return this.calendarChooser_.chooseCalendar();
       }, this).
       addCallback(function(calendarData) {
@@ -174,14 +176,14 @@ five.App.prototype.installServiceWorker_ = function() {
   if (five.device.isDebug()) {
     serviceWorkerUri.setParameterValue("Debug", "true");
   }
-  navigator.serviceWorker.register(serviceWorkerUri.toString(), { scope: '/' }).
-    then(function(registration) {
+  navigator.serviceWorker.register(serviceWorkerUri.toString(), { scope: '/' })
+    .then(function(registration) {
       this.logger_.info('ServiceWorker registration successful, scope: ' + registration.scope);
       return navigator.serviceWorker.ready;
     }.bind(this), function(err) {
       this.logger_.severe('ServiceWorker registration failed: ' + err, err);
-    }.bind(this)).
-    then(function() {
+    }.bind(this))
+    .then(function() {
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage(
           {'command': 'checkAppUpdateAvailable'});
