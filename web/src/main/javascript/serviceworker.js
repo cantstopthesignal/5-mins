@@ -119,6 +119,7 @@ five.ServiceWorker.prototype.handleFetch_ = function(e) {
   var event = e.getBrowserEvent();
   var url = new URL(event.request.url);
   if (self.location.origin != url.origin ||
+      url.pathname == '/manifest.txt' ||
       url.pathname.startsWith('/debug/')) {
     event.respondWith(fetch(event.request));
     return;

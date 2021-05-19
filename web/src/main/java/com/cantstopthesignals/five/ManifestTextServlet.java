@@ -20,7 +20,9 @@ public class ManifestTextServlet extends HttpServlet {
   static {
     EXCLUDED_BASE_PATHS.add("META-INF");
     EXCLUDED_BASE_PATHS.add("WEB-INF");
+    EXCLUDED_BASE_PATHS.add(".google");
     EXCLUDED_BASE_PATHS.add("debug");
+    EXCLUDED_BASE_PATHS.add("etc");
     EXCLUDED_BASE_PATHS.add("source-context.json");
     EXCLUDED_BASE_PATHS.add("source-contexts.json");
   }
@@ -40,8 +42,8 @@ public class ManifestTextServlet extends HttpServlet {
     resp.setHeader("Cache-Control", "max-age=" + CACHE_AGE_SECONDS);
 
     PrintWriter writer = resp.getWriter();
-    writer.println("CACHE MANIFEST");
-    writer.println("# version " + getFilesChecksum());
+    writer.println("# Manifest");
+    writer.println("# Version " + getFilesChecksum());
     writer.println();
 
     File rootDir = new File(getServletContext().getRealPath(getServletContext().getContextPath()));
@@ -52,10 +54,6 @@ public class ManifestTextServlet extends HttpServlet {
         printWarFiles(writer, rootDir, new File(relativeFilename));
       }
     }
-
-    writer.println();
-    writer.println("NETWORK:");
-    writer.println("*");
   }
 
   private String getFilesChecksum() throws IOException {
@@ -81,5 +79,4 @@ public class ManifestTextServlet extends HttpServlet {
       }
     }
   }
-
 }
