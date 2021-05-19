@@ -217,17 +217,29 @@ five.Auth.ConnectDialog_.prototype.createDom = function() {
   goog.base(this, 'createDom');
 
   var contentEl = this.getContentEl();
+  goog.dom.classlist.add(contentEl, 'connect-dialog');
 
-  var headerEl = document.createElement('div');
-  goog.dom.classlist.add(headerEl, 'title');
-  headerEl.appendChild(document.createTextNode(
-      '5 mins needs your authorization to access your calendar'));
-  contentEl.appendChild(headerEl);
-  var messageEl = document.createElement('div');
-  messageEl.appendChild(document.createTextNode(
-      'This application helps you to manage your schedule to a precision of five minutes. ' +
-      'You can drag and drop, duplicate events, and add future events with ease.'));
-  contentEl.appendChild(messageEl);
+  var appTitleEl = document.createElement('div');
+  goog.dom.classlist.add(appTitleEl, 'app-title');
+
+  var iconEl = document.createElement('span');
+  goog.dom.classlist.add(iconEl, 'icon');
+  appTitleEl.appendChild(iconEl);
+
+  appTitleEl.appendChild(document.createTextNode('5 mins'));
+  contentEl.appendChild(appTitleEl);
+
+  var appDescriptionEl = document.createElement('p');
+  appDescriptionEl.appendChild(document.createTextNode(
+      'This application helps manage your schedule to a precision of five minutes. ' +
+      'You can drag and drop, duplicate, and add future events with ease.'));
+  contentEl.appendChild(appDescriptionEl);
+
+  var connectNoteEl = document.createElement('p');
+  connectNoteEl.appendChild(document.createTextNode(
+      'To get started, 5 mins will need access your calendar. Press Connect to continue ' +
+      'with authorization.'));
+  contentEl.appendChild(connectNoteEl);
 
   var connectButtonEl = document.createElement('div');
   goog.dom.classlist.add(connectButtonEl, 'button');

@@ -145,7 +145,7 @@ a:hover {
 .dialog .button {
   border: 1px solid #aaa;
   margin-right: 5px;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 .dialog-background {
   background-color: rgba(0, 0, 0, 0.2);
@@ -175,6 +175,19 @@ a:hover {
 }
 .edit-event-dialog div.todo > input {
   vertical-align: middle;
+}
+.connect-dialog .app-title {
+  align-items: center;
+  display: flex;
+  font-size: 24px;
+}
+.connect-dialog .app-title > .icon {
+  background: url(/images/logo128.png);
+  background-size: 100%;
+  display: inline-block;
+  margin-right: 10px;
+  width: 64px;
+  height: 64px;
 }
 .summary-label {
   line-height: 29px;
