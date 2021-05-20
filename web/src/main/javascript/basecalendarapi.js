@@ -22,82 +22,7 @@ goog.inherits(five.BaseCalendarApi, goog.events.EventTarget);
 /** @type {!string} */
 five.BaseCalendarApi.CACHED_RESPONSE_KEY = 'cachedResponse';
 
-/**
- * @constructor
- * @param {!five.BaseCalendarApi.EventOperation.Type} type
- */
-five.BaseCalendarApi.EventOperation = function(type) {
-  /** @type {!five.BaseCalendarApi.EventOperation.Type} */
-  this.type_ = type;
-
-  /** @type {!goog.async.Deferred} */
-  this.deferred_ = new goog.async.Deferred();
-};
-
-/**
- * @enum {string}
- */
-five.BaseCalendarApi.EventOperation.Type = {
-  CREATE: 'create',
-  SAVE: 'save',
-  DELETE: 'delete'
-};
-
-/**
- * @return {!five.BaseCalendarApi.EventOperation.Type}
- */
-five.BaseCalendarApi.EventOperation.prototype.getType = function() {
-  return this.type_;
-};
-
-five.BaseCalendarApi.EventOperation.prototype.getDeferred = function() {
-  return this.deferred_;
-};
-
-/**
- * @constructor
- * @param {Object} eventData
- * @extends {five.BaseCalendarApi.EventOperation}
- */
-five.BaseCalendarApi.CreateEventOperation = function(eventData) {
-  goog.base(this, five.BaseCalendarApi.EventOperation.Type.CREATE);
-
-  /** @type {Object} */
-  this.eventData = eventData;
-};
-goog.inherits(five.BaseCalendarApi.CreateEventOperation, five.BaseCalendarApi.EventOperation);
-
-/**
- * @constructor
- * @param {Object} eventData
- * @param {Object} eventPatchData
- * @extends {five.BaseCalendarApi.EventOperation}
- */
-five.BaseCalendarApi.SaveEventOperation = function(eventData, eventPatchData) {
-  goog.base(this, five.BaseCalendarApi.EventOperation.Type.SAVE);
-
-  /** @type {Object} */
-  this.eventData = eventData;
-
-  /** @type {Object} */
-  this.eventPatchData = eventPatchData;
-};
-goog.inherits(five.BaseCalendarApi.SaveEventOperation, five.BaseCalendarApi.EventOperation);
-
-/**
- * @constructor
- * @param {Object} eventDeleteData
- * @extends {five.BaseCalendarApi.EventOperation}
- */
-five.BaseCalendarApi.DeleteEventOperation = function(eventDeleteData) {
-  goog.base(this, five.BaseCalendarApi.EventOperation.Type.DELETE);
-
-  /** @type {Object} */
-  this.eventDeleteData = eventDeleteData;
-};
-goog.inherits(five.BaseCalendarApi.DeleteEventOperation, five.BaseCalendarApi.EventOperation);
-
-/** @return {goog.async.Deferred} */
+/** @return {!goog.async.Deferred} */
 five.BaseCalendarApi.prototype.loadCalendarList = goog.abstractMethod;
 
 /**
@@ -105,24 +30,50 @@ five.BaseCalendarApi.prototype.loadCalendarList = goog.abstractMethod;
  * @param {goog.date.DateTime} startDate
  * @param {goog.date.DateTime} endDate
  * @param {Object=} opt_prevResp
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
  */
 five.BaseCalendarApi.prototype.loadEvents = goog.abstractMethod;
 
 /**
  * @param {string} calendarId
- * @param {!Array.<!five.BaseCalendarApi.EventOperation>} eventOperations
- * @return {goog.async.Deferred}
+ * @param {Object} eventData
+ * @return {!goog.async.Deferred}
  */
-five.BaseCalendarApi.prototype.applyEventOperations = goog.abstractMethod;
+five.BaseCalendarApi.prototype.createEvent = goog.abstractMethod;
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventData
+ * @param {Object} eventPatchData
+ * @return {!goog.async.Deferred}
+ */
+five.BaseCalendarApi.prototype.saveEvent = goog.abstractMethod;
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventDeleteData
+ * @return {!goog.async.Deferred}
+ */
+five.BaseCalendarApi.prototype.deleteEvent = goog.abstractMethod;
 
 /**
  * @param {Object} pendingMutationsData
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
  */
 five.BaseCalendarApi.prototype.savePendingMutations = goog.abstractMethod;
 
 /**
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
  */
 five.BaseCalendarApi.prototype.loadPendingMutations = goog.abstractMethod;
+
+/**
+ * @param {!string} currentCalendarId
+ * @return {!goog.async.Deferred}
+ */
+five.BaseCalendarApi.prototype.saveCurrentCalendarId = goog.abstractMethod;
+
+/**
+ * @return {!goog.async.Deferred}
+ */
+five.BaseCalendarApi.prototype.loadCurrentCalendarId = goog.abstractMethod;

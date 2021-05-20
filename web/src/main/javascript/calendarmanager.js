@@ -3,11 +3,11 @@
 goog.provide('five.CalendarManager');
 
 goog.require('five.AppContext');
+goog.require('five.ClientCalendarApi');
 goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('five.IdleTracker');
 goog.require('five.NotificationManager');
-goog.require('five.OfflineCalendarApi');
 goog.require('goog.asserts');
 goog.require('goog.async.DeferredList');
 goog.require('goog.date.Date');
@@ -30,8 +30,8 @@ five.CalendarManager = function(appContext, calendarData) {
   /** @type {!five.AppContext} */
   this.appContext_ = appContext;
 
-  /** @type {!five.OfflineCalendarApi} */
-  this.calendarApi_ = five.OfflineCalendarApi.get(this.appContext_);
+  /** @type {!five.ClientCalendarApi} */
+  this.calendarApi_ = five.ClientCalendarApi.get(this.appContext_);
 
   /** @type {five.IdleTracker} */
   this.idleTracker_ = new five.IdleTracker();
@@ -272,35 +272,35 @@ five.CalendarManager.prototype.saveMutations = function() {
   if (!this.hasMutations()) {
     return goog.async.Deferred.succeed();
   }
-  var operations = [];
-  goog.array.forEach(this.events_, function(event) {
+  var deferreds = [];
+  for (var event of goog.asserts.assertObject(this.events_)) {
     if (event.isNew()) {
-      operations.push(this.startCreateEventOperation_(event));
+      deferreds.push(this.createEvent_(event));
     } else if (event.hasMutations()) {
-      operations.push(this.startSaveEventOperation_(event));
+      deferreds.push(this.saveEvent_(event));
     }
-  }, this);
-  goog.array.forEach(this.removedEvents_, function(event) {
-    var operation = this.startDeleteEventOperation_(event);
-    if (operation) {
-      operations.push(operation);
+  }
+  for (event of this.removedEvents_) {
+    var deferred = this.deleteEvent_(event);
+    if (deferred) {
+      deferreds.push(deferred);
     }
-  }, this);
-  if (operations.length == 0) {
+  }
+  if (deferreds.length == 0) {
     return goog.async.Deferred.succeed();
   }
   this.requestStarted_();
-  return this.calendarApi_.applyEventOperations(this.calendarData_['id'], operations).
-      addCallback(function(resp) {
+  return new goog.async.DeferredList(deferreds)
+      .addCallback(resp => {
         this.requestEnded_();
         this.checkIdleRefresh_();
-      }, this).
-      addErrback(function(error) {
+      })
+      .addErrback(error => {
         this.logger_.severe('Error applying event operations: ' + error, error);
         this.requestEnded_();
         this.notificationManager_.show(
             five.CalendarManager.EVENTS_APPLY_OPERATIONS_ERROR_);
-      }, this);
+      });
 };
 
 /** @return {!five.CalendarManager.EventLoadingLock} */
@@ -325,67 +325,61 @@ five.CalendarManager.prototype.unlockEventLoading_ = function(lockId) {
 
 /**
  * @param {five.Event} event
- * @return {!five.BaseCalendarApi.EventOperation}
+ * @return {!goog.async.Deferred}
  */
-five.CalendarManager.prototype.startCreateEventOperation_ = function(event) {
+five.CalendarManager.prototype.createEvent_ = function(event) {
   goog.asserts.assert(event.isNew());
-  var operation = new five.BaseCalendarApi.CreateEventOperation(event.startCreate());
-  operation.getDeferred().
-      addCallback(function(resp) {
+  return this.calendarApi_.createEvent(this.calendarData_['id'], event.startCreate())
+      .addCallback(resp => {
         goog.asserts.assert(resp['kind'] == 'calendar#event');
         event.endCreate(resp);
-      }, this).
-      addErrback(function(error) {
+      })
+      .addErrback(error => {
         this.logger_.severe('Error creating event: ' + error, error);
         event.abortCreate();
         this.notificationManager_.show(
             five.CalendarManager.EVENT_CREATE_ERROR_);
-      }, this);
-  return operation;
+      });
 };
 
 /**
  * @param {five.Event} event
- * @return {!five.BaseCalendarApi.EventOperation}
+ * @return {!goog.async.Deferred}
  */
-five.CalendarManager.prototype.startSaveEventOperation_ = function(event) {
+five.CalendarManager.prototype.saveEvent_ = function(event) {
   goog.asserts.assert(event.hasMutations());
-  var operation = new five.BaseCalendarApi.SaveEventOperation(
-      event.getEventData(), event.startMutationPatch());
-  operation.getDeferred().
-      addCallback(function(resp) {
+  return this.calendarApi_.saveEvent(
+      this.calendarData_['id'], event.getEventData(), event.startMutationPatch())
+      .addCallback(resp => {
         goog.asserts.assert(resp['kind'] == 'calendar#event');
         event.endMutationPatch(resp);
-      }, this).
-      addErrback(function(error) {
+      })
+      .addErrback(error => {
         this.logger_.severe('Error saving event: ' + error, error);
         event.abortMutationPatch();
         this.notificationManager_.show(
             five.CalendarManager.EVENTS_SAVE_ERROR_);
-      }, this);
-  return operation;
+      });
 };
 
 /**
  * @param {five.Event} event
- * @return {five.BaseCalendarApi.EventOperation}
+ * @return {goog.async.Deferred}
  */
-five.CalendarManager.prototype.startDeleteEventOperation_ = function(event) {
+five.CalendarManager.prototype.deleteEvent_ = function(event) {
   if (event.isNew()) {
     this.eventDeleted_(event);
     return null;
   }
-  var operation = new five.BaseCalendarApi.DeleteEventOperation(event.startDelete());
-  operation.getDeferred().
-      addCallback(function(resp) {
+  return this.calendarApi_.deleteEvent(this.calendarData_['id'], event.startDelete())
+      .addCallback(resp => {
         this.eventDeleted_(event);
-      }, this).
-      addErrback(function(error) {
+      }).
+      addErrback(error => {
         this.logger_.severe('Error deleting events: ' + error, error);
         this.notificationManager_.show(
             five.CalendarManager.EVENT_DELETE_ERROR_);
-      }, this);
-  return operation;
+      });
 };
 
 five.CalendarManager.prototype.requestStarted_ = function() {

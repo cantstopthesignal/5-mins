@@ -18,7 +18,7 @@ goog.require('goog.log');
  * Api descriptor: https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest
  *
  * @constructor
- * @param {five.Auth} auth
+ * @param {!five.BaseAuth} auth
  * @extends {five.BaseCalendarApi}
  * @implements {five.Service}
  */
@@ -37,6 +37,9 @@ five.OfflineCalendarApi.DB_NAME_ = 'offlineCalendar';
 
 /** @type {!string} */
 five.OfflineCalendarApi.CALENDARS_DB_STORE_NAME_ = 'calendars';
+
+/** @type {!string} */
+five.OfflineCalendarApi.CALENDARS_VALUE_KEY = 'calendars';
 
 /** @type {!string} */
 five.OfflineCalendarApi.CURRENT_CALENDAR_ID_VALUE_KEY = 'currentCalendarId';
@@ -74,9 +77,23 @@ five.OfflineCalendarApi.prototype.register = function(appContext) {
   appContext.register(five.OfflineCalendarApi.SERVICE_ID, this);
 };
 
-/** @return {goog.async.Deferred} */
+/**
+ * @return {!goog.async.Deferred}
+ * @override
+ */
 five.OfflineCalendarApi.prototype.loadCalendarList = function() {
-  return this.calendarApi_.loadCalendarList();
+  var deferred = new goog.async.Deferred();
+  function onLoadCallback(resp) {
+    this.saveCachedCalendars_(resp).addBoth(function() {
+      deferred.callback(resp);
+    });
+  }
+  function onLoadError(error) {
+    this.loadCachedCalendars_().chainDeferred(deferred);
+  }
+  this.calendarApi_.loadCalendarList()
+      .addCallbacks(onLoadCallback, onLoadError, this);
+  return deferred;
 };
 
 /**
@@ -84,7 +101,8 @@ five.OfflineCalendarApi.prototype.loadCalendarList = function() {
  * @param {goog.date.DateTime} startDate
  * @param {goog.date.DateTime} endDate
  * @param {Object=} opt_prevResp
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
+ * @override
  */
 five.OfflineCalendarApi.prototype.loadEvents = function(calendarId, startDate,
     endDate, opt_prevResp) {
@@ -104,16 +122,40 @@ five.OfflineCalendarApi.prototype.loadEvents = function(calendarId, startDate,
 
 /**
  * @param {string} calendarId
- * @param {!Array.<!five.BaseCalendarApi.EventOperation>} eventOperations
- * @return {goog.async.Deferred}
+ * @param {Object} eventData
+ * @return {!goog.async.Deferred}
+ * @override
  */
-five.OfflineCalendarApi.prototype.applyEventOperations = function(calendarId, eventOperations) {
-  return this.calendarApi_.applyEventOperations(calendarId, eventOperations);
+five.OfflineCalendarApi.prototype.createEvent = function(calendarId, eventData) {
+  return this.calendarApi_.createEvent(calendarId, eventData);
+};
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventData
+ * @param {Object} eventPatchData
+ * @return {!goog.async.Deferred}
+ * @override
+ */
+five.OfflineCalendarApi.prototype.saveEvent = function(calendarId, eventData,
+    eventPatchData) {
+  return this.calendarApi_.saveEvent(calendarId, eventData, eventPatchData);
+}
+
+/**
+ * @param {string} calendarId
+ * @param {Object} eventDeleteData
+ * @return {!goog.async.Deferred}
+ * @override
+ */
+five.OfflineCalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
+  return this.calendarApi_.deleteEvent(calendarId, eventDeleteData);
 };
 
 /**
  * @param {Object} pendingMutationsData
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
+ * @override
  */
 five.OfflineCalendarApi.prototype.savePendingMutations = function(pendingMutationsData) {
   return this.getDb_().addCallback(function(db) {
@@ -123,14 +165,17 @@ five.OfflineCalendarApi.prototype.savePendingMutations = function(pendingMutatio
     var store = putTx.objectStore(
       five.OfflineCalendarApi.PENDING_MUTATIONS_DB_STORE_NAME_);
     store.put(pendingMutationsData, five.OfflineCalendarApi.PENDING_MUTATIONS_DB_VALUE_KEY);
-    return putTx.wait().addErrback(function(err) {
-      this.logger_.severe('Failed to store pending mutations: ' + err, err);
-    }, this);
+    return putTx.wait()
+      .addCallback(resp => null)
+      .addErrback(err => {
+        this.logger_.severe('Failed to store pending mutations: ' + err, err);
+      });
   }, this);
 };
 
 /**
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
+ * @override
  */
 five.OfflineCalendarApi.prototype.loadPendingMutations = function() {
   return this.getDb_().addCallback(function(db) {
@@ -147,7 +192,8 @@ five.OfflineCalendarApi.prototype.loadPendingMutations = function() {
 
 /**
  * @param {!string} currentCalendarId
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
+ * @override
  */
 five.OfflineCalendarApi.prototype.saveCurrentCalendarId = function(currentCalendarId) {
   return this.getDb_().addCallback(function(db) {
@@ -157,14 +203,17 @@ five.OfflineCalendarApi.prototype.saveCurrentCalendarId = function(currentCalend
     var store = putTx.objectStore(
       five.OfflineCalendarApi.CALENDARS_DB_STORE_NAME_);
     store.put(currentCalendarId, five.OfflineCalendarApi.CURRENT_CALENDAR_ID_VALUE_KEY);
-    return putTx.wait().addErrback(function(err) {
-      this.logger_.severe('Failed to store current calendar id: ' + err, err);
-    }, this);
+    return putTx.wait()
+      .addCallback(resp => null)
+      .addErrback(err => {
+        this.logger_.severe('Failed to store current calendar id:: ' + err, err);
+      });
   }, this);
 };
 
 /**
- * @return {goog.async.Deferred}
+ * @return {!goog.async.Deferred}
+ * @override
  */
 five.OfflineCalendarApi.prototype.loadCurrentCalendarId = function() {
   return this.getDb_().addCallback(function(db) {
@@ -179,7 +228,7 @@ five.OfflineCalendarApi.prototype.loadCurrentCalendarId = function() {
   }, this);
 };
 
-/** @return {goog.async.Deferred} */
+/** @return {!goog.async.Deferred} */
 five.OfflineCalendarApi.prototype.getDb_ = function() {
   if (this.dbDeferred_) {
     return this.dbDeferred_.branch();
@@ -205,13 +254,16 @@ five.OfflineCalendarApi.prototype.getDb_ = function() {
   return this.dbDeferred_.branch();
 };
 
-/** @return {goog.async.Deferred} */
+/** @return {!goog.async.Deferred} */
 five.OfflineCalendarApi.prototype.loadCachedEvents_ = function() {
   return this.getDb_().addCallback(function(db) {
     var getTx = db.createTransaction([five.OfflineCalendarApi.EVENTS_DB_STORE_NAME_]);
     var request = getTx.objectStore(five.OfflineCalendarApi.EVENTS_DB_STORE_NAME_).
       get(five.OfflineCalendarApi.EVENTS_DB_VALUE_KEY);
     return request.addCallbacks(function(resp) {
+        if (!resp) {
+          throw Error('No cached events available');
+        }
         resp[five.BaseCalendarApi.CACHED_RESPONSE_KEY] = true;
         return resp;
       }, function(err) {
@@ -220,7 +272,7 @@ five.OfflineCalendarApi.prototype.loadCachedEvents_ = function() {
   }, this);
 };
 
-/** @return {goog.async.Deferred} */
+/** @return {!goog.async.Deferred} */
 five.OfflineCalendarApi.prototype.saveCachedEvents_ = function(eventsResp) {
   return this.getDb_().addCallback(function(db) {
     var putTx = db.createTransaction(
@@ -234,3 +286,34 @@ five.OfflineCalendarApi.prototype.saveCachedEvents_ = function(eventsResp) {
   }, this);
 };
 
+/** @return {!goog.async.Deferred} */
+five.OfflineCalendarApi.prototype.loadCachedCalendars_ = function() {
+  return this.getDb_().addCallback(function(db) {
+    var getTx = db.createTransaction([five.OfflineCalendarApi.CALENDARS_DB_STORE_NAME_]);
+    var request = getTx.objectStore(five.OfflineCalendarApi.CALENDARS_DB_STORE_NAME_).
+      get(five.OfflineCalendarApi.CALENDARS_VALUE_KEY);
+    return request.addCallbacks(function(resp) {
+        if (!resp) {
+          throw Error('No cached calendars available');
+        }
+        resp[five.BaseCalendarApi.CACHED_RESPONSE_KEY] = true;
+        return resp;
+      }, function(err) {
+        this.logger_.severe('Failed to read cached calendars: ' + err, err);
+      }, this);
+  }, this);
+};
+
+/** @return {!goog.async.Deferred} */
+five.OfflineCalendarApi.prototype.saveCachedCalendars_ = function(CalendarsResp) {
+  return this.getDb_().addCallback(function(db) {
+    var putTx = db.createTransaction(
+      [five.OfflineCalendarApi.CALENDARS_DB_STORE_NAME_],
+      goog.db.Transaction.TransactionMode.READ_WRITE);
+    var store = putTx.objectStore(five.OfflineCalendarApi.CALENDARS_DB_STORE_NAME_);
+    store.put(CalendarsResp, five.OfflineCalendarApi.CALENDARS_VALUE_KEY);
+    return putTx.wait().addErrback(function(err) {
+      this.logger_.severe('Failed to store cached calendars: ' + err, err);
+    }, this);
+  }, this);
+};

@@ -2,6 +2,7 @@
 
 goog.provide('five.Auth');
 
+goog.require('five.BaseAuth');
 goog.require('five.Dialog');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
@@ -14,9 +15,11 @@ goog.require('goog.log');
 /**
  * Handle authorization.
  * @constructor
- * @extends {goog.events.EventTarget}
+ * @extends {five.BaseAuth}
  */
 five.Auth = function() {
+  goog.base(this);
+
   /** @type {!goog.async.Deferred} */
   this.authDeferred_ = new goog.async.Deferred();
 
@@ -24,10 +27,13 @@ five.Auth = function() {
   this.eventHandler_ = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler_);
 };
-goog.inherits(five.Auth, goog.events.EventTarget);
+goog.inherits(five.Auth, five.BaseAuth);
 
 five.Auth.GAPI_CLIENT_ID = '446611198518.apps.googleusercontent.com';
 five.Auth.GAPI_SCOPES = 'https://www.googleapis.com/auth/calendar';
+
+/** @type {number} */
+five.Auth.GAPI_INIT_TIMEOUT_ = 10000;
 
 /** @type {goog.debug.Logger} */
 five.Auth.prototype.logger_ = goog.log.getLogger('five.Auth');
@@ -47,9 +53,7 @@ five.Auth.prototype.start = function() {
   }
 };
 
-/**
- * Restart auth in the case where an api has detected an authorization failure.
- */
+/** @override */
 five.Auth.prototype.restart = function() {
   if (!this.authDeferred_.hasFired()) {
     // Re-auth already in progress.
@@ -60,16 +64,13 @@ five.Auth.prototype.restart = function() {
   goog.asserts.assert(!this.authDeferred_.hasFired());
 };
 
-/**
- * Check if the current auth token seems to be valid.
- * @return {boolean}
- */
+/** @override */
 five.Auth.prototype.isTokenValid = function() {
   var token = goog.getObjectByName('gapi.auth.getToken')();
   return token && ('access_token' in token);
 };
 
-/** @return {goog.async.Deferred} */
+/** @override */
 five.Auth.prototype.getAuthDeferred = function() {
   return this.authDeferred_;
 };
@@ -114,15 +115,26 @@ five.Auth.prototype.handleGapiLoad_ = function() {
     'client_id': five.Auth.GAPI_CLIENT_ID,
     'scope': five.Auth.GAPI_SCOPES
   };
+  var timeoutId = self.setTimeout(() => {
+    this.logger_.severe('Timed out initializing google api client');
+    goog.asserts.assert(!this.authDeferred_.hasFired());
+    this.authDeferred_.errback(Error('Timed out initializing google api client'));
+  }, five.Auth.GAPI_INIT_TIMEOUT_);
   goog.getObjectByName('gapi.auth2.init')(initParams)
-    .then(this.checkAuth_.bind(this, false))
-    .catch(function(err) {
+    .then(() => {
+      self.clearTimeout(timeoutId);
+      this.checkAuth_(false);
+    })
+    .catch(err => {
+      self.clearTimeout(timeoutId);
       this.logger_.severe('Error initializing google api client: ' + err, err);
-    }.bind(this));
+    });
 };
 
 five.Auth.prototype.handleLoadGapiJavascriptClientError_ = function(err) {
   this.logger_.severe('Error loading gapi javascript client: ' + err, err);
+  goog.asserts.assert(!this.authDeferred_.hasFired());
+  this.authDeferred_.errback(err);
 };
 
 five.Auth.prototype.checkAuth_ = function(refresh) {
@@ -160,6 +172,7 @@ five.Auth.prototype.handleAuthResult_ = function() {
     this.logger_.info('handleAuthResult_: authorized');
     var authResponse = authInstance['currentUser']['get']()['getAuthResponse']();
     this.setAuthRefreshTimer_(parseInt(authResponse['expires_in'], 10));
+    this.updateServiceAuth_(authResponse);
   } else {
     this.logger_.info('handleAuthResult_: not authorized or no result');
   }
@@ -178,7 +191,7 @@ five.Auth.prototype.handleAuthResult_ = function() {
 
 five.Auth.prototype.clearAuthRefreshTimer_ = function() {
   if (this.authRefreshTimeoutId_) {
-    window.clearTimeout(this.authRefreshTimeoutId_);
+    self.clearTimeout(this.authRefreshTimeoutId_);
     delete this.authRefreshTimeoutId_;
   }
 };
@@ -187,7 +200,7 @@ five.Auth.prototype.setAuthRefreshTimer_ = function(expireTimeSecs) {
   goog.asserts.assert(isFinite(expireTimeSecs));
   this.clearAuthRefreshTimer_();
   var refreshDelaySecs = Math.max(5 * 60, expireTimeSecs - 5 * 60);
-  this.authRefreshTimeoutId_ = window.setTimeout(
+  this.authRefreshTimeoutId_ = self.setTimeout(
       this.checkAuth_.bind(this, true), refreshDelaySecs * 1000);
 };
 
@@ -197,6 +210,25 @@ five.Auth.prototype.invalidateToken_ = function() {
   var accessToken = goog.asserts.assertString(token['access_token']);
   token['access_token'] = 'invalid';
   goog.getObjectByName('gapi.auth.setToken')(token);
+  this.updateServiceAuth_(token);
+};
+
+five.Auth.prototype.updateServiceAuth_ = function(authResponse) {
+  var authorizationHeader = 'Bearer ' + authResponse['access_token'];
+  navigator.serviceWorker.ready
+    .then(() => {
+      if (navigator.serviceWorker.controller) {
+        var message = {};
+        message[five.ServiceWorkerApi.MESSAGE_COMMAND_KEY] =
+            five.ServiceWorkerApi.COMMAND_AUTH_RPC;
+        message[five.ServiceAuth.RPC_NAME_KEY] = five.ServiceAuth.RPC_AUTHORIZATION_CHANGED;
+        message[five.ServiceAuth.RPC_REQUEST_KEY] = authorizationHeader;
+        navigator.serviceWorker.controller.postMessage(message);
+      } else {
+        this.logger_.severe('ServiceWorker controller not set');
+        throw Error('ServiceWorker controller not set');
+      }
+    });
 };
 
 /**

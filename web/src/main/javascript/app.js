@@ -6,9 +6,10 @@ goog.require('five.AppBar');
 goog.require('five.Auth');
 goog.require('five.CalendarChooser');
 goog.require('five.CalendarManager');
+goog.require('five.ClientCalendarApi');
 goog.require('five.EventsView');
 goog.require('five.NotificationManager');
-goog.require('five.OfflineCalendarApi');
+goog.require('five.ServiceWorkerApi');
 goog.require('goog.Uri');
 goog.require('five.device');
 goog.require('goog.asserts');
@@ -30,8 +31,8 @@ five.App = function() {
   /** @type {!five.Auth} */
   this.auth_ = new five.Auth();
 
-  /** @type {!five.OfflineCalendarApi} */
-  this.calendarApi_ = new five.OfflineCalendarApi(this.auth_);
+  /** @type {!five.ClientCalendarApi} */
+  this.calendarApi_ = new five.ClientCalendarApi();
   this.calendarApi_.register(this.appContext_);
 
   /** @type {goog.events.EventHandler} */
@@ -43,6 +44,13 @@ goog.inherits(five.App, goog.events.EventTarget);
 /** @type {string} */
 five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_ =
     'New app available. Refresh page to update.';
+
+five.App.CALENDARS_LOAD_ERROR_ =
+    'Error loading calendars. Please try again.';
+
+/** @type {string} */
+five.App.CALENDARS_LOAD_CACHED_ =
+    'Calendars loaded from cache. Please try again.';
 
 /** @type {number} */
 five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_DURATION_ = 2000;
@@ -83,9 +91,9 @@ five.App.prototype.start = function() {
   this.notificationManager_ = new five.NotificationManager(this.appBar_);
   this.notificationManager_.register(this.appContext_);
 
-  this.auth_.getAuthDeferred().branch().
-      addCallback(this.chooseCalendar_, this).
-      addCallback(this.showEventsView_, this);
+  this.auth_.getAuthDeferred().branch()
+      .addBoth(this.chooseCalendar_, this)
+      .addCallback(this.showEventsView_, this);
   this.auth_.start();
 
   if (five.device.isServiceWorkerEnabled()) {
@@ -108,19 +116,24 @@ five.App.prototype.disposeInternal = function() {
 };
 
 five.App.prototype.chooseCalendar_ = function() {
-  return this.calendarApi_.loadCalendarList().
-      addCallback(function(resp) {
+  return this.calendarApi_.loadCalendarList()
+      .addCallback(resp => {
+        if (resp[five.BaseCalendarApi.CACHED_RESPONSE_KEY]) {
+          this.notificationManager_.show(five.App.CALENDARS_LOAD_CACHED_,
+            undefined, five.NotificationManager.Level.INFO);
+        }
         goog.asserts.assert(!this.calendarChooser_);
-        goog.asserts.assertInstanceof(this.calendarApi_, five.OfflineCalendarApi);
-        var offlineCalendarApi = /** @type {!five.OfflineCalendarApi} */ (this.calendarApi_);
-        this.calendarChooser_ = new five.CalendarChooser(offlineCalendarApi, resp);
+        this.calendarChooser_ = new five.CalendarChooser(this.calendarApi_, resp);
         return this.calendarChooser_.chooseCalendar();
-      }, this).
-      addCallback(function(calendarData) {
+      })
+      .addCallback(calendarData => {
         this.calendarData_ = calendarData;
         goog.dispose(this.calendarChooser_);
         delete this.calendarChooser_;
-      }, this);
+      })
+      .addErrback(err => {
+        this.notificationManager_.show(five.App.CALENDARS_LOAD_ERROR_);
+      });
 };
 
 five.App.prototype.showEventsView_ = function() {
@@ -153,20 +166,23 @@ five.App.prototype.installServiceWorker_ = function() {
     serviceWorkerUri.setParameterValue("Debug", "true");
   }
   navigator.serviceWorker.register(serviceWorkerUri.toString(), { scope: '/' })
-    .then(function(registration) {
+    .then(registration => {
       this.logger_.info('ServiceWorker registration successful, scope: ' + registration.scope);
       return navigator.serviceWorker.ready;
-    }.bind(this), function(err) {
-      this.logger_.severe('ServiceWorker registration failed: ' + err, err);
-    }.bind(this))
-    .then(function() {
+    }, err => {
+      this.logger_.severe('ServiceWorker registration failed: ' + err,
+          /** @type {?Error} */ (err));
+    })
+    .then(() => {
       if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage(
-          {'command': 'checkAppUpdateAvailable'});
+        var message = {};
+        message[five.ServiceWorkerApi.MESSAGE_COMMAND_KEY] =
+            five.ServiceWorkerApi.COMMAND_CHECK_APP_UPDATE_AVAILABLE;
+        navigator.serviceWorker.controller.postMessage(message);
       } else {
         this.logger_.warning('ServiceWorker controller not set');
       }
-    }.bind(this));
+    });
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -212,7 +228,8 @@ five.App.prototype.handleWindowBeforeUnload_ = function(e) {
 
 five.App.prototype.handleServiceWorkerMessage_ = function(e) {
   var event = e.getBrowserEvent();
-  if (event.data['command'] == 'updateAvailable') {
+  var command = event.data[five.ServiceWorkerApi.MESSAGE_COMMAND_KEY];
+  if (command == five.ServiceWorkerApi.COMMAND_UPDATE_AVAILABLE) {
     this.notificationManager_.show(
         five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_,
         five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_DURATION_,
