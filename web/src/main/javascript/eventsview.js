@@ -2,7 +2,6 @@
 
 goog.provide('five.EventsView');
 
-goog.require('five.AndroidAppApi');
 goog.require('five.Button');
 goog.require('five.Component');
 goog.require('five.DayBanner');
@@ -60,13 +59,6 @@ five.EventsView = function(appContext, calendarManager, appBar) {
 
   /** @type {!Array.<!five.Event>} */
   this.proposedEvents_ = [];
-
-  /** @type {five.AndroidAppApi} */
-  this.androidAppApi_;
-
-  if (five.device.isWebView()) {
-    this.androidAppApi_ = five.AndroidAppApi.get(this.appContext_);
-  }
 
   /** @type {!five.DurationKeyMonitor} */
   this.durationKeyMonitor_ = new five.DurationKeyMonitor();
@@ -154,43 +146,28 @@ five.EventsView.prototype.createDom = function() {
   goog.dom.classlist.add(this.scrollEl_, 'events-view-scroll');
   this.el.appendChild(this.scrollEl_);
 
-  if (!five.device.isWebView()) {
-    var refreshButton = new five.Button('Refresh');
-    this.appBar_.getButtonBar().addButton(refreshButton);
-    this.eventHandler.listen(refreshButton.el, goog.events.EventType.CLICK,
-        this.handleRefreshClick_);
+  var refreshButton = new five.Button('Refresh');
+  this.appBar_.getButtonBar().addButton(refreshButton);
+  this.eventHandler.listen(refreshButton.el, goog.events.EventType.CLICK,
+      this.handleRefreshClick_);
 
-    var nowButton = new five.Button('Now');
-    this.appBar_.getButtonBar().addButton(nowButton);
-    this.eventHandler.listen(nowButton.el, goog.events.EventType.CLICK,
-        this.handleNowClick_);
+  var nowButton = new five.Button('Now');
+  this.appBar_.getButtonBar().addButton(nowButton);
+  this.eventHandler.listen(nowButton.el, goog.events.EventType.CLICK,
+      this.handleNowClick_);
 
-    if (five.device.isMobile()) {
-      var proposeButton = new five.FloatingActionButton('propose-button');
-      proposeButton.render(this.el);
-      this.eventHandler.listen(proposeButton.el, goog.events.EventType.CLICK,
-          this.handleProposeClick_);
-    }
-
-    this.saveButton_ = new five.Button('Save');
-    this.appBar_.getButtonBar().addButton(this.saveButton_);
-    this.eventHandler.listen(this.saveButton_.el, goog.events.EventType.CLICK,
-        this.handleSaveClick_);
-    goog.style.setElementShown(this.saveButton_.el, false);
-  } else {
-    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.REFRESH,
-        goog.bind(this.handleRefreshClick_, this));
-
-    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.NOW,
-        goog.bind(this.handleNowClick_, this));
-
-    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.PROPOSE,
-        goog.bind(this.handleProposeClick_, this));
-
-    this.androidAppApi_.addButton(five.AndroidAppApi.ButtonId.SAVE,
-        goog.bind(this.handleSaveClick_, this));
-    this.androidAppApi_.setButtonVisible(five.AndroidAppApi.ButtonId.SAVE, false);
+  if (five.device.isMobile()) {
+    var proposeButton = new five.FloatingActionButton('propose-button');
+    proposeButton.render(this.el);
+    this.eventHandler.listen(proposeButton.el, goog.events.EventType.CLICK,
+        this.handleProposeClick_);
   }
+
+  this.saveButton_ = new five.Button('Save');
+  this.appBar_.getButtonBar().addButton(this.saveButton_);
+  this.eventHandler.listen(this.saveButton_.el, goog.events.EventType.CLICK,
+      this.handleSaveClick_);
+  goog.style.setElementShown(this.saveButton_.el, false);
 
   this.nowMarker_ = new five.TimeMarker(new goog.date.DateTime(),
       five.TimeMarkerTheme.NOW);
@@ -1080,14 +1057,8 @@ five.EventsView.prototype.handleEventEdit_ = function(e) {
     this.openEditEventDialogForCreate_(event);
     return;
   }
-  if (!five.device.isWebView() || e.doubleClick) {
-    this.openEditEventDialog_(event);
-  } else {
-    this.calendarManager_.saveMutations().addCallback(function() {
-      this.replaceSelectedEvents_([]);
-      this.calendarManager_.openEventEditor(event);
-    }, this);
-  }
+
+  this.openEditEventDialog_(event);
 };
 
 /**
@@ -1171,11 +1142,7 @@ five.EventsView.prototype.handleCalendarManagerEventsChange_ = function(e) {
 five.EventsView.prototype.handleCalendarManagerMutationsStateChange_ =
     function(e) {
   var show = this.calendarManager_.hasMutations();
-  if (!five.device.isWebView()) {
-    goog.style.setElementShown(this.saveButton_.el, show);
-  } else {
-    this.androidAppApi_.setButtonVisible(five.AndroidAppApi.ButtonId.SAVE, show);
-  }
+  goog.style.setElementShown(this.saveButton_.el, show);
 };
 
 /** @param {goog.events.Event} e */

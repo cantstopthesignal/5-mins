@@ -2,8 +2,6 @@
 
 goog.provide('five.App');
 
-goog.require('five.AndroidAppApi');
-goog.require('five.AndroidCalendarApi');
 goog.require('five.AppBar');
 goog.require('five.Auth');
 goog.require('five.CalendarChooser');
@@ -29,24 +27,12 @@ five.App = function() {
   this.appContext_ = new five.AppContext();
   this.registerDisposable(this.appContext_);
 
-  if (!five.device.isWebView()) {
-    this.auth_ = new five.Auth();
-  }
+  /** @type {!five.Auth} */
+  this.auth_ = new five.Auth();
 
-  /** @type {!five.BaseCalendarApi} */
-  this.calendarApi_;
-
-  if (five.device.isWebView()) {
-    this.calendarApi_ = new five.AndroidCalendarApi();
-  } else {
-    this.calendarApi_ = new five.OfflineCalendarApi(this.auth_);
-  }
+  /** @type {!five.OfflineCalendarApi} */
+  this.calendarApi_ = new five.OfflineCalendarApi(this.auth_);
   this.calendarApi_.register(this.appContext_);
-
-  if (five.device.isWebView()) {
-    var androidAppApi = new five.AndroidAppApi();
-    androidAppApi.register(this.appContext_);
-  }
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
@@ -97,15 +83,10 @@ five.App.prototype.start = function() {
   this.notificationManager_ = new five.NotificationManager(this.appBar_);
   this.notificationManager_.register(this.appContext_);
 
-  if (five.device.isWebView()) {
-    this.calendarApi_.loadCalendarData().
-        addCallback(this.handleAndroidCalendarData_, this);
-  } else {
-    this.auth_.getAuthDeferred().branch().
-        addCallback(this.chooseCalendar_, this).
-        addCallback(this.showEventsView_, this);
-    this.auth_.start();
-  }
+  this.auth_.getAuthDeferred().branch().
+      addCallback(this.chooseCalendar_, this).
+      addCallback(this.showEventsView_, this);
+  this.auth_.start();
 
   if (five.device.isServiceWorkerEnabled()) {
     this.installServiceWorker_();
@@ -140,11 +121,6 @@ five.App.prototype.chooseCalendar_ = function() {
         goog.dispose(this.calendarChooser_);
         delete this.calendarChooser_;
       }, this);
-};
-
-five.App.prototype.handleAndroidCalendarData_ = function(calendarData) {
-  this.calendarData_ = calendarData;
-  this.showEventsView_();
 };
 
 five.App.prototype.showEventsView_ = function() {

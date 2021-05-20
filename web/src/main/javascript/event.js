@@ -329,9 +329,7 @@ five.Event.prototype.startMutationPatch = function() {
     return mutation.isLocked();
   }));
   var patchData = {};
-  if (!five.device.isWebView()) {
-    goog.asserts.assertString(this.eventData_['etag']);
-  }
+  goog.asserts.assertString(this.eventData_['etag']);
   patchData['etag'] = this.eventData_['etag'];
   this.mergeMutationsIntoData_(patchData);
   goog.array.forEach(this.mutations_, function(mutation) {

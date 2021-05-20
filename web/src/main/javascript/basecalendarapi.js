@@ -110,16 +110,6 @@ five.BaseCalendarApi.prototype.loadCalendarList = goog.abstractMethod;
 five.BaseCalendarApi.prototype.loadEvents = goog.abstractMethod;
 
 /**
- * @param {!Function} callback
- */
-five.BaseCalendarApi.prototype.registerEventsListener = goog.abstractMethod;
-
-/**
- * @return {goog.async.Deferred}
- */
-five.BaseCalendarApi.prototype.requestSync = goog.abstractMethod;
-
-/**
  * @param {string} calendarId
  * @param {!Array.<!five.BaseCalendarApi.EventOperation>} eventOperations
  * @return {goog.async.Deferred}
@@ -127,23 +117,12 @@ five.BaseCalendarApi.prototype.requestSync = goog.abstractMethod;
 five.BaseCalendarApi.prototype.applyEventOperations = goog.abstractMethod;
 
 /**
- * @param {string} calendarId
- * @param {Object} eventData
- * @return {goog.async.Deferred}
- */
-five.BaseCalendarApi.prototype.openEventEditor = goog.abstractMethod;
-
-/**
  * @param {Object} pendingMutationsData
  * @return {goog.async.Deferred}
  */
-five.BaseCalendarApi.prototype.savePendingMutations = function(pendingMutationsData) {
-  return goog.async.Deferred.succeed(null);
-};
+five.BaseCalendarApi.prototype.savePendingMutations = goog.abstractMethod;
 
 /**
  * @return {goog.async.Deferred}
  */
-five.BaseCalendarApi.prototype.loadPendingMutations = function() {
-  return goog.async.Deferred.succeed(null);
-};
+five.BaseCalendarApi.prototype.loadPendingMutations = goog.abstractMethod;

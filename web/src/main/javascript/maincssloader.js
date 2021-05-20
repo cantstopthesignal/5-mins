@@ -20,9 +20,6 @@ five.mainCssLoader.load = function() {
   if (five.device.isMobile()) {
     loadStylesheet('/css/mainmobile.css');
   }
-  if (five.device.isWebView()) {
-    loadStylesheet('/css/mainwebview.css');
-  }
 
   var uri = new goog.Uri(window.location.href);
   var zoom = parseFloat(uri.getParameterValue('zoom') || '1');

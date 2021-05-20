@@ -30,21 +30,12 @@ five.CalendarManager = function(appContext, calendarData) {
   /** @type {!five.AppContext} */
   this.appContext_ = appContext;
 
-  /** @type {!five.BaseCalendarApi} */
-  this.calendarApi_;
-  if (five.device.isWebView()) {
-    this.calendarApi_ = five.AndroidCalendarApi.get(this.appContext_);
-  } else {
-    this.calendarApi_ = five.OfflineCalendarApi.get(this.appContext_);
-  }
+  /** @type {!five.OfflineCalendarApi} */
+  this.calendarApi_ = five.OfflineCalendarApi.get(this.appContext_);
 
   /** @type {five.IdleTracker} */
-  this.idleTracker_;
-
-  if (!five.device.isWebView()) {
-    this.idleTracker_ = new five.IdleTracker();
-    this.registerDisposable(this.idleTracker_);
-  }
+  this.idleTracker_ = new five.IdleTracker();
+  this.registerDisposable(this.idleTracker_);
 
   /** @type {!five.NotificationManager} */
   this.notificationManager_ = five.NotificationManager.get(this.appContext_);
@@ -64,8 +55,6 @@ five.CalendarManager = function(appContext, calendarData) {
 
   /** @type {number} */
   this.eventLoadingLockNextId_ = 1;
-
-  this.calendarApi_.registerEventsListener(goog.bind(this.handleEventsChanged_, this));
 
   if (this.idleTracker_) {
     this.eventHandler.listen(this.idleTracker_, five.IdleTracker.EventType.ACTIVE,
@@ -305,30 +294,12 @@ five.CalendarManager.prototype.saveMutations = function() {
       addCallback(function(resp) {
         this.requestEnded_();
         this.checkIdleRefresh_();
-        this.calendarApi_.requestSync();
       }, this).
       addErrback(function(error) {
         this.logger_.severe('Error applying event operations: ' + error, error);
         this.requestEnded_();
         this.notificationManager_.show(
             five.CalendarManager.EVENTS_APPLY_OPERATIONS_ERROR_);
-      }, this);
-};
-
-/** @param {five.Event} event */
-five.CalendarManager.prototype.openEventEditor = function(event) {
-  goog.asserts.assert(!event.isNew());
-  goog.asserts.assert(!event.hasMutations());
-  this.requestStarted_();
-  this.calendarApi_.openEventEditor(this.calendarData_['id'], event.getEventData()).
-      addCallback(function(resp) {
-        this.requestEnded_();
-      }, this).
-      addErrback(function(error) {
-        this.logger_.severe('Error opening event editor: ' + error, error);
-        this.requestEnded_();
-        this.notificationManager_.show(
-            five.CalendarManager.OPEN_EVENTS_EDITOR_ERROR_);
       }, this);
 };
 
@@ -561,7 +532,7 @@ five.CalendarManager.prototype.canRefreshEvents_ = function() {
 };
 
 five.CalendarManager.prototype.handleUserActive_ = function() {
-  if (!this.startDate_ || five.device.isWebView()) {
+  if (!this.startDate_) {
     return;
   }
   this.needIdleRefresh_ = true;

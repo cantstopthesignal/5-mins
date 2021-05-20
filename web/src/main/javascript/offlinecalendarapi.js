@@ -103,20 +103,6 @@ five.OfflineCalendarApi.prototype.loadEvents = function(calendarId, startDate,
 };
 
 /**
- * @param {!Function} callback
- */
-five.OfflineCalendarApi.prototype.registerEventsListener = function(callback) {
-  return this.calendarApi_.registerEventsListener(callback);
-};
-
-/**
- * @return {goog.async.Deferred}
- */
-five.OfflineCalendarApi.prototype.requestSync = function() {
-  return this.calendarApi_.requestSync();
-};
-
-/**
  * @param {string} calendarId
  * @param {!Array.<!five.BaseCalendarApi.EventOperation>} eventOperations
  * @return {goog.async.Deferred}

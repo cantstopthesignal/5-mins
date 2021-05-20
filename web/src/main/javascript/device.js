@@ -32,19 +32,6 @@ five.device.isMobile = function() {
   return five.device.isMobile_;
 };
 
-/** @return {boolean} */
-five.device.isWebView = function() {
-  if (!goog.isDef(five.device.isWebView_)) {
-    var param = five.device.getUriParam_('webview');
-    if (param) {
-      five.device.isWebView_ = (param == 'true' || param == '1');
-    } else {
-      five.device.isWebView_ = !!('Android' in window);
-    }
-  }
-  return five.device.isWebView_;
-};
-
 /** @return {string} */
 five.device.getJsMode = function() {
   if (!goog.isDef(five.device.jsMode_)) {
@@ -93,9 +80,6 @@ five.device.isTouch_;
 
 /** @type {boolean} */
 five.device.isMobile_;
-
-/** @type {boolean} */
-five.device.isWebView_;
 
 /** @type {boolean} */
 five.device.isDebug_;

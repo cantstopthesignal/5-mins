@@ -118,19 +118,6 @@ five.CalendarApi.prototype.loadEvents = function(calendarId, startDate,
 };
 
 /**
- * @param {!Function} callback
- */
-five.CalendarApi.prototype.registerEventsListener = function(callback) {
-};
-
-/**
- * @return {goog.async.Deferred}
- */
-five.CalendarApi.prototype.requestSync = function() {
-  return goog.async.Deferred.succeed(true);
-};
-
-/**
  * @param {string} calendarId
  * @param {!Array.<!five.BaseCalendarApi.EventOperation>} eventOperations
  * @return {goog.async.Deferred}
