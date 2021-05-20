@@ -66,7 +66,7 @@ five.device.isServiceWorkerEnabled = function() {
     if (goog.isDef(param)) {
       five.device.isServiceWorkerEnabled_ = (param == 'true' || param == '1');
     } else {
-      five.device.isServiceWorkerEnabled_ = !five.device.isJsModeUncompiled();
+      five.device.isServiceWorkerEnabled_ = true;
     }
   }
   return five.device.isServiceWorkerEnabled_;
