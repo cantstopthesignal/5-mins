@@ -281,7 +281,7 @@ five.CalendarApi.prototype.joinPath_ = function(pathParts) {
  * @return {boolean}
  */
 five.CalendarApi.prototype.isLikelyAuthFailure_ = function(resp) {
-  if (resp.status == 401) {
+  if (resp.status == 401 || resp.status == 403) {
     return true;
   }
   // Due to a bug in google apis, a 404 can be returned instead of a 401

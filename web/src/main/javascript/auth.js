@@ -46,6 +46,7 @@ five.Auth.prototype.authRefreshTimeoutId_;
 
 five.Auth.prototype.start = function() {
   this.loadGapiJavascriptClientAndAuth_();
+  this.registerServiceWorkerClient_();
 
   if (goog.DEBUG) {
     goog.exportSymbol('five.auth.invalidateToken',
@@ -72,7 +73,7 @@ five.Auth.prototype.isTokenValid = function() {
 
 /** @override */
 five.Auth.prototype.getAuthDeferred = function() {
-  return this.authDeferred_;
+  return this.authDeferred_.branch();
 };
 
 /** @override */
@@ -229,6 +230,36 @@ five.Auth.prototype.updateServiceAuth_ = function(authResponse) {
         throw Error('ServiceWorker controller not set');
       }
     });
+};
+
+five.Auth.prototype.registerServiceWorkerClient_ = function() {
+  navigator.serviceWorker.ready
+    .then(() => {
+      if (navigator.serviceWorker.controller) {
+        var channel = new MessageChannel();
+        channel.port1.onmessage = (e) => {
+          this.handleServiceMessage_(e);
+        };
+        var message = {};
+        message[five.ServiceWorkerApi.MESSAGE_COMMAND_KEY] =
+            five.ServiceWorkerApi.COMMAND_AUTH_RPC;
+        message[five.ServiceAuth.RPC_NAME_KEY] = five.ServiceAuth.RPC_REGISTER;
+        navigator.serviceWorker.controller.postMessage(message, [channel.port2]);
+      } else {
+        this.logger_.severe('ServiceWorker controller not set');
+        throw Error('ServiceWorker controller not set');
+      }
+    });
+};
+
+/** @param {Event} event */
+five.Auth.prototype.handleServiceMessage_ = function(event) {
+  var rpcName = event.data[five.ServiceAuth.RPC_NAME_KEY];
+  if (rpcName == five.ServiceAuth.RPC_RESTART) {
+    this.restart();
+  } else {
+    throw Error('Unexpected message ' + event);
+  }
 };
 
 /**
