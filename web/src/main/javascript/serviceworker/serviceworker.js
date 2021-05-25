@@ -65,6 +65,8 @@ five.ServiceWorker.prototype.logger_ = goog.log.getLogger('five.ServiceWorker');
 five.ServiceWorker.prototype.start = function() {
   this.logger_.info('start');
 
+  this.serviceAuth_.start();
+
   this.eventHandler_.
       listen(self, goog.events.EventType.INSTALL, this.handleInstall_).
       listen(self, goog.events.EventType.ACTIVATE, this.handleActivate_).

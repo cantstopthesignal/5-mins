@@ -206,7 +206,7 @@ five.OfflineCalendarApi.prototype.saveCurrentCalendarId = function(currentCalend
     return putTx.wait()
       .addCallback(resp => null)
       .addErrback(err => {
-        this.logger_.severe('Failed to store current calendar id:: ' + err, err);
+        this.logger_.severe('Failed to store current calendar id: ' + err, err);
       });
   }, this);
 };

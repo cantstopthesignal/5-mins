@@ -100,12 +100,12 @@ five.App.prototype.start = function() {
     this.installServiceWorker_();
   }
 
-  this.eventHandler_.
-      listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_).
-      listen(document, goog.events.EventType.COPY, this.handleCopy_).
-      listen(document, goog.events.EventType.PASTE, this.handlePaste_).
-      listen(window, goog.events.EventType.BEFOREUNLOAD, this.handleWindowBeforeUnload_).
-      listen(navigator.serviceWorker, goog.events.EventType.MESSAGE,
+  this.eventHandler_
+      .listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_)
+      .listen(document, goog.events.EventType.COPY, this.handleCopy_)
+      .listen(document, goog.events.EventType.PASTE, this.handlePaste_)
+      .listen(window, goog.events.EventType.BEFOREUNLOAD, this.handleWindowBeforeUnload_)
+      .listen(navigator.serviceWorker, goog.events.EventType.MESSAGE,
         this.handleServiceWorkerMessage_);
 };
 
@@ -156,11 +156,6 @@ five.App.prototype.handleWindowResize_ = function() {
 };
 
 five.App.prototype.installServiceWorker_ = function() {
-  if (!('serviceWorker' in navigator)) {
-    this.logger_.severe('Service workers not available');
-    return;
-  }
-
   var serviceWorkerUri = new goog.Uri('/js/serviceWorker.js?jsmode=' + five.device.getJsMode());
   if (five.device.isDebug()) {
     serviceWorkerUri.setParameterValue("Debug", "true");
