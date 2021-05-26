@@ -20,9 +20,6 @@ five.ServiceAuth = function() {
   /** @type {!goog.async.Deferred} */
   this.authDeferred_ = new goog.async.Deferred();
 
-  /** @type {MessagePort} */
-  this.clientPort_;
-
   /** @type {goog.async.Deferred} */
   this.dbDeferred_;
 };
@@ -33,9 +30,6 @@ five.ServiceAuth.RPC_NAME_KEY = 'rpcName';
 
 /** @type {!string} */
 five.ServiceAuth.RPC_REQUEST_KEY = 'rpcRequest';
-
-/** @type {!string} */
-five.ServiceAuth.RPC_REGISTER = 'register';
 
 /** @type {!string} */
 five.ServiceAuth.RPC_AUTHORIZATION_CHANGED = 'authorizationChanged';
@@ -71,7 +65,7 @@ five.ServiceAuth.prototype.start = function() {
             this.authDeferred_.errback(Error('No cached auth header available'));
           }
         })
-        .addErrback(function(err) {
+        .addErrback(err => {
           this.authDeferred_.errback(err);
         });
     })
@@ -86,8 +80,6 @@ five.ServiceAuth.prototype.handleMessage = function(e) {
   var rpcName = event.data[five.ServiceAuth.RPC_NAME_KEY];
   if (rpcName == five.ServiceAuth.RPC_AUTHORIZATION_CHANGED) {
     this.handleAuthorizationChangedMessage_(event);
-  } else if (rpcName == five.ServiceAuth.RPC_REGISTER) {
-    this.clientPort_ = event.ports[0];
   } else {
     throw Error('Unexpected message ' + event);
   }
@@ -114,18 +106,22 @@ five.ServiceAuth.prototype.handleAuthorizationChangedMessage_ = function(event) 
 
 /** @override */
 five.ServiceAuth.prototype.restart = function() {
-  if (!this.clientPort_) {
-    this.logger_.severe('Cannot restart auth: no client registered');
-    return;
-  }
-
   if (!this.authDeferred_.hasFired()) {
     return;
   }
+
   this.authDeferred_ = new goog.async.Deferred();
-  var message = {};
-  message[five.ServiceAuth.RPC_NAME_KEY] = five.ServiceAuth.RPC_RESTART;
-  this.clientPort_.postMessage(message);
+  self['clients'].matchAll().then(clients => {
+    if (clients.length == 0) {
+      this.authDeferred_.errback(Error('No client windows available for auth'));
+    } else {
+      var message = {};
+      message[five.ServiceWorkerApi.MESSAGE_COMMAND_KEY] =
+          five.ServiceWorkerApi.COMMAND_AUTH_RPC;
+      message[five.ServiceAuth.RPC_NAME_KEY] = five.ServiceAuth.RPC_RESTART;
+      clients[0].postMessage(message);
+    }
+  });
 };
 
 /** @override */
@@ -156,9 +152,9 @@ five.ServiceAuth.prototype.getDb_ = function() {
           db.createObjectStore(five.ServiceAuth.AUTH_DB_STORE_NAME_);
         }
       });
-  this.dbDeferred_.addErrback(function(err) {
+  this.dbDeferred_.addErrback(err => {
     this.logger_.severe('Failed to open database: ' + err, err);
-  }, this);
+  });
 
   return this.dbDeferred_.branch();
 };

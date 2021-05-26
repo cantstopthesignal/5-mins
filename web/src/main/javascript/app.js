@@ -229,5 +229,9 @@ five.App.prototype.handleServiceWorkerMessage_ = function(e) {
         five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_,
         five.App.APP_UPDATE_AVAILABLE_NOTIFICATION_DURATION_,
         five.NotificationManager.Level.INFO);
+  } else if (command == five.ServiceWorkerApi.COMMAND_AUTH_RPC) {
+    this.auth_.handleMessage(e);
+  } else {
+    throw Error('Unexpected message ' + event);
   }
 };

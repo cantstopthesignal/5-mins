@@ -46,7 +46,6 @@ five.Auth.prototype.authRefreshTimeoutId_;
 
 five.Auth.prototype.start = function() {
   this.loadGapiJavascriptClientAndAuth_();
-  this.registerServiceWorkerClient_();
 
   if (goog.DEBUG) {
     goog.exportSymbol('five.auth.invalidateToken',
@@ -62,7 +61,6 @@ five.Auth.prototype.restart = function() {
   }
   this.authDeferred_ = new goog.async.Deferred();
   this.checkAuth_(true);
-  goog.asserts.assert(!this.authDeferred_.hasFired());
 };
 
 /** @override */
@@ -140,7 +138,14 @@ five.Auth.prototype.handleLoadGapiJavascriptClientError_ = function(err) {
 
 five.Auth.prototype.checkAuth_ = function(refresh) {
   this.logger_.info('checkAuth_ refresh=' + refresh);
-  var authInstance = goog.getObjectByName('gapi.auth2.getAuthInstance')();
+  var gapiAuth2GetAuthInstance = goog.getObjectByName('gapi.auth2.getAuthInstance');
+  if (!gapiAuth2GetAuthInstance) {
+    this.logger_.severe('Error reloading auth: gapi auth2 library missing');
+    goog.asserts.assert(!this.authDeferred_.hasFired());
+    this.authDeferred_.errback(Error('Error reloading auth: gapi auth2 library missing'));
+    return;
+  }
+  var authInstance = gapiAuth2GetAuthInstance();
   if (authInstance['isSignedIn']['get']()) {
     if (refresh) {
       authInstance['currentUser']['get']()['reloadAuthResponse']()
@@ -207,10 +212,21 @@ five.Auth.prototype.setAuthRefreshTimer_ = function(expireTimeSecs) {
 
 five.Auth.prototype.invalidateToken_ = function() {
   this.logger_.info('invalidateToken_');
-  var token = goog.getObjectByName('gapi.auth.getToken')();
-  var accessToken = goog.asserts.assertString(token['access_token']);
+  var gapiGetToken = goog.getObjectByName('gapi.auth.getToken');
+  var gapiSetToken = goog.getObjectByName('gapi.auth.setToken');
+  var token = {};
+  if (gapiGetToken) {
+    token = gapiGetToken();
+    goog.asserts.assertString(token['access_token']);
+  } else {
+    this.logger_.severe('gapi.auth.getToken not found');
+  }
   token['access_token'] = 'invalid';
-  goog.getObjectByName('gapi.auth.setToken')(token);
+  if (gapiSetToken) {
+    gapiSetToken(token);
+  } else {
+    this.logger_.severe('gapi.auth.setToken not found');
+  }
   this.updateServiceAuth_(token);
 };
 
@@ -232,28 +248,9 @@ five.Auth.prototype.updateServiceAuth_ = function(authResponse) {
     });
 };
 
-five.Auth.prototype.registerServiceWorkerClient_ = function() {
-  navigator.serviceWorker.ready
-    .then(() => {
-      if (navigator.serviceWorker.controller) {
-        var channel = new MessageChannel();
-        channel.port1.onmessage = (e) => {
-          this.handleServiceMessage_(e);
-        };
-        var message = {};
-        message[five.ServiceWorkerApi.MESSAGE_COMMAND_KEY] =
-            five.ServiceWorkerApi.COMMAND_AUTH_RPC;
-        message[five.ServiceAuth.RPC_NAME_KEY] = five.ServiceAuth.RPC_REGISTER;
-        navigator.serviceWorker.controller.postMessage(message, [channel.port2]);
-      } else {
-        this.logger_.severe('ServiceWorker controller not set');
-        throw Error('ServiceWorker controller not set');
-      }
-    });
-};
-
-/** @param {Event} event */
-five.Auth.prototype.handleServiceMessage_ = function(event) {
+/** @param {!goog.events.BrowserEvent} e */
+five.Auth.prototype.handleMessage = function(e) {
+  var event = e.getBrowserEvent();
   var rpcName = event.data[five.ServiceAuth.RPC_NAME_KEY];
   if (rpcName == five.ServiceAuth.RPC_RESTART) {
     this.restart();

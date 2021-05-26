@@ -180,6 +180,8 @@ five.ServiceWorker.prototype.handleMessage_ = function(e) {
     this.serviceCalendarApi_.handleMessage(e);
   } else if (command == five.ServiceWorkerApi.COMMAND_AUTH_RPC) {
     this.serviceAuth_.handleMessage(e);
+  } else {
+    this.logger_.severe('Unexpected message ' + event);
   }
 }
 
