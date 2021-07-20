@@ -34,6 +34,11 @@ five.IdleTracker = function() {
       goog.events.EventType.VISIBILITYCHANGE,
       this.handleVisibilityChange_, false, this);
 
+  /** @type {goog.events.Key} */
+  this.onlineListenerKey_ = goog.events.listen(window,
+      goog.events.EventType.ONLINE,
+      this.handleOnline_, false, this);
+
   /** @type {number} */
   this.idleIntervalId_ = window.setInterval(goog.bind(this.handleIdleInterval_, this),
       five.IdleTracker.IDLE_CHECK_INTERVAL_MS_);
@@ -51,6 +56,9 @@ five.IdleTracker.EventType = {
   IDLE: goog.events.getUniqueId('idle'),
   ACTIVE: goog.events.getUniqueId('active')
 };
+
+/** @type {goog.log.Logger} */
+five.IdleTracker.prototype.logger_ = goog.log.getLogger('five.IdleTracker');
 
 five.IdleTracker.prototype.handleUserActivity_ = function() {
   this.userActiveTime_ = goog.now();
@@ -74,6 +82,10 @@ five.IdleTracker.prototype.handleVisibilityChange_ = function() {
   }
 };
 
+five.IdleTracker.prototype.handleOnline_ = function() {
+  this.handleUserActivity_();
+};
+
 /** @override */
 five.IdleTracker.prototype.disposeInternal = function() {
   if (this.globalMouseMoveListenerKey_) {
@@ -87,6 +99,10 @@ five.IdleTracker.prototype.disposeInternal = function() {
   if (this.visibilityChangedListenerKey_) {
     goog.events.unlistenByKey(this.visibilityChangedListenerKey_);
     delete this.visibilityChangedListenerKey_;
+  }
+  if (this.onlineListenerKey_) {
+    goog.events.unlistenByKey(this.onlineListenerKey_);
+    delete this.onlineListenerKey_;
   }
   if (this.idleIntervalId_) {
     window.clearInterval(this.idleIntervalId_);

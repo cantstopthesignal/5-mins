@@ -144,7 +144,7 @@ five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_ =
 five.CalendarManager.EVENTS_REFRESHED_NOTIFICATION_DURATION_ = 1000;
 
 /** @type {number} */
-five.CalendarManager.NEW_NETWORK_ONLINE_DELAY_MS_ = 2000;
+five.CalendarManager.NEW_NETWORK_ONLINE_DELAY_MS_ = 500;
 
 /** @type {goog.log.Logger} */
 five.CalendarManager.prototype.logger_ = goog.log.getLogger(
@@ -227,6 +227,7 @@ five.CalendarManager.prototype.refreshEvents_ = function() {
   this.requestStarted_();
   function callback(resp) {
     if (resp[five.BaseCalendarApi.CACHED_RESPONSE_KEY]) {
+      this.needIdleRefresh_ = true;
       this.notificationManager_.show(five.CalendarManager.EVENTS_LOAD_CACHED_,
         undefined, five.NotificationManager.Level.INFO);
     }
@@ -239,6 +240,7 @@ five.CalendarManager.prototype.refreshEvents_ = function() {
       this.endDate_).
       addCallback(callback, this).
       addErrback(function(error) {
+        this.needIdleRefresh_ = true;
         this.logger_.severe('Error loading events: ' + error, error);
         this.requestEnded_();
         this.notificationManager_.show(
