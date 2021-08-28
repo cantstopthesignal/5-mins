@@ -31,8 +31,8 @@ five.App = function() {
   /** @type {!five.Auth} */
   this.auth_ = new five.Auth();
 
-  /** @type {!five.ClientCalendarApi} */
-  this.calendarApi_ = new five.ClientCalendarApi();
+  /** @type {!five.OfflineCalendarApi} */
+  this.calendarApi_ = new five.OfflineCalendarApi(this.auth_);
   this.calendarApi_.register(this.appContext_);
 
   /** @type {goog.events.EventHandler} */

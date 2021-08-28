@@ -2,22 +2,22 @@
 
 goog.provide('five.CalendarChooser');
 
-goog.require('five.ClientCalendarApi')
 goog.require('five.Dialog')
+goog.require('five.OfflineCalendarApi')
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.dom.classlist');
 
 /**
  * @constructor
- * @param {!five.ClientCalendarApi} calendarApi
+ * @param {!five.OfflineCalendarApi} calendarApi
  * @param {!Object} listResp
  * @extends {five.Dialog}
  */
 five.CalendarChooser = function(calendarApi, listResp) {
   goog.base(this);
 
-  /** @type {!five.ClientCalendarApi} */
+  /** @type {!five.OfflineCalendarApi} */
   this.calendarApi_ = calendarApi;
 
   /** @type {!Object} */

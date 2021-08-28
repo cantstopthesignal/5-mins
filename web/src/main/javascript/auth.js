@@ -75,6 +75,18 @@ five.Auth.prototype.getAuthDeferred = function() {
 };
 
 /** @override */
+five.Auth.prototype.getAuthorizationHeaderValue = function() {
+  var gapiGetToken = goog.getObjectByName('gapi.auth.getToken');
+  if (gapiGetToken) {
+    var token = gapiGetToken();
+    if (token && ('access_token' in token)) {
+      return 'Bearer ' + token['access_token'];
+    }
+  }
+  return '';
+};
+
+/** @override */
 five.Auth.prototype.disposeInternal = function() {
   this.clearAuthRefreshTimer_();
   goog.base(this, 'disposeInternal');
@@ -178,7 +190,7 @@ five.Auth.prototype.handleAuthResult_ = function() {
     this.logger_.info('handleAuthResult_: authorized');
     var authResponse = authInstance['currentUser']['get']()['getAuthResponse']();
     this.setAuthRefreshTimer_(parseInt(authResponse['expires_in'], 10));
-    this.updateServiceAuth_(authResponse);
+    this.updateServiceAuth_();
   } else {
     this.logger_.info('handleAuthResult_: not authorized or no result');
   }
@@ -227,11 +239,10 @@ five.Auth.prototype.invalidateToken_ = function() {
   } else {
     this.logger_.severe('gapi.auth.setToken not found');
   }
-  this.updateServiceAuth_(token);
+  this.updateServiceAuth_();
 };
 
-five.Auth.prototype.updateServiceAuth_ = function(authResponse) {
-  var authorizationHeader = 'Bearer ' + authResponse['access_token'];
+five.Auth.prototype.updateServiceAuth_ = function() {
   navigator.serviceWorker.ready
     .then(() => {
       if (navigator.serviceWorker.controller) {
@@ -239,7 +250,7 @@ five.Auth.prototype.updateServiceAuth_ = function(authResponse) {
         message[five.ServiceWorkerApi.MESSAGE_COMMAND_KEY] =
             five.ServiceWorkerApi.COMMAND_AUTH_RPC;
         message[five.ServiceAuth.RPC_NAME_KEY] = five.ServiceAuth.RPC_AUTHORIZATION_CHANGED;
-        message[five.ServiceAuth.RPC_REQUEST_KEY] = authorizationHeader;
+        message[five.ServiceAuth.RPC_REQUEST_KEY] = this.getAuthorizationHeaderValue();
         navigator.serviceWorker.controller.postMessage(message);
       } else {
         this.logger_.severe('ServiceWorker controller not set');

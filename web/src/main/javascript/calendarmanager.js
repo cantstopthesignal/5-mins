@@ -3,11 +3,11 @@
 goog.provide('five.CalendarManager');
 
 goog.require('five.AppContext');
-goog.require('five.ClientCalendarApi');
 goog.require('five.Event');
 goog.require('five.EventMutation');
 goog.require('five.IdleTracker');
 goog.require('five.NotificationManager');
+goog.require('five.OfflineCalendarApi');
 goog.require('goog.asserts');
 goog.require('goog.async.DeferredList');
 goog.require('goog.date.Date');
@@ -30,8 +30,8 @@ five.CalendarManager = function(appContext, calendarData) {
   /** @type {!five.AppContext} */
   this.appContext_ = appContext;
 
-  /** @type {!five.ClientCalendarApi} */
-  this.calendarApi_ = five.ClientCalendarApi.get(this.appContext_);
+  /** @type {!five.OfflineCalendarApi} */
+  this.calendarApi_ = five.OfflineCalendarApi.get(this.appContext_);
 
   /** @type {five.IdleTracker} */
   this.idleTracker_ = new five.IdleTracker();
