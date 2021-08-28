@@ -127,7 +127,20 @@ five.OfflineCalendarApi.prototype.loadEvents = function(calendarId, startDate,
  * @override
  */
 five.OfflineCalendarApi.prototype.createEvent = function(calendarId, eventData) {
-  return this.calendarApi_.createEvent(calendarId, eventData);
+  var deferred = new goog.async.Deferred();
+  function onCreateEventCallback(resp) {
+    this.loadCachedEvents_()
+        .addCallback(cachedResp => {
+          this.mergeCreatedEvent_(cachedResp, resp);
+          this.saveCachedEvents_(cachedResp)
+              .addBoth(() => deferred.callback(resp));
+        })
+        .addErrback(() => deferred.callback(resp));
+  };
+  this.calendarApi_.createEvent(calendarId, eventData).
+      addCallback(onCreateEventCallback, this).
+      addErrback(err => deferred.errback(err));
+  return deferred;
 };
 
 /**
@@ -139,7 +152,20 @@ five.OfflineCalendarApi.prototype.createEvent = function(calendarId, eventData) 
  */
 five.OfflineCalendarApi.prototype.saveEvent = function(calendarId, eventData,
     eventPatchData) {
-  return this.calendarApi_.saveEvent(calendarId, eventData, eventPatchData);
+  var deferred = new goog.async.Deferred();
+  function onSaveEventCallback(resp) {
+    this.loadCachedEvents_()
+        .addCallback(cachedResp => {
+          this.mergeSavedEvent_(cachedResp, resp);
+          this.saveCachedEvents_(cachedResp)
+              .addBoth(() => deferred.callback(resp));
+        })
+        .addErrback(() => deferred.callback(resp));
+  };
+  this.calendarApi_.saveEvent(calendarId, eventData, eventPatchData).
+      addCallback(onSaveEventCallback, this).
+      addErrback(err => deferred.errback(err));
+  return deferred;
 }
 
 /**
@@ -149,7 +175,20 @@ five.OfflineCalendarApi.prototype.saveEvent = function(calendarId, eventData,
  * @override
  */
 five.OfflineCalendarApi.prototype.deleteEvent = function(calendarId, eventDeleteData) {
-  return this.calendarApi_.deleteEvent(calendarId, eventDeleteData);
+  var deferred = new goog.async.Deferred();
+  function onDeleteEventCallback(resp) {
+    this.loadCachedEvents_()
+        .addCallback(cachedResp => {
+          this.mergeDeletedEvent_(cachedResp, eventDeleteData);
+          this.saveCachedEvents_(cachedResp)
+              .addBoth(() => deferred.callback(resp));
+        })
+        .addErrback(() => deferred.callback(resp));
+  };
+  this.calendarApi_.deleteEvent(calendarId, eventDeleteData).
+      addCallback(onDeleteEventCallback, this).
+      addErrback(err => deferred.errback(err));
+  return deferred;
 };
 
 /**
@@ -316,4 +355,53 @@ five.OfflineCalendarApi.prototype.saveCachedCalendars_ = function(CalendarsResp)
       this.logger_.severe('Failed to store cached calendars: ' + err, err);
     }, this);
   }, this);
+};
+
+/**
+ * @param {Object} eventsResp
+ * @param {Object} createResp
+ */
+five.OfflineCalendarApi.prototype.mergeCreatedEvent_ = function(eventsResp, createResp) {
+  var eventId = goog.asserts.assertString(createResp['id']);
+  var eventItems = eventsResp['items'];
+  for (var existingItem of eventItems) {
+    if (existingItem['id'] == eventId) {
+      this.logger_.severe('Event ' + eventId + ' already in cache, not merging created event');
+      return;
+    }
+  }
+  eventItems.push(createResp);
+};
+
+/**
+ * @param {Object} eventsResp
+ * @param {Object} saveResp
+ */
+five.OfflineCalendarApi.prototype.mergeSavedEvent_ = function(eventsResp, saveResp) {
+  var eventId = goog.asserts.assertString(saveResp['id']);
+  var eventItems = eventsResp['items'];
+  for (var i = 0; i < eventItems.length; i++) {
+    if (eventItems[i]['id'] == eventId) {
+      eventItems.splice(i, 1, saveResp);
+      return;
+    }
+  }
+  this.logger_.warning('Event ' + eventId + ' not yet in cache, merging saved event');
+  eventItems.push(saveResp);
+};
+
+/**
+ * @param {Object} eventsResp
+ * @param {Object} eventDeleteData
+ */
+five.OfflineCalendarApi.prototype.mergeDeletedEvent_ = function(eventsResp, eventDeleteData) {
+  var eventId = goog.asserts.assertString(eventDeleteData['id']);
+  var eventItems = eventsResp['items'];
+  for (var i = 0; i < eventItems.length; i++) {
+    if (eventItems[i]['id'] == eventId) {
+      eventItems.splice(i, 1);
+      return;
+    }
+  }
+  this.logger_.severe('Event ' + eventId + ' not in cache, not merging deleted event');
 };
