@@ -458,6 +458,15 @@ a:hover {
 .event-card.attached-to-patch {
   border-left-width: 0;
 }
+.event-card > div > .sync-status {
+  background-size: 12px 12px;
+  float: right;
+  width: 12px;
+  height: 12px;
+  margin-right: -2px;
+  position: relative;
+  vertical-align: middle;
+}
 .event-card > div > .date-range {
   color: #e8e8e8a0;
   font-size: 11px;
@@ -537,6 +546,13 @@ a:hover {
 }
 .propose-button {
   background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTkgMTNoLTZ2NmgtMnYtNkg1di0yaDZWNWgydjZoNnYyeiIgZmlsbD0id2hpdGUiLz48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PC9zdmc+Cg==) no-repeat 50% !important;
+}
+
+.cached-icon {
+  background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjRweCIgZmlsbD0iI0ZGRkZGRiI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE5IDhsLTQgNGgzYzAgMy4zMS0yLjY5IDYtNiA2LTEuMDEgMC0xLjk3LS4yNS0yLjgtLjdsLTEuNDYgMS40NkM4Ljk3IDE5LjU0IDEwLjQzIDIwIDEyIDIwYzQuNDIgMCA4LTMuNTggOC04aDNsLTQtNHpNNiAxMmMwLTMuMzEgMi42OS02IDYtNiAxLjAxIDAgMS45Ny4yNSAyLjguN2wxLjQ2LTEuNDZDMTUuMDMgNC40NiAxMy41NyA0IDEyIDRjLTQuNDIgMC04IDMuNTgtOCA4SDFsNCA0IDQtNEg2eiIvPjwvc3ZnPg==) no-repeat 50%;
+}
+.changed-icon {
+  background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjRweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjRweCIgZmlsbD0iI0ZGRkZGRiI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTEyIDcuNzdMMTguMzkgMThINS42MUwxMiA3Ljc3TTEyIDRMMiAyMGgyMEwxMiA0eiIvPjwvc3ZnPg==) no-repeat 50%;
 }
 
 /*

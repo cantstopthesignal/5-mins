@@ -69,6 +69,9 @@ five.EventCard.prototype.contentEl_;
 five.EventCard.prototype.dateRangeEl_;
 
 /** @type {Element} */
+five.EventCard.prototype.syncStatusEl_;
+
+/** @type {Element} */
 five.EventCard.prototype.summaryEl_;
 
 /** @type {boolean} */
@@ -134,11 +137,20 @@ five.EventCard.prototype.getThemeForSummaryType_ = function(summaryType) {
 five.EventCard.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classlist.add(this.el, 'event-card');
+
   this.contentEl_ = document.createElement('div');
   this.el.appendChild(this.contentEl_);
+
+  this.syncStatusEl_ = document.createElement('div');
+  goog.dom.classlist.add(this.syncStatusEl_, 'sync-status');
+  goog.dom.classlist.add(this.syncStatusEl_, 'changed-icon');
+  goog.style.setElementShown(this.syncStatusEl_, false);
+  this.contentEl_.appendChild(this.syncStatusEl_);
+
   this.dateRangeEl_ = document.createElement('div');
   goog.dom.classlist.add(this.dateRangeEl_, 'date-range');
   this.contentEl_.appendChild(this.dateRangeEl_);
+
   this.summaryEl_ = document.createElement('span');
   this.contentEl_.appendChild(this.summaryEl_);
 
@@ -174,27 +186,38 @@ five.EventCard.prototype.updateDisplay = function() {
 
   goog.dom.setTextContent(this.summaryEl_, summaryInfo.getShortenedSummary());
   this.el.setAttribute('title', this.event_.getSummary());
+
+  this.updateSyncStatusDisplay_();
+};
+
+five.EventCard.prototype.updateSyncStatusDisplay_ = function() {
+  goog.style.setElementShown(this.syncStatusEl_, this.event_.hasMutations() && !this.proposed_);
 };
 
 five.EventCard.prototype.updateThemeDisplay_ = function() {
   if (!this.theme_) {
     return;
   }
+  var borderColor;
+  var bgColor;
   if (this.proposed_) {
     if (this.selected_) {
-      this.el.style.borderColor = this.theme_.proposedSelectedBorderColor;
-      this.el.style.backgroundColor = this.theme_.proposedSelectedBgColor;
+      borderColor = this.theme_.proposedSelectedBorderColor;
+      bgColor = this.theme_.proposedSelectedBgColor;
     } else {
-      this.el.style.borderColor = this.theme_.proposedBorderColor;
-      this.el.style.backgroundColor = this.theme_.proposedBgColor;
+      borderColor = this.theme_.proposedBorderColor;
+      bgColor = this.theme_.proposedBgColor;
     }
   } else if (this.selected_) {
-    this.el.style.borderColor = this.theme_.selectedBorderColor;
-    this.el.style.backgroundColor = this.theme_.selectedBgColor;
+    borderColor = this.theme_.selectedBorderColor;
+    bgColor = this.theme_.selectedBgColor;
   } else {
-    this.el.style.borderColor = this.theme_.borderColor;
-    this.el.style.backgroundColor = this.theme_.bgColor;
+    borderColor = this.theme_.borderColor;
+    bgColor = this.theme_.bgColor;
   }
+  this.el.style.borderColor = borderColor;
+  this.el.style.backgroundColor = bgColor;
+  this.syncStatusEl_.style.backgroundColor = bgColor;
 };
 
 /** @param {goog.math.Rect} rect */
@@ -246,6 +269,7 @@ five.EventCard.prototype.setProposed = function(proposed) {
   this.proposed_ = proposed;
   goog.dom.classlist.enable(this.el, 'proposed', this.proposed_);
   this.updateThemeDisplay_();
+  this.updateSyncStatusDisplay_();
   if (this.timeAxisPatch_) {
     this.timeAxisPatch_.setProposed(this.proposed_);
   }
