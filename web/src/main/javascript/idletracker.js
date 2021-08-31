@@ -40,13 +40,10 @@ five.IdleTracker = function() {
       this.handleOnline_, false, this);
 
   /** @type {number} */
-  this.idleIntervalId_ = window.setInterval(goog.bind(this.handleIdleInterval_, this),
-      five.IdleTracker.IDLE_CHECK_INTERVAL_MS_);
+  this.idleIntervalId_ = window.setTimeout(goog.bind(this.handleIdleTimeout_, this),
+      five.IdleTracker.IDLE_TIMEOUT_MS_);
 };
 goog.inherits(five.IdleTracker, goog.events.EventTarget);
-
-/** @type {number} */
-five.IdleTracker.IDLE_CHECK_INTERVAL_MS_ = 60 * 1000;
 
 /** @type {number} */
 five.IdleTracker.IDLE_TIMEOUT_MS_ = 5 * 60 * 1000;
@@ -65,12 +62,19 @@ five.IdleTracker.prototype.handleUserActivity_ = function() {
   if (!this.userActive_) {
     this.userActive_ = true;
     this.dispatchEvent(five.IdleTracker.EventType.ACTIVE);
+
+    if (this.idleTimeoutId_) {
+      window.clearTimeout(this.idleTimeoutId_);
+      delete this.idleTimeoutId_;
+    }
+    this.idleTimeoutId_ = window.setTimeout(goog.bind(this.handleIdleTimeout_, this),
+        five.IdleTracker.IDLE_TIMEOUT_MS_);
   }
 };
 
-five.IdleTracker.prototype.handleIdleInterval_ = function() {
-  if (goog.now() - this.userActiveTime_ > five.IdleTracker.IDLE_TIMEOUT_MS_ &&
-      this.userActive_) {
+five.IdleTracker.prototype.handleIdleTimeout_ = function() {
+  delete this.idleTimeoutId_;
+  if (this.userActive_) {
     this.userActive_ = false;
     this.dispatchEvent(five.IdleTracker.EventType.IDLE);
   }
