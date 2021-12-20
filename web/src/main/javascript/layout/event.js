@@ -33,6 +33,7 @@ five.layout.Event = function(startTime, endTime) {
   this.neighborHasTimeAxisPatch = false;
   this.attachedToTimeAxisPatch = false;
 
+  this.minEventHeight = 0;
   this.rect = null;
 };
 goog.inherits(five.layout.Event, goog.Disposable);
@@ -43,4 +44,8 @@ five.layout.Event.prototype.disposeInternal = function() {
   delete this.startTimePoint;
   delete this.endTimePoint;
   goog.base(this, 'disposeInternal');
+};
+
+five.layout.Event.prototype.setMinEventHeight = function(minEventHeight) {
+  this.minEventHeight = minEventHeight;
 };

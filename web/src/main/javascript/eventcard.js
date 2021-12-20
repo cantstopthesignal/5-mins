@@ -261,6 +261,11 @@ five.EventCard.prototype.setSelected = function(selected) {
   }
 };
 
+/** @return {boolean} */
+five.EventCard.prototype.isProposed = function() {
+  return this.proposed_;
+};
+
 /** @param {boolean} proposed */
 five.EventCard.prototype.setProposed = function(proposed) {
   if (!this.el) {

@@ -377,8 +377,9 @@ five.layout.Calc.prototype.enforceMinEventHeight_ = function() {
       totalMinHeights += timePointIter.minHeight;
       timePointIter = timePointIter.next;
     }
-    if (this.minEventHeight > totalMinHeights) {
-      maxTimeGapTimePoint.minHeight += this.minEventHeight - totalMinHeights;
+    var minEventHeight = Math.max(this.minEventHeight, event.minEventHeight);
+    if (minEventHeight > totalMinHeights) {
+      maxTimeGapTimePoint.minHeight += minEventHeight - totalMinHeights;
     }
   }, this);
 };

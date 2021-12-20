@@ -540,6 +540,9 @@ five.EventsTimeline.prototype.doLayout_ = function() {
   var layoutEvents = goog.array.map(this.eventCards_, function(eventCard) {
     var layoutEvent = new five.layout.Event(
         eventCard.getStartTime(), eventCard.getEndTime());
+    if (eventCard.isProposed()) {
+      layoutEvent.setMinEventHeight(five.deviceParams.getMinProposedEventHeight());
+    }
     layoutEvent.eventCard = eventCard;
     return layoutEvent;
   }, this);

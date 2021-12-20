@@ -14,6 +14,7 @@ five.deviceParams.DeviceParams = function() {
   this.timeAxisPatchWidth = 15;
   this.defaultHourHeight = isMobile ? 50 : 45;
   this.minEventHeight = isMobile ? 21 : 17;
+  this.minProposedEventHeight = isMobile ? 32 : 21;
 
   this.eventCardMinShortHeight = isMobile ? 28 : 26;
   this.eventCardMinNormalHeight = isMobile ? 32 : 30;
@@ -56,6 +57,11 @@ goog.scope(function() {
   /** @return {number} */
   five.deviceParams.getMinEventHeight = function() {
     return getInstance().minEventHeight;
+  };
+
+  /** @return {number} */
+  five.deviceParams.getMinProposedEventHeight = function() {
+    return getInstance().minProposedEventHeight;
   };
 
   /** @return {number} */
