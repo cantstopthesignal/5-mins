@@ -166,7 +166,8 @@ a:hover {
 .edit-event-dialog .button {
   margin-top: 8px;
 }
-.edit-event-dialog div.todo {
+.edit-event-dialog div.todo,
+.edit-event-dialog div.isEstimated {
   float: right;
   line-height: 32px;
   margin-right: 5px;

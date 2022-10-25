@@ -114,8 +114,10 @@ five.Event.parseEventDataDate = function(dateData) {
  * @param summary {string}
  * @param shortenedSummary {string}
  * @param type {five.Event.SummaryType}
+ * @param isEstimated {boolean}
  */
-five.Event.SummaryInfo = function(summary, shortenedSummary, type) {
+five.Event.SummaryInfo = function(summary, shortenedSummary, type,
+    isEstimated) {
   /** @type {string} */
   this.summary_ = summary;
 
@@ -124,33 +126,55 @@ five.Event.SummaryInfo = function(summary, shortenedSummary, type) {
 
   /** @type {five.Event.SummaryType} */
   this.type_ = type;
+
+  /** @type {boolean} */
+  this.isEstimated_ = isEstimated;
 };
+
+five.Event.SummaryInfo.TODO_PREFIX = '[todo] ';
+
+five.Event.SummaryInfo.ESTIMATED_SUFFIX = ' (estimated)';
 
 /**
  * @param summary {string}
  * @return {!five.Event.SummaryInfo}
  */
 five.Event.SummaryInfo.fromSummary = function(summary) {
+  var TODO_PREFIX = five.Event.SummaryInfo.TODO_PREFIX;
+  var ESTIMATED_SUFFIX = five.Event.SummaryInfo.ESTIMATED_SUFFIX;
   var type = five.Event.SummaryType.DEFAULT;
   var shortenedSummary = summary;
-  if (summary.toLowerCase().indexOf('[todo] ') == 0) {
-    shortenedSummary = summary.substr('[todo] '.length);
+  if (shortenedSummary.toLowerCase().startsWith(TODO_PREFIX)) {
+    shortenedSummary = shortenedSummary.substring(TODO_PREFIX.length);
     type = five.Event.SummaryType.TODO;
   }
-  return new five.Event.SummaryInfo(summary, shortenedSummary, type);
+  var isEstimated = false;
+  if (shortenedSummary.toLowerCase().endsWith(ESTIMATED_SUFFIX)) {
+    shortenedSummary = shortenedSummary.substring(
+        0, shortenedSummary.length - ESTIMATED_SUFFIX.length);
+    isEstimated = true;
+  }
+  return new five.Event.SummaryInfo(summary, shortenedSummary, type, isEstimated);
 };
 
 /**
  * @param shortenedSummary {string}
  * @param type {five.Event.SummaryType}
+ * @param isEstimated {boolean}
  * @return {!five.Event.SummaryInfo}
  */
-five.Event.SummaryInfo.fromShortenedSummary = function(shortenedSummary, type) {
+five.Event.SummaryInfo.fromShortenedSummary = function(shortenedSummary, type,
+    isEstimated) {
+  var TODO_PREFIX = five.Event.SummaryInfo.TODO_PREFIX;
+  var ESTIMATED_SUFFIX = five.Event.SummaryInfo.ESTIMATED_SUFFIX;
   var summary = shortenedSummary;
   if (type == five.Event.SummaryType.TODO) {
-    summary = '[todo] ' + shortenedSummary;
+    summary = TODO_PREFIX + summary;
   }
-  return new five.Event.SummaryInfo(summary, shortenedSummary, type);
+  if (isEstimated) {
+    summary = summary + ESTIMATED_SUFFIX;
+  }
+  return new five.Event.SummaryInfo(summary, shortenedSummary, type, isEstimated);
 };
 
 /**
@@ -163,7 +187,16 @@ five.Event.SummaryInfo.toggleTodo = function(summaryInfo) {
     newType = five.Event.SummaryType.TODO;
   }
   return five.Event.SummaryInfo.fromShortenedSummary(
-    summaryInfo.getShortenedSummary(), newType);
+    summaryInfo.getShortenedSummary(), newType, summaryInfo.isEstimated());
+};
+
+/**
+ * @param summaryInfo {five.Event.SummaryInfo}
+ * @return {!five.Event.SummaryInfo}
+ */
+five.Event.SummaryInfo.toggleIsEstimated = function(summaryInfo) {
+  return five.Event.SummaryInfo.fromShortenedSummary(
+      summaryInfo.getShortenedSummary(), summaryInfo.getType(), !summaryInfo.isEstimated());
 };
 
 /** @return {string} */
@@ -179,6 +212,25 @@ five.Event.SummaryInfo.prototype.getShortenedSummary = function() {
 /** @return {five.Event.SummaryType} */
 five.Event.SummaryInfo.prototype.getType = function() {
   return this.type_;
+};
+
+/** @return {boolean} */
+five.Event.SummaryInfo.prototype.isEstimated = function() {
+  return this.isEstimated_;
+};
+
+/** @return {!Array.<number>} */
+five.Event.SummaryInfo.prototype.getShortenedSummaryRange = function() {
+  var TODO_PREFIX = five.Event.SummaryInfo.TODO_PREFIX;
+  var ESTIMATED_SUFFIX = five.Event.SummaryInfo.ESTIMATED_SUFFIX;
+  var range = [0, this.summary_.length];
+  if (this.type_ == five.Event.SummaryType.TODO) {
+    range[0] += TODO_PREFIX.length;
+  }
+  if (this.isEstimated_) {
+    range[1] -= ESTIMATED_SUFFIX.length;
+  }
+  return range;
 };
 
 /** @type {boolean} */

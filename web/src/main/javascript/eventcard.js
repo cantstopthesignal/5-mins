@@ -171,15 +171,18 @@ five.EventCard.prototype.disposeInternal = function() {
 };
 
 five.EventCard.prototype.updateDisplay = function() {
+  var summaryInfo = five.Event.SummaryInfo.fromSummary(this.event_.getSummary());
+
   var dateRangeText = five.EventCard.toTimeString_(this.getStartTime());
   var minuteDiff = five.util.msToMin(this.getEndTime().getTime() -
       this.getStartTime().getTime());
   if (minuteDiff != 5) {
     dateRangeText += ' - ' + five.EventCard.toTimeString_(this.getEndTime());
   }
+  if (summaryInfo.isEstimated()) {
+    dateRangeText = '~' + dateRangeText;
+  }
   goog.dom.setTextContent(this.dateRangeEl_, dateRangeText);
-
-  var summaryInfo = five.Event.SummaryInfo.fromSummary(this.event_.getSummary());
 
   var newTheme = this.getThemeForSummaryType_(summaryInfo.getType());
   this.maybeSetTheme_(newTheme);

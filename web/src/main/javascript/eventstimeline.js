@@ -68,6 +68,7 @@ five.EventsTimeline.EventType = {
   EVENTS_SAVE: goog.events.getUniqueId('events_save'),
   EVENTS_SNAP_TO: goog.events.getUniqueId('events_snap_to'),
   EVENTS_SPLIT: goog.events.getUniqueId('events_split'),
+  EVENTS_TOGGLE_IS_ESTIMATED: goog.events.getUniqueId('events_toggle_is_estimated'),
   EVENTS_TOGGLE_TODO: goog.events.getUniqueId('events_toggle_todo'),
   EVENTS_PROPOSE: goog.events.getUniqueId('events_propose'),
 };
@@ -726,7 +727,11 @@ five.EventsTimeline.prototype.handleKeyDown_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.D) {
     event = five.EventsTimeline.EventType.EVENTS_DUPLICATE;
   } else if (e.keyCode == goog.events.KeyCodes.E) {
-    event = five.EventsTimeline.EventType.EVENTS_EDIT;
+    if (e.ctrlKey) {
+      event = five.EventsTimeline.EventType.EVENTS_TOGGLE_IS_ESTIMATED;
+    } else {
+      event = five.EventsTimeline.EventType.EVENTS_EDIT;
+    }
   } else if (e.keyCode == goog.events.KeyCodes.TAB) {
     if (e.shiftKey) {
       event = five.EventSelectNeighborEvent.previous();

@@ -524,7 +524,9 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
       listen(timeline, EventType.EVENTS_SPLIT,
           this.handleEventsTimelineEventsSplit_).
       listen(timeline, EventType.EVENTS_TOGGLE_TODO,
-          this.handleEventsTimelineEventsToggleTodo_);
+          this.handleEventsTimelineEventsToggleTodo_).
+      listen(timeline, EventType.EVENTS_TOGGLE_IS_ESTIMATED,
+          this.handleEventsTimelineEventsToggleIsEstimated_);
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
@@ -650,6 +652,23 @@ five.EventsView.prototype.handleEventsTimelineEventsToggleTodo_ = function(e) {
   goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
     var summaryInfo = five.Event.SummaryInfo.fromSummary(selectedEvent.getSummary());
     var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
+    var newSummary = newSummaryInfo.getSummary();
+    selectedEvent.addMutation(new five.EventMutation.ChangeSummary(newSummary));
+  });
+  goog.array.forEach(this.columns_, function(column) {
+    column.timeline.eventsChanged(this.selectedEvents_);
+  }, this);
+  e.preventDefault();
+}
+
+/** @param {goog.events.BrowserEvent} e */
+five.EventsView.prototype.handleEventsTimelineEventsToggleIsEstimated_ = function(e) {
+  if (!this.selectedEvents_.length) {
+    return;
+  }
+  goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
+    var summaryInfo = five.Event.SummaryInfo.fromSummary(selectedEvent.getSummary());
+    var newSummaryInfo = five.Event.SummaryInfo.toggleIsEstimated(summaryInfo);
     var newSummary = newSummaryInfo.getSummary();
     selectedEvent.addMutation(new five.EventMutation.ChangeSummary(newSummary));
   });

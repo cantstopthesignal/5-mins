@@ -39,6 +39,9 @@ five.EditEventDialog = function(appContext, event, newCreate) {
   /** @type {Element} */
   this.todoCheckboxEl_;
 
+  /** @type {Element} */
+  this.isEstimatedCheckboxEl_;
+
   /** @type {string} */
   this.originalSummary_ = this.event_.getSummary();
 
@@ -134,6 +137,21 @@ five.EditEventDialog.prototype.createDom = function() {
       this.handleTodoCheckboxChange_);
   contentEl.appendChild(todoDivEl);
 
+  var isEstimatedDivEl = document.createElement('div');
+  goog.dom.classlist.add(isEstimatedDivEl, 'isEstimated');
+  this.isEstimatedCheckboxEl_ = document.createElement('input');
+  this.isEstimatedCheckboxEl_.setAttribute('type', 'checkbox');
+  var isEstimatedCheckboxId = goog.getUid(this.isEstimatedCheckboxEl_);
+  this.isEstimatedCheckboxEl_.setAttribute('id', isEstimatedCheckboxId);
+  isEstimatedDivEl.append(this.isEstimatedCheckboxEl_);
+  var isEstimatedLabelEl = document.createElement('label');
+  isEstimatedLabelEl.setAttribute('for', isEstimatedCheckboxId);
+  isEstimatedLabelEl.appendChild(document.createTextNode('estimated'));
+  isEstimatedDivEl.append(isEstimatedLabelEl);
+  this.eventHandler.listen(this.isEstimatedCheckboxEl_, goog.events.EventType.CHANGE,
+      this.handleIsEstimatedCheckboxChange_);
+  contentEl.appendChild(isEstimatedDivEl);
+
   var doneButtonEl = document.createElement('div');
   goog.dom.classlist.add(doneButtonEl, 'button');
   this.eventHandler.listen(doneButtonEl, goog.events.EventType.CLICK,
@@ -198,6 +216,7 @@ five.EditEventDialog.prototype.handleSummaryChanged_ = function() {
   var newSummary = this.summaryInputEl_.value.trim();
   var summaryInfo =  five.Event.SummaryInfo.fromSummary(newSummary);
   this.todoCheckboxEl_.checked = summaryInfo.getType() == five.Event.SummaryType.TODO;
+  this.isEstimatedCheckboxEl_.checked = summaryInfo.isEstimated();
   if (!newSummary.length) {
     return;
   }
@@ -210,10 +229,10 @@ five.EditEventDialog.prototype.handleSummaryChanged_ = function() {
 five.EditEventDialog.prototype.setSummaryInputValueAndSelect_ = function(summaryInfo) {
   this.summaryInputEl_.value = summaryInfo.getSummary();
   this.summaryInputEl_.focus();
-  this.summaryInputEl_.setSelectionRange(
-      summaryInfo.getSummary().length - summaryInfo.getShortenedSummary().length,
-      summaryInfo.getSummary().length);
+  var range = summaryInfo.getShortenedSummaryRange();
+  this.summaryInputEl_.setSelectionRange(range[0], range[1]);
   this.todoCheckboxEl_.checked = summaryInfo.getType() == five.Event.SummaryType.TODO;
+  this.isEstimatedCheckboxEl_.checked = summaryInfo.isEstimated();
 };
 
 /** @override */
@@ -288,9 +307,13 @@ five.EditEventDialog.prototype.handleTodoCheckboxChange_ = function() {
   this.toggleTodo_();
 };
 
+five.EditEventDialog.prototype.handleIsEstimatedCheckboxChange_ = function() {
+  this.toggleIsEstimated_();
+};
+
 /** @param {goog.events.BrowserEvent} e */
 five.EditEventDialog.prototype.handleKeyDown_ = function(e) {
-  if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
+  if ((e.keyCode == goog.events.KeyCodes.E || e.keyCode == goog.events.KeyCodes.Y) && e.ctrlKey) {
     e.preventDefault();
   }
 };
@@ -306,12 +329,22 @@ five.EditEventDialog.prototype.handleKeyUp_ = function(e) {
   } else if (e.keyCode == goog.events.KeyCodes.Y && e.ctrlKey) {
     this.toggleTodo_();
     e.preventDefault();
+  } else if (e.keyCode == goog.events.KeyCodes.E && e.ctrlKey) {
+    this.toggleIsEstimated_();
+    e.preventDefault();
   }
 };
 
 five.EditEventDialog.prototype.toggleTodo_ = function() {
   var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
   var newSummaryInfo = five.Event.SummaryInfo.toggleTodo(summaryInfo);
+  this.setSummaryInputValueAndSelect_(newSummaryInfo);
+  this.handleSummaryChanged_();
+};
+
+five.EditEventDialog.prototype.toggleIsEstimated_ = function() {
+  var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
+  var newSummaryInfo = five.Event.SummaryInfo.toggleIsEstimated(summaryInfo);
   this.setSummaryInputValueAndSelect_(newSummaryInfo);
   this.handleSummaryChanged_();
 };
