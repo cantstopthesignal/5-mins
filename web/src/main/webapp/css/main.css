@@ -174,7 +174,8 @@ a:hover {
   margin-top: 8px;
   user-select: none;
 }
-.edit-event-dialog div.todo > input {
+.edit-event-dialog div.todo > input,
+.edit-event-dialog div.isEstimated > input {
   vertical-align: middle;
 }
 .connect-dialog .app-title {
