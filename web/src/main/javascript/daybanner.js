@@ -31,6 +31,9 @@ five.DayBanner.EventType = {
 /** @type {five.EventsTimeline} */
 five.DayBanner.prototype.owner_;
 
+/** @type {Element} */
+five.DayBanner.prototype.dateSpanEl_;
+
 /** @param {five.EventsTimeline} owner */
 five.DayBanner.prototype.setOwner = function(owner) {
   this.owner_ = owner;
@@ -43,11 +46,14 @@ five.DayBanner.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classlist.add(this.el, 'day-banner');
 
-  this.el.appendChild(document.createTextNode(''));
+  this.dateSpanEl_ = document.createElement('span');
+  this.dateSpanEl_.appendChild(document.createTextNode(''));
+  this.el.appendChild(this.dateSpanEl_);
+
   this.updateDisplay_();
 
   this.eventHandler.
-      listen(this.el, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_);
+      listen(this.dateSpanEl_, goog.events.EventType.MOUSEDOWN, this.handleMouseDown_);
 };
 
 /** @override */
@@ -85,7 +91,7 @@ five.DayBanner.prototype.getHeight = function() {
 
 five.DayBanner.prototype.updateDisplay_ = function() {
   var dayText = five.DayBanner.DATE_FORMAT.format(this.date_);
-  this.el.firstChild.data = dayText;
+  this.dateSpanEl_.firstChild.data = dayText;
 };
 
 /** @param {goog.events.BrowserEvent} e */
