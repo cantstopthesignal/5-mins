@@ -179,7 +179,7 @@ five.EventCard.prototype.updateDisplay = function() {
   if (minuteDiff != 5) {
     dateRangeText += ' - ' + five.EventCard.toTimeString_(this.getEndTime());
   }
-  if (summaryInfo.isEstimated()) {
+  if (summaryInfo.isEstimate()) {
     dateRangeText = '~' + dateRangeText;
   }
   goog.dom.setTextContent(this.dateRangeEl_, dateRangeText);

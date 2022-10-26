@@ -114,10 +114,10 @@ five.Event.parseEventDataDate = function(dateData) {
  * @param summary {string}
  * @param shortenedSummary {string}
  * @param type {five.Event.SummaryType}
- * @param isEstimated {boolean}
+ * @param isEstimate {boolean}
  */
 five.Event.SummaryInfo = function(summary, shortenedSummary, type,
-    isEstimated) {
+    isEstimate) {
   /** @type {string} */
   this.summary_ = summary;
 
@@ -128,12 +128,12 @@ five.Event.SummaryInfo = function(summary, shortenedSummary, type,
   this.type_ = type;
 
   /** @type {boolean} */
-  this.isEstimated_ = isEstimated;
+  this.isEstimate_ = isEstimate;
 };
 
 five.Event.SummaryInfo.TODO_PREFIX = '[todo] ';
 
-five.Event.SummaryInfo.ESTIMATED_SUFFIX = ' (estimated)';
+five.Event.SummaryInfo.ESTIMATE_SUFFIX = ' (estimate)';
 
 /**
  * @param summary {string}
@@ -141,40 +141,40 @@ five.Event.SummaryInfo.ESTIMATED_SUFFIX = ' (estimated)';
  */
 five.Event.SummaryInfo.fromSummary = function(summary) {
   var TODO_PREFIX = five.Event.SummaryInfo.TODO_PREFIX;
-  var ESTIMATED_SUFFIX = five.Event.SummaryInfo.ESTIMATED_SUFFIX;
+  var ESTIMATE_SUFFIX = five.Event.SummaryInfo.ESTIMATE_SUFFIX;
   var type = five.Event.SummaryType.DEFAULT;
   var shortenedSummary = summary;
   if (shortenedSummary.toLowerCase().startsWith(TODO_PREFIX)) {
     shortenedSummary = shortenedSummary.substring(TODO_PREFIX.length);
     type = five.Event.SummaryType.TODO;
   }
-  var isEstimated = false;
-  if (shortenedSummary.toLowerCase().endsWith(ESTIMATED_SUFFIX)) {
+  var isEstimate = false;
+  if (shortenedSummary.toLowerCase().endsWith(ESTIMATE_SUFFIX)) {
     shortenedSummary = shortenedSummary.substring(
-        0, shortenedSummary.length - ESTIMATED_SUFFIX.length);
-    isEstimated = true;
+        0, shortenedSummary.length - ESTIMATE_SUFFIX.length);
+    isEstimate = true;
   }
-  return new five.Event.SummaryInfo(summary, shortenedSummary, type, isEstimated);
+  return new five.Event.SummaryInfo(summary, shortenedSummary, type, isEstimate);
 };
 
 /**
  * @param shortenedSummary {string}
  * @param type {five.Event.SummaryType}
- * @param isEstimated {boolean}
+ * @param isEstimate {boolean}
  * @return {!five.Event.SummaryInfo}
  */
 five.Event.SummaryInfo.fromShortenedSummary = function(shortenedSummary, type,
-    isEstimated) {
+    isEstimate) {
   var TODO_PREFIX = five.Event.SummaryInfo.TODO_PREFIX;
-  var ESTIMATED_SUFFIX = five.Event.SummaryInfo.ESTIMATED_SUFFIX;
+  var ESTIMATE_SUFFIX = five.Event.SummaryInfo.ESTIMATE_SUFFIX;
   var summary = shortenedSummary;
   if (type == five.Event.SummaryType.TODO) {
     summary = TODO_PREFIX + summary;
   }
-  if (isEstimated) {
-    summary = summary + ESTIMATED_SUFFIX;
+  if (isEstimate) {
+    summary = summary + ESTIMATE_SUFFIX;
   }
-  return new five.Event.SummaryInfo(summary, shortenedSummary, type, isEstimated);
+  return new five.Event.SummaryInfo(summary, shortenedSummary, type, isEstimate);
 };
 
 /**
@@ -187,16 +187,16 @@ five.Event.SummaryInfo.toggleTodo = function(summaryInfo) {
     newType = five.Event.SummaryType.TODO;
   }
   return five.Event.SummaryInfo.fromShortenedSummary(
-    summaryInfo.getShortenedSummary(), newType, summaryInfo.isEstimated());
+    summaryInfo.getShortenedSummary(), newType, summaryInfo.isEstimate());
 };
 
 /**
  * @param summaryInfo {five.Event.SummaryInfo}
  * @return {!five.Event.SummaryInfo}
  */
-five.Event.SummaryInfo.toggleIsEstimated = function(summaryInfo) {
+five.Event.SummaryInfo.toggleIsEstimate = function(summaryInfo) {
   return five.Event.SummaryInfo.fromShortenedSummary(
-      summaryInfo.getShortenedSummary(), summaryInfo.getType(), !summaryInfo.isEstimated());
+      summaryInfo.getShortenedSummary(), summaryInfo.getType(), !summaryInfo.isEstimate());
 };
 
 /** @return {string} */
@@ -215,20 +215,20 @@ five.Event.SummaryInfo.prototype.getType = function() {
 };
 
 /** @return {boolean} */
-five.Event.SummaryInfo.prototype.isEstimated = function() {
-  return this.isEstimated_;
+five.Event.SummaryInfo.prototype.isEstimate = function() {
+  return this.isEstimate_;
 };
 
 /** @return {!Array.<number>} */
 five.Event.SummaryInfo.prototype.getShortenedSummaryRange = function() {
   var TODO_PREFIX = five.Event.SummaryInfo.TODO_PREFIX;
-  var ESTIMATED_SUFFIX = five.Event.SummaryInfo.ESTIMATED_SUFFIX;
+  var ESTIMATE_SUFFIX = five.Event.SummaryInfo.ESTIMATE_SUFFIX;
   var range = [0, this.summary_.length];
   if (this.type_ == five.Event.SummaryType.TODO) {
     range[0] += TODO_PREFIX.length;
   }
-  if (this.isEstimated_) {
-    range[1] -= ESTIMATED_SUFFIX.length;
+  if (this.isEstimate_) {
+    range[1] -= ESTIMATE_SUFFIX.length;
   }
   return range;
 };

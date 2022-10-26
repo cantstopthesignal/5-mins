@@ -525,8 +525,8 @@ five.EventsView.prototype.registerListenersForTimeline_ = function(timeline) {
           this.handleEventsTimelineEventsSplit_).
       listen(timeline, EventType.EVENTS_TOGGLE_TODO,
           this.handleEventsTimelineEventsToggleTodo_).
-      listen(timeline, EventType.EVENTS_TOGGLE_IS_ESTIMATED,
-          this.handleEventsTimelineEventsToggleIsEstimated_);
+      listen(timeline, EventType.EVENTS_TOGGLE_IS_ESTIMATE,
+          this.handleEventsTimelineEventsToggleIsEstimate_);
 };
 
 five.EventsView.prototype.handleEventsTimelineDeselect_ = function() {
@@ -662,13 +662,13 @@ five.EventsView.prototype.handleEventsTimelineEventsToggleTodo_ = function(e) {
 }
 
 /** @param {goog.events.BrowserEvent} e */
-five.EventsView.prototype.handleEventsTimelineEventsToggleIsEstimated_ = function(e) {
+five.EventsView.prototype.handleEventsTimelineEventsToggleIsEstimate_ = function(e) {
   if (!this.selectedEvents_.length) {
     return;
   }
   goog.array.forEach(this.selectedEvents_, function(selectedEvent) {
     var summaryInfo = five.Event.SummaryInfo.fromSummary(selectedEvent.getSummary());
-    var newSummaryInfo = five.Event.SummaryInfo.toggleIsEstimated(summaryInfo);
+    var newSummaryInfo = five.Event.SummaryInfo.toggleIsEstimate(summaryInfo);
     var newSummary = newSummaryInfo.getSummary();
     selectedEvent.addMutation(new five.EventMutation.ChangeSummary(newSummary));
   });

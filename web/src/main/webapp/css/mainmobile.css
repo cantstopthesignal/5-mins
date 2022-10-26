@@ -15,7 +15,7 @@ body {
   margin-top: 16px;
 }
 .edit-event-dialog div.todo,
-.edit-event-dialog div.isEstimated {
+.edit-event-dialog div.isEstimate {
   margin-top: 16px;
 }
 .summary-input {

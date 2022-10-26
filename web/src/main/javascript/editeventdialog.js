@@ -40,7 +40,7 @@ five.EditEventDialog = function(appContext, event, newCreate) {
   this.todoCheckboxEl_;
 
   /** @type {Element} */
-  this.isEstimatedCheckboxEl_;
+  this.isEstimateCheckboxEl_;
 
   /** @type {string} */
   this.originalSummary_ = this.event_.getSummary();
@@ -137,20 +137,20 @@ five.EditEventDialog.prototype.createDom = function() {
       this.handleTodoCheckboxChange_);
   contentEl.appendChild(todoDivEl);
 
-  var isEstimatedDivEl = document.createElement('div');
-  goog.dom.classlist.add(isEstimatedDivEl, 'isEstimated');
-  this.isEstimatedCheckboxEl_ = document.createElement('input');
-  this.isEstimatedCheckboxEl_.setAttribute('type', 'checkbox');
-  var isEstimatedCheckboxId = goog.getUid(this.isEstimatedCheckboxEl_);
-  this.isEstimatedCheckboxEl_.setAttribute('id', isEstimatedCheckboxId);
-  isEstimatedDivEl.append(this.isEstimatedCheckboxEl_);
-  var isEstimatedLabelEl = document.createElement('label');
-  isEstimatedLabelEl.setAttribute('for', isEstimatedCheckboxId);
-  isEstimatedLabelEl.appendChild(document.createTextNode('estimated'));
-  isEstimatedDivEl.append(isEstimatedLabelEl);
-  this.eventHandler.listen(this.isEstimatedCheckboxEl_, goog.events.EventType.CHANGE,
-      this.handleIsEstimatedCheckboxChange_);
-  contentEl.appendChild(isEstimatedDivEl);
+  var isEstimateDivEl = document.createElement('div');
+  goog.dom.classlist.add(isEstimateDivEl, 'isEstimate');
+  this.isEstimateCheckboxEl_ = document.createElement('input');
+  this.isEstimateCheckboxEl_.setAttribute('type', 'checkbox');
+  var isEstimateCheckboxId = goog.getUid(this.isEstimateCheckboxEl_);
+  this.isEstimateCheckboxEl_.setAttribute('id', isEstimateCheckboxId);
+  isEstimateDivEl.append(this.isEstimateCheckboxEl_);
+  var isEstimateLabelEl = document.createElement('label');
+  isEstimateLabelEl.setAttribute('for', isEstimateCheckboxId);
+  isEstimateLabelEl.appendChild(document.createTextNode('estimate'));
+  isEstimateDivEl.append(isEstimateLabelEl);
+  this.eventHandler.listen(this.isEstimateCheckboxEl_, goog.events.EventType.CHANGE,
+      this.handleIsEstimateCheckboxChange_);
+  contentEl.appendChild(isEstimateDivEl);
 
   var doneButtonEl = document.createElement('div');
   goog.dom.classlist.add(doneButtonEl, 'button');
@@ -216,7 +216,7 @@ five.EditEventDialog.prototype.handleSummaryChanged_ = function() {
   var newSummary = this.summaryInputEl_.value.trim();
   var summaryInfo =  five.Event.SummaryInfo.fromSummary(newSummary);
   this.todoCheckboxEl_.checked = summaryInfo.getType() == five.Event.SummaryType.TODO;
-  this.isEstimatedCheckboxEl_.checked = summaryInfo.isEstimated();
+  this.isEstimateCheckboxEl_.checked = summaryInfo.isEstimate();
   if (!newSummary.length) {
     return;
   }
@@ -232,7 +232,7 @@ five.EditEventDialog.prototype.setSummaryInputValueAndSelect_ = function(summary
   var range = summaryInfo.getShortenedSummaryRange();
   this.summaryInputEl_.setSelectionRange(range[0], range[1]);
   this.todoCheckboxEl_.checked = summaryInfo.getType() == five.Event.SummaryType.TODO;
-  this.isEstimatedCheckboxEl_.checked = summaryInfo.isEstimated();
+  this.isEstimateCheckboxEl_.checked = summaryInfo.isEstimate();
 };
 
 /** @override */
@@ -307,8 +307,8 @@ five.EditEventDialog.prototype.handleTodoCheckboxChange_ = function() {
   this.toggleTodo_();
 };
 
-five.EditEventDialog.prototype.handleIsEstimatedCheckboxChange_ = function() {
-  this.toggleIsEstimated_();
+five.EditEventDialog.prototype.handleIsEstimateCheckboxChange_ = function() {
+  this.toggleIsEstimate_();
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -330,7 +330,7 @@ five.EditEventDialog.prototype.handleKeyUp_ = function(e) {
     this.toggleTodo_();
     e.preventDefault();
   } else if (e.keyCode == goog.events.KeyCodes.E && e.ctrlKey) {
-    this.toggleIsEstimated_();
+    this.toggleIsEstimate_();
     e.preventDefault();
   }
 };
@@ -342,9 +342,9 @@ five.EditEventDialog.prototype.toggleTodo_ = function() {
   this.handleSummaryChanged_();
 };
 
-five.EditEventDialog.prototype.toggleIsEstimated_ = function() {
+five.EditEventDialog.prototype.toggleIsEstimate_ = function() {
   var summaryInfo = five.Event.SummaryInfo.fromSummary(this.summaryInputEl_.value.trim());
-  var newSummaryInfo = five.Event.SummaryInfo.toggleIsEstimated(summaryInfo);
+  var newSummaryInfo = five.Event.SummaryInfo.toggleIsEstimate(summaryInfo);
   this.setSummaryInputValueAndSelect_(newSummaryInfo);
   this.handleSummaryChanged_();
 };
