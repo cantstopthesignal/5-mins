@@ -1179,7 +1179,7 @@ five.EventsView.prototype.handleCalendarManagerRequestsStateChange_ =
 };
 
 five.EventsView.prototype.handleInitialEventsLoad_ = function() {
-  this.scrollToNow_();
+  this.scrollToNow_(true);
   this.updateViewDate_();
   this.updateAdditionalTimelineAlignments_();
 };
