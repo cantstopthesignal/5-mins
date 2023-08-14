@@ -435,7 +435,9 @@ five.CalendarManager.prototype.updateEventsData_ = function(eventsData, opt_pend
     var event = five.Event.fromPreservedState(pendingMutatedEventData);
     this.registerListenersForEvent_(event);
     this.events_.push(event);
-    pendingIds[pendingMutatedEventData['eventData']['id']] = true;
+    if (!event.isNew()) {
+      pendingIds[pendingMutatedEventData['eventData']['id']] = true;
+    }
   }
   for (var pendingRemovedEventData of pendingRemovedEventDatas) {
     var event = five.Event.fromPreservedState(pendingRemovedEventData);
@@ -513,13 +515,13 @@ five.CalendarManager.prototype.handleEventsChanged_ = function(resp) {
     deferred = goog.async.Deferred.succeed(null);
   } else {
     deferred = this.calendarApi_.loadPendingMutations().addCallback(function(pendingMutationsData) {
-      this.hasLoadedPendingMutations_ = true;
       return pendingMutationsData;
     }, this);
   }
 
   return deferred.addCallback(function(pendingMutationsData) {
     this.updateEventsData_(resp['items'] || [], pendingMutationsData);
+    this.hasLoadedPendingMutations_ = true;
   }, this);
 };
 
