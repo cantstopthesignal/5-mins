@@ -164,6 +164,7 @@ five.Auth.prototype.checkAuth_ = function(refresh) {
         .then(this.handleAuthResult_.bind(this))
         .catch(function(err) {
           this.logger_.severe('Error reloading auth: ' + err, err);
+          this.authDeferred_.errback(Error('Error reloading auth: ' + err));
         }.bind(this));
     } else {
       this.handleAuthResult_();
