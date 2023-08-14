@@ -217,3 +217,18 @@ function assertTimesEqualOrNull(msg, time1, time2) {
     assertEquals(msg, time1.getTime(), time2.getTime());
   }
 }
+
+function testIntervalToIsoStringSafe() {
+  var interval = new goog.date.Interval(0, 0, 0, 0, 0, 0);
+  assertEquals('PT0S', interval.toIsoString());
+  var interval = new goog.date.Interval(0, 0, 2, 2, 3, 40);
+  assertEquals('P2DT2H3M40S', interval.toIsoString());
+  var interval = new goog.date.Interval(0, 0, 2, 2, 3, 40);
+  assertEquals('-P2DT2H3M40S', interval.getInverse().toIsoString());
+  var interval = new goog.date.Interval(0, 0, 0, 0, -1, 30);
+  assertEquals(-30, interval.getTotalSeconds());
+  assertEquals(null, interval.toIsoString());
+  var isoString = five.util.intervalToIsoStringSafe(interval);
+  assertEquals('-PT30S', isoString);
+  assertEquals(-30, goog.date.Interval.fromIsoString(isoString).getTotalSeconds());
+}

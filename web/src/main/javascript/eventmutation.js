@@ -69,7 +69,7 @@ five.EventMutation.prototype.clone = goog.abstractMethod;
 five.EventMutation.prototype.preserveState = goog.abstractMethod;
 
 /**
- * @param {goog.date.Interval} interval
+ * @param {!goog.date.Interval} interval
  * @param {boolean=} opt_locked
  * @constructor
  * @extends {five.EventMutation}
@@ -77,7 +77,7 @@ five.EventMutation.prototype.preserveState = goog.abstractMethod;
 five.EventMutation.IntervalMutation_ = function(interval, opt_locked) {
   goog.base(this, opt_locked);
 
-  /** @type {goog.date.Interval} */
+  /** @type {!goog.date.Interval} */
   this.interval_ = interval;
 };
 goog.inherits(five.EventMutation.IntervalMutation_, five.EventMutation);
@@ -89,7 +89,7 @@ five.EventMutation.IntervalMutation_.prototype.getInterval = function() {
 
 five.EventMutation.IntervalMutation_.prototype.preserveState = function() {
   return {
-    'interval': this.interval_.toIsoString()
+    'interval': five.util.intervalToIsoStringSafe(this.interval_)
   };
 };
 
@@ -124,7 +124,7 @@ five.EventMutation.ReplaceTextMutation_.prototype.preserveState = function() {
 };
 
 /**
- * @param {goog.date.Interval} interval
+ * @param {!goog.date.Interval} interval
  * @param {boolean=} opt_locked
  * @constructor
  * @extends {five.EventMutation.IntervalMutation_}
@@ -143,7 +143,7 @@ five.EventMutation.MoveBy.TYPE_ = 'MoveBy';
  */
 five.EventMutation.MoveBy.fromPreservedState = function(state) {
   var interval = goog.date.Interval.fromIsoString(goog.asserts.assertString(state['interval']));
-  return new five.EventMutation.MoveBy(interval);
+  return new five.EventMutation.MoveBy(goog.asserts.assertObject(interval));
 };
 
 /** @override */
@@ -159,7 +159,7 @@ five.EventMutation.MoveBy.prototype.preserveState = function() {
 };
 
 /**
- * @param {goog.date.Interval} interval
+ * @param {!goog.date.Interval} interval
  * @param {boolean=} opt_locked
  * @constructor
  * @extends {five.EventMutation.IntervalMutation_}
@@ -179,7 +179,7 @@ five.EventMutation.MoveStartBy.TYPE_ = 'MoveStartBy';
  */
 five.EventMutation.MoveStartBy.fromPreservedState = function(state) {
   var interval = goog.date.Interval.fromIsoString(goog.asserts.assertString(state['interval']));
-  return new five.EventMutation.MoveStartBy(interval);
+  return new five.EventMutation.MoveStartBy(goog.asserts.assertObject(interval));
 };
 
 /** @override */
@@ -195,7 +195,7 @@ five.EventMutation.MoveStartBy.prototype.preserveState = function() {
 };
 
 /**
- * @param {goog.date.Interval} interval
+ * @param {!goog.date.Interval} interval
  * @param {boolean=} opt_locked
  * @constructor
  * @extends {five.EventMutation.IntervalMutation_}
@@ -215,7 +215,7 @@ five.EventMutation.MoveEndBy.TYPE_ = 'MoveEndBy';
  */
 five.EventMutation.MoveEndBy.fromPreservedState = function(state) {
   var interval = goog.date.Interval.fromIsoString(goog.asserts.assertString(state['interval']));
-  return new five.EventMutation.MoveEndBy(interval);
+  return new five.EventMutation.MoveEndBy(goog.asserts.assertObject(interval));
 };
 
 /** @override */

@@ -3,6 +3,7 @@
 goog.provide('five.util');
 
 goog.require('goog.date.Date');
+goog.require('goog.date.Interval')
 
 
 five.util.round = function(number) {
@@ -162,3 +163,11 @@ five.util.forEachHourWrapInternal_ = function(startTime, endTime, fn,
     fn.call(opt_scope, hourIter, null, true);
   }
 };
+
+/**
+ * @param {!goog.date.Interval} interval
+ */
+five.util.intervalToIsoStringSafe = function(interval) {
+  return new goog.date.Interval(goog.date.Interval.SECONDS, interval.getTotalSeconds()).
+      toIsoString();
+}
