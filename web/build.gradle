@@ -119,10 +119,26 @@ class ClosureGenerateDepsTask extends DefaultTask {
     @TaskAction
     void run() {
         destFile.getParentFile().mkdirs();
+        File tempBinDir = new File(getTemporaryDir(), "bin");
+        tempBinDir.mkdirs();
+        def whichPython3Output = new ByteArrayOutputStream()
+        project.exec {
+            commandLine "which", "python3"
+            standardOutput = whichPython3Output;
+        }
+        def python3Path = whichPython3Output.toString().trim();
+        project.exec {
+            commandLine "ln", "-sf", python3Path, new File(tempBinDir, "python")
+        }
+        project.exec {
+            commandLine "ls", "-laF", tempBinDir
+            environment PATH: tempBinDir
+        }
         project.exec {
             commandLine project.closureDepsWriterBin,
                     "--root_with_prefix=${project.javascriptSourceDir} ${rootRelativeToClosure}"
             standardOutput destFile.newOutputStream()
+            environment PATH: tempBinDir
         }
     }
 }
